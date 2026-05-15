@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+eww_bin="${EWW_BIN:-eww}"
+osd_timer_file="$runtime_dir/eww-osd-hide.pid"
+
+ensure_eww() {
+    if ! command -v "$eww_bin" >/dev/null 2>&1; then
+        exit 0
+    fi
+
+    "$eww_bin" daemon >/dev/null 2>&1 || true
+}
+
+ensure_window() {
+    if ! "$eww_bin" active-windows 2>/dev/null | grep -q '^[^:]*: osd$'; then
+        "$eww_bin" open osd >/dev/null 2>&1 || true
+    fi
+}
+
+schedule_hide() {
+    if [ -f "$osd_timer_file" ]; then
+        old_pid=$(cat "$osd_timer_file" 2>/dev/null || true)
+        if [ -n "${old_pid:-}" ]; then
+            kill "$old_pid" >/dev/null 2>&1 || true
+        fi
+    fi
+
+    (
+        sleep 0.5
+        "$eww_bin" update osd_visible=false >/dev/null 2>&1 || true
+    ) &
+    echo $! > "$osd_timer_file"
+}
+
+render_osd() {
+    local icon=$1
+    local text=$2
+    local value=$3
+
+    ensure_eww
+    ensure_window
+    "$eww_bin" update \
+        osd_icon="$icon" \
+        osd_text="$text" \
+        osd_value="$value" \
+        osd_visible=true >/dev/null 2>&1 || true
+    schedule_hide
+}
+
+get_volume_percent() {
+    wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '
+        /Volume:/ {
+            value = int(($2 + 0) * 100 + 0.5)
+        }
+        /MUTED/ {
+            muted = 1
+        }
+        END {
+            if (value < 0) value = 0
+            if (value > 100) value = 100
+            print value "|" muted
+        }'
+}
+
+get_mic_percent() {
+    wpctl get-volume @DEFAULT_AUDIO_SOURCE@ 2>/dev/null | awk '
+        /Volume:/ {
+            value = int(($2 + 0) * 100 + 0.5)
+        }
+        /MUTED/ {
+            muted = 1
+        }
+        END {
+            if (value < 0) value = 0
+            if (value > 100) value = 100
+            print value "|" muted
+        }'
+}
+
+get_brightness_percent() {
+    brightnessctl -m 2>/dev/null | awk -F, 'NR==1 { gsub(/%/, "", $4); print int($4 + 0) }'
+}
+
+handle_volume() {
+    case "${1:-}" in
+        up)
+            wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+ >/dev/null
+            ;;
+        down)
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- >/dev/null
+            ;;
+        mute)
+            wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle >/dev/null
+            ;;
+    esac
+
+    local state value muted icon
+    state=$(get_volume_percent)
+    value=${state%%|*}
+    muted=${state##*|}
+
+    if [ "$muted" = "1" ] || [ "$value" -eq 0 ]; then
+        icon="󰝟"
+        render_osd "$icon" "Volume Muted" "$value"
+        return
+    fi
+
+    if [ "$value" -lt 34 ]; then
+        icon="󰕿"
+    elif [ "$value" -lt 67 ]; then
+        icon="󰖀"
+    else
+        icon="󰕾"
+    fi
+
+    render_osd "$icon" "Volume ${value}%" "$value"
+}
+
+handle_mic() {
+    wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle >/dev/null
+
+    local state value muted icon
+    state=$(get_mic_percent)
+    value=${state%%|*}
+    muted=${state##*|}
+
+    if [ "$muted" = "1" ]; then
+        icon="󰍭"
+        render_osd "$icon" "Microphone Muted" "$value"
+    else
+        icon="󰍬"
+        render_osd "$icon" "Microphone ${value}%" "$value"
+    fi
+}
+
+handle_brightness() {
+    case "${1:-}" in
+        up)
+            brightnessctl -e4 -n2 set 5%+ >/dev/null
+            ;;
+        down)
+            brightnessctl -e4 -n2 set 5%- >/dev/null
+            ;;
+    esac
+
+    local value
+    value=$(get_brightness_percent)
+    value=${value:-0}
+    render_osd "󰃠" "Brightness ${value}%" "$value"
+}
+
+case "${1:-}" in
+    volume-up)
+        handle_volume up
+        ;;
+    volume-down)
+        handle_volume down
+        ;;
+    volume-mute)
+        handle_volume mute
+        ;;
+    mic-mute)
+        handle_mic
+        ;;
+    brightness-up)
+        handle_brightness up
+        ;;
+    brightness-down)
+        handle_brightness down
+        ;;
+    *)
+        echo "usage: osdctl {volume-up|volume-down|volume-mute|mic-mute|brightness-up|brightness-down}" >&2
+        exit 1
+        ;;
+esac

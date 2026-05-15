@@ -1,0 +1,20 @@
+window {
+    background: rgba(14, 18, 24, 0.94);
+}
+
+button {
+    border-radius: 10px;
+}
+
+entry,
+combobox,
+button {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f4f7fb;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+button:hover {
+    background: rgba(125, 211, 164, 0.18);
+    border-color: rgba(125, 211, 164, 0.45);
+}

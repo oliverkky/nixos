@@ -1,0 +1,27 @@
+@import url("../../../.cache/wal/colors-waybar.css");
+
+* {
+    font-family: Cantarell, "Symbols Nerd Font", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+}
+
+#waybar {
+    background: transparent;
+    color: alpha(@foreground, 0.72);
+}
+
+#waybar > box {
+    padding-bottom: 56px;
+}
+
+#custom-splash {
+    background: transparent;
+    color: alpha(@foreground, 0.92);
+    text-shadow: 0 1px 3px alpha(@background, 0.85);
+}

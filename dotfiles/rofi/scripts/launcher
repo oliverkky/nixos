@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+rofi \
+    -show appsearch \
+    -modes "appsearch:$config_root/rofi/scripts/menu" \
+    -show-icons

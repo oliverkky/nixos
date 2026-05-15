@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+set -eu
+
+if [ "$#" -lt 1 ]; then
+    exit 1
+fi
+
+exec "$HOME/.config/hypr/scripts/set-wallpaper" "$1"

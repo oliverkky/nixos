@@ -1,0 +1,40 @@
+(defvar osd_visible false)
+(defvar osd_icon "󰕾")
+(defvar osd_text "Volume 50%")
+(defvar osd_value 50)
+
+(defwindow osd
+  :monitor "DP-4"
+  :stacking "overlay"
+  :focusable false
+  :exclusive false
+  :geometry (geometry
+    :x "50%"
+    :y "34%"
+    :width "360px"
+    :height "96px"
+    :anchor "center")
+  (box
+    :class "osd-root"
+    :halign "center"
+    :valign "center"
+    :visible osd_visible
+    (box
+      :class "osd-card"
+      :orientation "vertical"
+      :space-evenly false
+      (box
+        :class "osd-head"
+        :orientation "horizontal"
+        (label
+          :class "osd-icon"
+          :text osd_icon)
+        (label
+          :class "osd-text"
+          :xalign 0
+          :text osd_text))
+      (progress
+        :class "osd-bar"
+        :value osd_value
+        :flipped false
+        :orientation "h"))))

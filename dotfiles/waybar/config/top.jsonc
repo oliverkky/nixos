@@ -1,0 +1,104 @@
+{
+  "layer": "top",
+  "position": "top",
+  "output": ["eDP-1"],
+  "height": 32,
+  "spacing": 0,
+  "reload_style_on_change": true,
+
+  "modules-left": ["hyprland/workspaces"],
+  "modules-center": ["clock"],
+  "modules-right": ["tray", "pulseaudio", "battery", "network", "custom/power"],
+
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "sort-by-number": true,
+    "all-outputs": false,
+    "format-icons": {
+      "active": " ",
+      "default": " ",
+    },
+    "persistent-workspaces": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+    },
+  },
+
+  "clock": {
+    "format": "{:%a %d %b  %H:%M}",
+    "tooltip-format": "<span size='large'><b>{:%A, %B %-d, %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
+    "on-click": "~/.config/waybar/popup/toggle.sh clock",
+    "calendar": {
+      "mode": "month",
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "format": {
+        "months": "<span weight='bold'>{}</span>",
+        "days": "{}",
+        "weeks": "<span alpha='55%'>W{}</span>",
+        "weekdays": "<span alpha='70%'>{}</span>",
+        "today": "<span background='#3584e4' foreground='#ffffff' weight='bold'> {} </span>",
+      },
+    },
+    "actions": {
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down",
+      "on-click-right": "mode",
+    },
+  },
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 2,
+  },
+  "network": {
+    "format-wifi": "{icon}",
+    "format-ethernet": "󰛳",
+    "format-linked": "󰛳",
+    "format-disconnected": "󰤮",
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "tooltip-format-wifi": "Wi-Fi: {essid}",
+    "tooltip-format-ethernet": "Ethernet: {ifname}",
+    "tooltip-format-linked": "Network: {ifname} (no IP)",
+    "tooltip-format-disconnected": "Network disconnected",
+    "interval": 5,
+  },
+
+  "pulseaudio": {
+    "format": "<span size='x-large'>{icon}</span>",
+    "format-muted": "<span size='x-large'>󰸈</span>",
+    "format-icons": {
+      "default": ["󰕿", "󰖀", "󰕾"],
+    },
+    "tooltip-format": "Audio: {volume}%",
+    "tooltip-format-muted": "Audio: muted",
+    "scroll-step": 5,
+  },
+
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15,
+    },
+    "format": "{icon}",
+    "format-charging": "{icon}",
+    "format-full": "󰁹",
+    "format-icons": {
+      "default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+      "charging": ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
+    },
+    "tooltip-format": "Battery: {capacity}% ({time})",
+    "tooltip-format-charging": "Battery: {capacity}% (charging)",
+    "tooltip-format-full": "Battery: 100% (full)",
+    "interval": 10,
+  },
+
+  "custom/power": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "~/.config/rofi/applets/bin/powermenu.sh",
+  },
+}

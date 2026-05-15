@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+set -eu
+
+if [ "$#" -lt 1 ]; then
+    echo "usage: set-wallpaper <image>" >&2
+    exit 1
+fi
+
+image_path=$1
+
+if [ ! -f "$image_path" ]; then
+    echo "file not found: $image_path" >&2
+    exit 1
+fi
+
+exec waypaper --backend swww --wallpaper "$image_path"

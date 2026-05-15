@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cache_file="/tmp/rofi-menu-apps.tsv"
+
+browser_cmd=()
+if [ -n "${BROWSER:-}" ] && command -v "${BROWSER%% *}" >/dev/null 2>&1; then
+    # shellcheck disable=SC2206
+    browser_cmd=(${BROWSER})
+elif command -v brave >/dev/null 2>&1; then
+    browser_cmd=(brave)
+elif command -v brave-browser >/dev/null 2>&1; then
+    browser_cmd=(brave-browser)
+elif command -v flatpak >/dev/null 2>&1; then
+    browser_cmd=(flatpak run com.brave.Browser)
+elif command -v xdg-open >/dev/null 2>&1; then
+    browser_cmd=(xdg-open)
+elif command -v gio >/dev/null 2>&1; then
+    browser_cmd=(gio open)
+else
+    browser_cmd=(python3 -m webbrowser)
+fi
+
+urlencode() {
+    python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1]))' "$1"
+}
+
+bang_to_url() {
+    local prefix=$1
+    local query=$2
+
+    case "$prefix" in
+        g)
+            printf 'https://www.google.com/search?q=%s\n' "$(urlencode "$query")"
+            ;;
+        yt)
+            printf 'https://www.youtube.com/results?search_query=%s\n' "$(urlencode "$query")"
+            ;;
+        gh)
+            printf 'https://github.com/search?q=%s\n' "$(urlencode "$query")"
+            ;;
+        d)
+            printf 'https://duckduckgo.com/?q=%s\n' "$(urlencode "$query")"
+            ;;
+        br)
+            printf 'https://search.brave.com/search?q=%s\n' "$(urlencode "$query")"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+open_in_browser() {
+    local input=$1
+    local url=
+
+    if [[ "$input" =~ ^https?:// ]]; then
+        url=$input
+    elif [[ "$input" =~ ^!([a-zA-Z0-9]+)[[:space:]]+(.+) ]]; then
+        local prefix=${BASH_REMATCH[1],,}
+        local query=${BASH_REMATCH[2]}
+        if ! url=$(bang_to_url "$prefix" "$query"); then
+            return 1
+        fi
+    fi
+
+    if [ -n "${url:-}" ]; then
+        if [ "${browser_cmd[0]}" = "xdg-open" ]; then
+            xdg-open "$url" >/dev/null 2>&1 &
+        else
+            "${browser_cmd[@]}" "$url" >/dev/null 2>&1 &
+        fi
+        disown || true
+        return 0
+    fi
+
+    if [ "${browser_cmd[0]}" = "xdg-open" ]; then
+        xdg-open "https://search.brave.com/search?q=$(urlencode "$input")" >/dev/null 2>&1 &
+    elif [ "${browser_cmd[0]}" = "flatpak" ]; then
+        flatpak run com.brave.Browser --search "$input" >/dev/null 2>&1 &
+    else
+        "${browser_cmd[@]}" --search "$input" >/dev/null 2>&1 &
+    fi
+    disown || true
+}
+
+build_cache() {
+    mkdir -p "$(dirname "$cache_file")"
+    python3 - <<'PY' > "$cache_file"
+import os
+from pathlib import Path
+
+def candidate_roots():
+    roots = []
+    home = Path.home()
+    xdg_data_home = Path(os.environ.get("XDG_DATA_HOME", home / ".local/share"))
+    roots.append(xdg_data_home / "applications")
+
+    xdg_data_dirs = os.environ.get("XDG_DATA_DIRS")
+    if xdg_data_dirs:
+        for entry in xdg_data_dirs.split(":"):
+            if entry:
+                roots.append(Path(entry) / "applications")
+    else:
+        roots.extend([
+            Path("/usr/local/share/applications"),
+            Path("/usr/share/applications"),
+        ])
+
+    roots.extend([
+        Path("/var/lib/flatpak/exports/share/applications"),
+        home / ".local/share/flatpak/exports/share/applications",
+        home / ".nix-profile/share/applications",
+        Path("/etc/profiles/per-user") / home.name / "share/applications",
+        Path("/run/current-system/sw/share/applications"),
+        Path("/nix/var/nix/profiles/default/share/applications"),
+    ])
+
+    deduped = []
+    seen = set()
+    for root in roots:
+        key = str(root)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(root)
+    return deduped
+
+roots = candidate_roots()
+
+def desktop_id(path: Path, root: Path) -> str:
+    try:
+        rel = path.relative_to(root)
+        return str(rel).replace("/", "-")
+    except ValueError:
+        return path.name
+
+def parse_desktop_file(path: Path):
+    data = {}
+    in_desktop_entry = False
+    for raw_line in path.read_text(errors="ignore").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("["):
+            in_desktop_entry = line == "[Desktop Entry]"
+            continue
+        if not in_desktop_entry or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        data.setdefault(key, value)
+    return data
+
+entries = []
+for root in roots:
+    if not root.exists():
+        continue
+    for path in root.rglob("*.desktop"):
+        data = parse_desktop_file(path)
+        name = data.get("Name")
+        if not name:
+            continue
+        if data.get("Hidden", "").lower() == "true":
+            continue
+        if data.get("NoDisplay", "").lower() == "true":
+            continue
+        if data.get("Type", "Application") not in {"Application", "Link"}:
+            continue
+        entries.append((
+            name,
+            desktop_id(path, root),
+            data.get("Icon", ""),
+            data.get("GenericName", ""),
+            str(path),
+        ))
+
+seen = set()
+for entry in sorted(entries, key=lambda item: item[0].lower()):
+    if entry[1] in seen:
+        continue
+    seen.add(entry[1])
+    print("\t".join(entry))
+PY
+}
+
+list_entries() {
+    build_cache
+
+    printf '\0prompt\x1fSearch\n'
+    printf '\0message\x1fType app name, <b>cats</b> for Brave search, or bangs like <b>!g cats</b>, <b>!yt cats</b>, <b>!gh repo</b>\n'
+    awk -F '\t' '
+        {
+            display = $1
+            if ($4 != "") {
+                display = display " [" $4 "]"
+            }
+            printf "%s\0icon\x1f%s\x1finfo\x1fapp:%s\t%s\n", display, $3, $2, $5
+        }' "$cache_file"
+}
+
+launch_app() {
+    local desktop_id=$1
+    local desktop_file=$2
+
+    if command -v gio >/dev/null 2>&1; then
+        gio launch "$desktop_file" >/dev/null 2>&1 &
+    elif command -v gtk-launch >/dev/null 2>&1; then
+        gtk-launch "$desktop_id" >/dev/null 2>&1 &
+    elif command -v dex >/dev/null 2>&1; then
+        dex "$desktop_file" >/dev/null 2>&1 &
+    else
+        return 1
+    fi
+    disown || true
+}
+
+case "${ROFI_RETV:-0}" in
+    0)
+        list_entries
+        ;;
+    1)
+        if [[ "${ROFI_INFO:-}" == app:* ]]; then
+            app_info=${ROFI_INFO#app:}
+            launch_app "${app_info%%$'\t'*}" "${app_info#*$'\t'}"
+        elif [ -n "${1:-}" ]; then
+            open_in_browser "$1"
+        fi
+        ;;
+    2)
+        if [ -n "${1:-}" ]; then
+            open_in_browser "$1"
+        fi
+        ;;
+esac
