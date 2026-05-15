@@ -17,7 +17,7 @@ rofi_menu() {
         -markup-rows \
         -p "$prompt" \
         -mesg "$message" \
-        -theme-str "window {fullscreen: false; width: 520px; height: auto;}" \
+        -theme-str "window {fullscreen: false; width: 520px;}" \
         -theme-str "mainbox {padding: 34px 0px; spacing: 18px; children: [ \"inputbar\", \"message\", \"listview\" ];}" \
         -theme-str "inputbar {margin: 0px 44px; border-radius: 16px;}" \
         -theme-str "message {margin: 0px 48px;}" \
@@ -52,7 +52,7 @@ rofi_input() {
         "${args[@]}" \
         -p "$prompt" \
         -mesg "$message" \
-        -theme-str "window {fullscreen: false; width: 520px; height: auto;}" \
+        -theme-str "window {fullscreen: false; width: 520px;}" \
         -theme-str "mainbox {padding: 34px 0px; spacing: 18px; children: [ \"inputbar\", \"message\" ];}" \
         -theme-str "inputbar {margin: 0px 44px; border-radius: 16px;}" \
         -theme-str "message {margin: 0px 48px;}" \
