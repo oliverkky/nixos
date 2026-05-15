@@ -38,7 +38,7 @@
 
 .modules-right {
     margin: 2px 12px 2px 0px;
-    padding: 0 9px;
+    padding: 0 12px;
     border-radius: 999px;
     background: @surface_soft;
     border-top: 1px solid @border;
@@ -58,6 +58,7 @@
 #network,
 #pulseaudio,
 #battery,
+#custom-bluetooth,
 #custom-power {
     margin: 0px 0px;
     min-height: 0px;
@@ -135,7 +136,7 @@
 
 #tray {
     margin: 0;
-    padding: 0 2px 0 0;
+    padding: 0 5px 0 1px;
     background: transparent;
     border: none;
     color: @text;
@@ -153,9 +154,10 @@
 #network,
 #pulseaudio,
 #battery,
+#custom-bluetooth,
 #custom-power {
     margin: 0;
-    padding: 0 3px;
+    padding: 0 6px;
     background: transparent;
     border: none;
     color: @text;
@@ -166,17 +168,18 @@
 #battery,
 #network,
 #tray,
+#custom-bluetooth,
 #custom-power {
     min-height: 0;
 }
 
 #network {
     margin-right: 0;
-    padding-right: 2px;
+    padding-right: 6px;
 }
 
 #custom-power {
-    padding-left: 6px;
+    padding-left: 8px;
     font-size: 13px;
     color: alpha(@foreground, 0.88);
 }
@@ -198,6 +201,7 @@
 #network:hover,
 #pulseaudio:hover,
 #battery:hover,
+#custom-bluetooth:hover,
 #custom-power:hover {
     background: transparent;
     border-color: transparent;
