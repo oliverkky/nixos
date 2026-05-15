@@ -16,6 +16,7 @@
     enable = true;
     wayland.enable = true;
   };
+  security.pam.services.sddm.enableGnomeKeyring = true;
 
   # ── Hyprland ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,13 @@
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
+  # ── Secret storage ───────────────────────────────────────────────────────────
+  # NetworkManager and desktop apps use this for saved credentials under
+  # Hyprland, where no full GNOME/KDE session starts a keyring for us.
+
+  services.gnome.gnome-keyring.enable = true;
+  programs.seahorse.enable = true;
+
   # ── Printing ─────────────────────────────────────────────────────────────────
 
   services.printing.enable = true;
@@ -95,6 +103,7 @@
     eww
     awww
     waypaper
+    networkmanagerapplet
     brightnessctl
 
     # Theming
