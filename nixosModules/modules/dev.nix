@@ -36,6 +36,6 @@
     git
 
     # Codex CLI
-    inputs.codex-cli-nix.packages.${pkgs.system}.default
+    inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }
