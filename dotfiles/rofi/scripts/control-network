@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+active_ssid() {
+    nmcli -t -f ACTIVE,SSID dev wifi 2>/dev/null | awk -F: '$1 == "yes" {print $2; exit}'
+}
+
+wifi_enabled() {
+    nmcli -t -f WIFI general 2>/dev/null | head -n1
+}
+
+connect_saved() {
+    local ssid=$1
+    nmcli connection up id "$ssid" >/dev/null 2>&1 && return 0
+    return 1
+}
+
+connect_wifi() {
+    local ssid=$1
+    if connect_saved "$ssid"; then
+        notify_user "Network" "Connected to $ssid"
+        return
+    fi
+
+    local password
+    password=$(rofi_input "Password" "$ssid" true || true)
+    [ -n "$password" ] || exit 0
+
+    if nmcli device wifi connect "$ssid" password "$password" >/dev/null 2>&1; then
+        notify_user "Network" "Connected to $ssid"
+    else
+        notify_user "Network" "Could not connect to $ssid"
+    fi
+}
+
+status="Wi-Fi: $(wifi_enabled)"
+current="$(active_ssid || true)"
+[ -n "$current" ] && status="$status | Connected: $current"
+
+choice=$(
+    {
+        if [ "$(wifi_enabled)" = "enabled" ]; then
+            printf '󰤭  Disable Wi-Fi\n'
+            printf '󰖩  Rescan\n'
+            [ -n "$current" ] && printf '󰤮  Disconnect %s\n' "$current"
+        else
+            printf '󰤨  Enable Wi-Fi\n'
+        fi
+
+        nmcli -t -f IN-USE,SSID,SECURITY,SIGNAL dev wifi list --rescan yes 2>/dev/null \
+            | awk -F: '
+                $2 != "" && !seen[$2]++ {
+                    lock = $3 == "" ? " " : ""
+                    mark = $1 == "*" ? "●" : " "
+                    printf "%s  %s  %s  %s%%\n", mark, lock, $2, $4
+                }'
+    } | rofi_menu "Network" "$status" 10 1
+)
+
+case "$choice" in
+    *"Enable Wi-Fi")
+        nmcli radio wifi on
+        ;;
+    *"Disable Wi-Fi")
+        nmcli radio wifi off
+        ;;
+    *Rescan)
+        nmcli device wifi rescan >/dev/null 2>&1 || true
+        exec "$0"
+        ;;
+    *Disconnect*)
+        nmcli device disconnect "$(nmcli -t -f DEVICE,TYPE dev status | awk -F: '$2 == "wifi" {print $1; exit}')" >/dev/null 2>&1 || true
+        ;;
+    "")
+        ;;
+    *)
+        ssid=$(printf '%s\n' "$choice" | sed -E 's/^[● ]  .  //; s/  [0-9]+%$//')
+        [ -n "$ssid" ] && connect_wifi "$ssid"
+        ;;
+esac

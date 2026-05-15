@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+choice=$(
+    {
+        printf '󰤨  Network\n'
+        printf '󰂯  Bluetooth\n'
+        printf '󰕾  Audio\n'
+        printf '󰃠  Brightness\n'
+        printf '  Screenshot\n'
+        printf '  Session\n'
+    } | rofi_menu "Control" "$(hostname)" 6 1
+)
+
+case "$choice" in
+    *Network) "$config_root/rofi/scripts/control-network" ;;
+    *Bluetooth) "$config_root/rofi/scripts/control-bluetooth" ;;
+    *Audio) "$config_root/rofi/scripts/control-audio" ;;
+    *Brightness) "$config_root/rofi/scripts/control-brightness" ;;
+    *Screenshot) "$config_root/rofi/scripts/control-screenshot" ;;
+    *Session) "$config_root/rofi/scripts/control-session" ;;
+esac

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+theme="$config_root/rofi/powermenu.rasi"
+
+rofi_menu() {
+    local prompt=$1
+    local message=${2:-}
+    local rows=${3:-8}
+    local cols=${4:-1}
+
+    rofi \
+        -dmenu \
+        -i \
+        -markup-rows \
+        -p "$prompt" \
+        -mesg "$message" \
+        -theme-str "window {fullscreen: false; width: 520px; height: auto;}" \
+        -theme-str "mainbox {padding: 34px 0px; spacing: 18px; children: [ \"inputbar\", \"message\", \"listview\" ];}" \
+        -theme-str "inputbar {margin: 0px 44px; border-radius: 16px;}" \
+        -theme-str "message {margin: 0px 48px;}" \
+        -theme-str "listview {columns: $cols; lines: $rows; margin: 0px 44px; spacing: 10px;}" \
+        -theme-str "element {padding: 16px 18px; border-radius: 16px;}" \
+        -theme-str "element-text {font: \"Cantarell Bold 12\"; horizontal-align: 0.0;}" \
+        -theme-str "textbox-prompt-colon {str: \"\";}" \
+        -theme "$theme"
+}
+
+rofi_confirm() {
+    local prompt=$1
+    local message=${2:-}
+    local choice
+
+    choice=$(printf 'Yes\nNo\n' | rofi_menu "$prompt" "$message" 2 2 || true)
+    [ "$choice" = "Yes" ]
+}
+
+rofi_input() {
+    local prompt=$1
+    local message=${2:-}
+    local hidden=${3:-false}
+    local args=()
+
+    if [ "$hidden" = true ]; then
+        args=(-password)
+    fi
+
+    rofi \
+        -dmenu \
+        "${args[@]}" \
+        -p "$prompt" \
+        -mesg "$message" \
+        -theme-str "window {fullscreen: false; width: 520px; height: auto;}" \
+        -theme-str "mainbox {padding: 34px 0px; spacing: 18px; children: [ \"inputbar\", \"message\" ];}" \
+        -theme-str "inputbar {margin: 0px 44px; border-radius: 16px;}" \
+        -theme-str "message {margin: 0px 48px;}" \
+        -theme-str "textbox-prompt-colon {str: \"\";}" \
+        -theme "$theme"
+}
+
+notify_user() {
+    local title=$1
+    local body=${2:-}
+
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "$title" "$body" >/dev/null 2>&1 || true
+    fi
+}

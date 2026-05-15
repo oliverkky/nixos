@@ -81,6 +81,7 @@
 
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
+  services.power-profiles-daemon.enable = true;
 
   # ── Secret storage ───────────────────────────────────────────────────────────
   # NetworkManager and desktop apps use this for saved credentials under
@@ -105,6 +106,12 @@
     waypaper
     networkmanagerapplet
     brightnessctl
+    grim
+    slurp
+    wl-clipboard
+    libnotify
+    pavucontrol
+    hyprlock
 
     # Theming
     bibata-cursors

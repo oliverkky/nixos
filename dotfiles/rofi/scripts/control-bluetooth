@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+powered() {
+    bluetoothctl show 2>/dev/null | awk '/Powered:/ {print $2; exit}'
+}
+
+device_name() {
+    bluetoothctl info "$1" 2>/dev/null | awk -F': ' '/Name:/ {print $2; exit}'
+}
+
+device_connected() {
+    bluetoothctl info "$1" 2>/dev/null | awk '/Connected:/ {print $2; exit}'
+}
+
+status="Bluetooth: $(powered || printf 'unavailable')"
+
+choice=$(
+    {
+        if [ "$(powered || true)" = "yes" ]; then
+            printf '󰂲  Disable Bluetooth\n'
+            printf '󰂯  Scan\n'
+        else
+            printf '󰂯  Enable Bluetooth\n'
+        fi
+
+        bluetoothctl devices 2>/dev/null | while read -r _ mac name; do
+            [ -n "${mac:-}" ] || continue
+            connected=$(device_connected "$mac")
+            mark=" "
+            [ "$connected" = "yes" ] && mark="●"
+            printf '%s  %s  %s\n' "$mark" "$mac" "${name:-$(device_name "$mac")}"
+        done
+    } | rofi_menu "Bluetooth" "$status" 10 1
+)
+
+case "$choice" in
+    *"Enable Bluetooth")
+        bluetoothctl power on >/dev/null
+        ;;
+    *"Disable Bluetooth")
+        bluetoothctl power off >/dev/null
+        ;;
+    *Scan)
+        bluetoothctl power on >/dev/null
+        bluetoothctl scan on >/dev/null &
+        sleep 6
+        bluetoothctl scan off >/dev/null || true
+        exec "$0"
+        ;;
+    "")
+        ;;
+    *)
+        mac=$(printf '%s\n' "$choice" | grep -oE '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' | head -n1 || true)
+        [ -n "$mac" ] || exit 0
+        if [ "$(device_connected "$mac")" = "yes" ]; then
+            bluetoothctl disconnect "$mac" >/dev/null || true
+            notify_user "Bluetooth" "Disconnected $mac"
+        else
+            bluetoothctl trust "$mac" >/dev/null || true
+            bluetoothctl connect "$mac" >/dev/null || notify_user "Bluetooth" "Could not connect $mac"
+        fi
+        ;;
+esac

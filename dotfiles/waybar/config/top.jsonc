@@ -8,7 +8,7 @@
 
   "modules-left": ["hyprland/workspaces"],
   "modules-center": ["clock"],
-  "modules-right": ["tray", "pulseaudio", "battery", "network", "custom/power"],
+  "modules-right": ["tray", "pulseaudio", "battery", "custom/bluetooth", "network", "custom/power"],
 
   "hyprland/workspaces": {
     "format": "{icon}",
@@ -64,6 +64,17 @@
     "tooltip-format-ethernet": "Ethernet: {ifname}",
     "tooltip-format-linked": "Network: {ifname} (no IP)",
     "tooltip-format-disconnected": "Network disconnected",
+    "on-click": "~/.config/rofi/scripts/control-network",
+    "on-click-right": "kitty -e nmtui",
+    "interval": 5,
+  },
+
+  "custom/bluetooth": {
+    "exec": "~/.config/waybar/scripts/bluetooth-status.sh",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "on-click": "~/.config/rofi/scripts/control-bluetooth",
     "interval": 5,
   },
 
@@ -75,6 +86,7 @@
     },
     "tooltip-format": "Audio: {volume}%",
     "tooltip-format-muted": "Audio: muted",
+    "on-click": "~/.config/rofi/scripts/control-audio",
     "scroll-step": 5,
   },
 
@@ -93,12 +105,13 @@
     "tooltip-format": "Battery: {capacity}% ({time})",
     "tooltip-format-charging": "Battery: {capacity}% (charging)",
     "tooltip-format-full": "Battery: 100% (full)",
+    "on-click": "~/.config/rofi/scripts/control-brightness",
     "interval": 10,
   },
 
   "custom/power": {
     "format": "",
     "tooltip": false,
-    "on-click": "~/.config/rofi/applets/bin/powermenu.sh",
+    "on-click": "~/.config/rofi/scripts/control-session",
   },
 }

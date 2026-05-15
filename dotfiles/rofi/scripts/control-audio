@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+volume_state() {
+    wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '
+        /Volume:/ { value = int(($2 + 0) * 100 + 0.5) }
+        /MUTED/ { muted = 1 }
+        END {
+            if (muted) {
+                printf "%s%% muted", value
+            } else {
+                printf "%s%%", value
+            }
+        }'
+}
+
+choice=$(
+    {
+        printf '󰝟  Toggle mute\n'
+        printf '󰕾  Volume up\n'
+        printf '󰖀  Volume down\n'
+        printf '󰍬  Toggle microphone\n'
+        printf '󰓃  Open mixer\n'
+    } | rofi_menu "Audio" "Volume: $(volume_state)" 5 1
+)
+
+case "$choice" in
+    *"Toggle mute") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+    *"Volume up") wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+ ;;
+    *"Volume down") wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
+    *"Toggle microphone") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
+    *"Open mixer")
+        if command -v pavucontrol >/dev/null 2>&1; then
+            pavucontrol >/dev/null 2>&1 &
+        fi
+        ;;
+esac

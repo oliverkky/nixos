@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+current=$(brightnessctl -m 2>/dev/null | awk -F, 'NR==1 {print $4}')
+profile=""
+if command -v powerprofilesctl >/dev/null 2>&1; then
+    profile=$(powerprofilesctl get 2>/dev/null || true)
+fi
+
+choice=$(
+    {
+        printf '󰃠  Up\n'
+        printf '󰃞  Down\n'
+        printf '󰃟  25%%\n'
+        printf '󰃠  50%%\n'
+        printf '󰃠  75%%\n'
+        printf '󰃠  100%%\n'
+        if [ -n "$profile" ]; then
+            printf '󰾅  Power saver\n'
+            printf '󰾆  Balanced\n'
+            printf '󰓅  Performance\n'
+        fi
+    } | rofi_menu "Power" "Brightness: ${current:-unknown}${profile:+ | Profile: $profile}" 9 1
+)
+
+case "$choice" in
+    *Up) brightnessctl set +10% >/dev/null ;;
+    *Down) brightnessctl set 10%- >/dev/null ;;
+    *25*) brightnessctl set 25% >/dev/null ;;
+    *50*) brightnessctl set 50% >/dev/null ;;
+    *75*) brightnessctl set 75% >/dev/null ;;
+    *100*) brightnessctl set 100% >/dev/null ;;
+    *"Power saver") powerprofilesctl set power-saver ;;
+    *Balanced) powerprofilesctl set balanced ;;
+    *Performance) powerprofilesctl set performance ;;
+esac

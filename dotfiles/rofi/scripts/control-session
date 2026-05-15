@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+choice=$(
+    {
+        printf '  Lock\n'
+        printf '󰗼  Logout\n'
+        printf '󰤄  Suspend\n'
+        printf '󰜉  Reboot\n'
+        printf '  Shutdown\n'
+    } | rofi_menu "Session" "Uptime: $(uptime -p | sed 's/^up //')" 5 1
+)
+
+case "$choice" in
+    *Lock)
+        if command -v hyprlock >/dev/null 2>&1; then
+            hyprlock
+        else
+            loginctl lock-session
+        fi
+        ;;
+    *Logout)
+        rofi_confirm "Logout" "End the current Hyprland session?" && hyprctl dispatch exit
+        ;;
+    *Suspend)
+        rofi_confirm "Suspend" "Put this machine to sleep?" && systemctl suspend
+        ;;
+    *Reboot)
+        rofi_confirm "Reboot" "Restart this machine?" && systemctl reboot
+        ;;
+    *Shutdown)
+        rofi_confirm "Shutdown" "Power off this machine?" && systemctl poweroff
+        ;;
+esac
