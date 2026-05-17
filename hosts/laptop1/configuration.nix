@@ -5,6 +5,14 @@
   ...
 }:
 
+let
+  laptopPanelEdid = pkgs.runCommand "mne007za1-edid" { } ''
+        mkdir -p $out/lib/firmware/edid
+        base64 -d > $out/lib/firmware/edid/mne007za1-60hz.bin <<'EOF'
+    AP///////wAObwwUAAAAAAAfAQS1HhN4Au6Vo1RMmSYPUFQAAAABAQEBAQEBAQEBAQEBAQEBtshAoLAITnAwIDYALrwQAAAYz4VAoLAITnAwIDYALrwQAAAYAAAA/gBDU09UIFQzCiAgICAgAAAA/gBNTkUwMDdaQTEtMwogAJw=
+    EOF
+  '';
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -16,6 +24,12 @@
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [
+    "drm.edid_firmware=eDP-1:edid/mne007za1-60hz.bin"
+  ];
+  boot.initrd.extraFiles."lib/firmware/edid/mne007za1-60hz.bin".source =
+    "${laptopPanelEdid}/lib/firmware/edid/mne007za1-60hz.bin";
+  hardware.firmware = [ laptopPanelEdid ];
 
   # ── User ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +41,7 @@
       "wheel"
       "video"
       "audio"
+      "input"
     ];
     shell = pkgs.zsh;
   };
@@ -49,6 +64,16 @@
   };
 
   console.keyMap = "cz-lat2";
+
+  environment.sessionVariables.HYPR_PRIMARY_MONITOR = "eDP-1";
+
+  # ── Laptop power behavior ───────────────────────────────────────────────────
+
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchDocked = "ignore";
+  };
 
   # ── Nix ─────────────────────────────────────────────────────────────────────
 

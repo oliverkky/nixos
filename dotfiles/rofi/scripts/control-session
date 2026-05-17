@@ -12,7 +12,7 @@ choice=$(
         printf '󰤄  Suspend\n'
         printf '󰜉  Reboot\n'
         printf '  Shutdown\n'
-    } | rofi_menu "Session" "Uptime: $(uptime -p | sed 's/^up //')" 5 1
+    } | rofi_menu "Power" "$(uptime -p 2>/dev/null || true)" 5 1
 )
 
 case "$choice" in

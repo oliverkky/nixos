@@ -15,7 +15,6 @@
 @define-color accent @color4;
 @define-color critical @color1;
 @define-color warning @color3;
-
 * {
     font-family: Cantarell, "Symbols Nerd Font", sans-serif;
     font-size: 12px;
@@ -58,6 +57,7 @@
 #network,
 #pulseaudio,
 #battery,
+#custom-power-profile,
 #custom-bluetooth,
 #custom-power {
     margin: 0px 0px;
@@ -154,6 +154,7 @@
 #network,
 #pulseaudio,
 #battery,
+#custom-power-profile,
 #custom-bluetooth,
 #custom-power {
     margin: 0;
@@ -168,6 +169,7 @@
 #battery,
 #network,
 #tray,
+#custom-power-profile,
 #custom-bluetooth,
 #custom-power {
     min-height: 0;
@@ -182,6 +184,10 @@
     padding-left: 8px;
     font-size: 13px;
     color: alpha(@foreground, 0.88);
+}
+
+#custom-power-profile {
+    padding: 0 6px;
 }
 
 #clock:hover,
@@ -201,6 +207,7 @@
 #network:hover,
 #pulseaudio:hover,
 #battery:hover,
+#custom-power-profile:hover,
 #custom-bluetooth:hover,
 #custom-power:hover {
     background: transparent;

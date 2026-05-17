@@ -2,12 +2,21 @@
 
 set -u
 
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+
 launch() {
     setsid -f "$@" >/dev/null 2>&1
 }
 
 launch_shell() {
     setsid -f sh -lc "$1" >/dev/null 2>&1
+}
+
+launch_config_script() {
+    local script="$config_root/$1"
+    if [[ -x "$script" ]]; then
+        launch "$script"
+    fi
 }
 
 toggle_nm_radio() {
@@ -33,22 +42,24 @@ toggle_bluetooth() {
 
 case "${1:-}" in
     screenshot)
-        if command -v grim >/dev/null 2>&1 && command -v slurp >/dev/null 2>&1; then
-            mkdir -p "$HOME/Pictures/Screenshots"
-            file="$HOME/Pictures/Screenshots/$(date +%Y-%m-%d_%H-%M-%S).png"
-            launch_shell "grim -g \"\$(slurp)\" \"$file\""
-        fi
+        launch_config_script "rofi/scripts/control-screenshot"
         ;;
     system-settings)
-        command -v gnome-control-center >/dev/null 2>&1 && launch gnome-control-center
+        if command -v gnome-control-center >/dev/null 2>&1; then
+            launch gnome-control-center
+        elif command -v nwg-look >/dev/null 2>&1; then
+            launch nwg-look
+        fi
         ;;
     lock)
-        loginctl lock-session >/dev/null 2>&1
+        if command -v hyprlock >/dev/null 2>&1; then
+            launch hyprlock
+        else
+            loginctl lock-session >/dev/null 2>&1
+        fi
         ;;
     power-menu)
-        if command -v gnome-control-center >/dev/null 2>&1; then
-            launch_shell 'gnome-control-center power || gnome-control-center'
-        fi
+        launch_config_script "rofi/scripts/control-session"
         ;;
     volume)
         value="${2:-50}"
@@ -60,12 +71,25 @@ case "${1:-}" in
     toggle-wifi)
         command -v nmcli >/dev/null 2>&1 && toggle_nm_radio wifi
         ;;
+    disconnect-wifi)
+        if command -v nmcli >/dev/null 2>&1; then
+            device="$(nmcli -t -f DEVICE,TYPE dev status | awk -F: '$2 == "wifi" {print $1; exit}')"
+            [[ -n "${device:-}" ]] && nmcli device disconnect "$device" >/dev/null 2>&1
+        fi
+        ;;
+    network-menu)
+        launch_config_script "rofi/scripts/control-network"
+        ;;
     toggle-bluetooth)
         command -v bluetoothctl >/dev/null 2>&1 && toggle_bluetooth
+        ;;
+    bluetooth-menu)
+        launch_config_script "rofi/scripts/control-bluetooth"
         ;;
     set-power-mode)
         mode="${2:-balanced}"
         command -v powerprofilesctl >/dev/null 2>&1 && powerprofilesctl set "$mode" >/dev/null 2>&1
+        "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/scripts/apply-power-profile-display" >/dev/null 2>&1 || true
         ;;
     toggle-night-light)
         if command -v gsettings >/dev/null 2>&1; then
@@ -113,10 +137,51 @@ case "${1:-}" in
     sound-settings)
         command -v gnome-control-center >/dev/null 2>&1 && launch_shell 'gnome-control-center sound || gnome-control-center'
         ;;
+    audio-menu)
+        launch_config_script "rofi/scripts/control-audio"
+        ;;
+    media-play-pause)
+        command -v playerctl >/dev/null 2>&1 && playerctl play-pause >/dev/null 2>&1
+        ;;
+    media-next)
+        command -v playerctl >/dev/null 2>&1 && playerctl next >/dev/null 2>&1
+        ;;
+    media-prev)
+        command -v playerctl >/dev/null 2>&1 && playerctl previous >/dev/null 2>&1
+        ;;
     calendar)
-        command -v gnome-calendar >/dev/null 2>&1 && launch gnome-calendar
+        if command -v gnome-calendar >/dev/null 2>&1; then
+            launch gnome-calendar
+        elif command -v evolution >/dev/null 2>&1; then
+            launch evolution -c calendar
+        elif command -v gnome-control-center >/dev/null 2>&1; then
+            launch_shell 'gnome-control-center datetime || gnome-control-center'
+        fi
         ;;
     datetime-settings)
         command -v gnome-control-center >/dev/null 2>&1 && launch_shell 'gnome-control-center datetime || gnome-control-center'
+        ;;
+    clocks)
+        if command -v gnome-clocks >/dev/null 2>&1; then
+            launch gnome-clocks
+        else
+            command -v gnome-control-center >/dev/null 2>&1 && launch_shell 'gnome-control-center datetime || gnome-control-center'
+        fi
+        ;;
+    weather)
+        if command -v gnome-weather >/dev/null 2>&1; then
+            launch gnome-weather
+        elif command -v xdg-open >/dev/null 2>&1; then
+            launch xdg-open "https://www.yr.no/en"
+        fi
+        ;;
+    clear-notifications)
+        if command -v makoctl >/dev/null 2>&1; then
+            makoctl dismiss --all >/dev/null 2>&1
+        elif command -v dunstctl >/dev/null 2>&1; then
+            dunstctl close-all >/dev/null 2>&1
+        elif command -v swaync-client >/dev/null 2>&1; then
+            swaync-client --close-all >/dev/null 2>&1
+        fi
         ;;
 esac

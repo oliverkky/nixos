@@ -1,0 +1,18 @@
+font=Cantarell 10
+width=360
+height=110
+margin=12
+padding=14
+border-size=1
+border-radius=8
+default-timeout=5000
+ignore-timeout=0
+anchor=top-right
+background-color=#1f2329e6
+text-color=#d8dee9ff
+border-color=#ffffff22
+progress-color=over #88c0d0cc
+
+[urgency=high]
+border-color=#bf616aff
+default-timeout=0

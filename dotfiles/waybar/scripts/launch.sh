@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+if command -v systemctl >/dev/null 2>&1 && systemctl --user is-active graphical-session.target >/dev/null 2>&1; then
+    systemctl --user restart waybar-top.service waybar-splash.service
+    exit 0
+fi
+
 pkill waybar || true
 sleep 0.1
 

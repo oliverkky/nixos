@@ -9,7 +9,7 @@ fi
 
 powered=$(bluetoothctl show 2>/dev/null | awk '/Powered:/ {print $2; exit}')
 if [ "$powered" != "yes" ]; then
-    jq -cn --arg text "󰂲" --arg tooltip "Bluetooth off" --arg class "off" \
+    jq -cn --arg text "󰂲" --arg tooltip "Bluetooth: off\nLeft-click opens devices\nRight-click opens quick settings" --arg class "off" \
         '{text: $text, tooltip: $tooltip, class: $class}'
     exit 0
 fi
@@ -21,9 +21,9 @@ connected=$(
 )
 
 if [ -n "$connected" ]; then
-    jq -cn --arg text "󰂱" --arg tooltip "$connected" --arg class "connected" \
+    jq -cn --arg text "󰂱" --arg tooltip "Bluetooth: connected\nDevices: $connected\nLeft-click opens devices" --arg class "connected" \
         '{text: $text, tooltip: $tooltip, class: $class}'
 else
-    jq -cn --arg text "󰂯" --arg tooltip "Bluetooth on" --arg class "on" \
+    jq -cn --arg text "󰂯" --arg tooltip "Bluetooth: on\nNo connected devices\nLeft-click opens devices" --arg class "on" \
         '{text: $text, tooltip: $tooltip, class: $class}'
 fi

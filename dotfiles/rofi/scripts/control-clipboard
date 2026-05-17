@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+source "$config_root/rofi/scripts/control-lib"
+
+if ! command -v cliphist >/dev/null 2>&1; then
+    notify_user "Clipboard" "cliphist is not installed"
+    exit 0
+fi
+
+choice="$(cliphist list | rofi_menu "Clipboard" "Pick an item to copy" 12 1 || true)"
+[ -n "$choice" ] || exit 0
+
+printf '%s' "$choice" | cliphist decode | wl-copy
+notify_user "Clipboard" "Copied selected item"

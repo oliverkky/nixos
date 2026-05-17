@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -u
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+apply_display="$config_root/hypr/scripts/apply-power-profile-display"
+
+"$apply_display" >/dev/null 2>&1 || true
+
+if ! command -v dbus-monitor >/dev/null 2>&1; then
+    exit 0
+fi
+
+dbus-monitor --system "type='signal',path='/net/hadess/PowerProfiles',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'" 2>/dev/null \
+    | while IFS= read -r line; do
+        if [[ "$line" == signal\ * ]]; then
+            "$apply_display" >/dev/null 2>&1 || true
+        fi
+    done

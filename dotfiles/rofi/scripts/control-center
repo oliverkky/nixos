@@ -12,7 +12,7 @@ choice=$(
         printf '󰕾  Audio\n'
         printf '󰃠  Brightness\n'
         printf '  Screenshot\n'
-        printf '  Session\n'
+        printf '  Power\n'
     } | rofi_menu "Control" "$(hostname)" 6 1
 )
 
@@ -22,5 +22,5 @@ case "$choice" in
     *Audio) "$config_root/rofi/scripts/control-audio" ;;
     *Brightness) "$config_root/rofi/scripts/control-brightness" ;;
     *Screenshot) "$config_root/rofi/scripts/control-screenshot" ;;
-    *Session) "$config_root/rofi/scripts/control-session" ;;
+    *Power) "$config_root/rofi/scripts/control-session" ;;
 esac

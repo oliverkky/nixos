@@ -14,4 +14,4 @@ if [ ! -f "$image_path" ]; then
     exit 1
 fi
 
-exec waypaper --backend swww --wallpaper "$image_path"
+exec waypaper --backend awww --wallpaper "$image_path"

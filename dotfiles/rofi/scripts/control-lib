@@ -15,6 +15,9 @@ rofi_menu() {
         -dmenu \
         -i \
         -markup-rows \
+        -click-to-exit \
+        -no-fixed-num-lines \
+        -auto-select \
         -p "$prompt" \
         -mesg "$message" \
         -theme-str "window {fullscreen: false; width: 520px;}" \
@@ -50,6 +53,8 @@ rofi_input() {
     rofi \
         -dmenu \
         "${args[@]}" \
+        -click-to-exit \
+        -no-fixed-num-lines \
         -p "$prompt" \
         -mesg "$message" \
         -theme-str "window {fullscreen: false; width: 520px;}" \

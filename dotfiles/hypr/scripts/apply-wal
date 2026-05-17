@@ -10,7 +10,22 @@ fi
 image_path=$1
 wal_bin=${WAL_BIN:-"$HOME/.local/bin/wal"}
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
 waybar_colors="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors-waybar.css"
+sddm_wallpaper="/var/lib/sddm-wallpaper/current-wallpaper.png"
+last_wallpaper="$state_root/hypr/last-wallpaper"
+
+mkdir -p "$(dirname "$last_wallpaper")"
+printf '%s\n' "$image_path" > "$last_wallpaper"
+
+if [ -f "$sddm_wallpaper" ] && [ -w "$sddm_wallpaper" ]; then
+    if command -v magick >/dev/null 2>&1; then
+        magick "$image_path" "$sddm_wallpaper" >/dev/null 2>&1 || true
+    else
+        cp -- "$image_path" "$sddm_wallpaper" >/dev/null 2>&1 || true
+    fi
+    chmod 0644 "$sddm_wallpaper" >/dev/null 2>&1 || true
+fi
 
 if [ ! -x "$wal_bin" ]; then
     wal_bin=$(command -v wal 2>/dev/null || true)

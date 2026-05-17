@@ -22,6 +22,7 @@ const WAYBAR_DIR = GLib.build_filenamev([CONFIG_ROOT, "waybar"]);
 const POPUP_DIR = GLib.build_filenamev([WAYBAR_DIR, "popup"]);
 const ACTION_SCRIPT = `${POPUP_DIR}/action.sh`;
 const STATE_SCRIPT = `${POPUP_DIR}/state.sh`;
+const CENTER_STATE_SCRIPT = `${POPUP_DIR}/center-state.sh`;
 const CSS_FILE = `${WAYBAR_DIR}/style/popup.css`;
 const ANIMATE_OPEN = GLib.getenv("WAYBAR_GNOME_POPUP_ANIMATE") !== "0";
 
@@ -99,6 +100,27 @@ function readQuickState() {
       nightLight: false,
       darkStyle: false,
       doNotDisturb: false,
+    };
+  }
+}
+
+function readCenterState() {
+  const output = runShell(CENTER_STATE_SCRIPT);
+  if (!output) {
+    return {
+      media: { status: "Stopped", title: "Nothing playing", artist: "" },
+      events: "No upcoming events",
+      weather: "Forecast unavailable",
+    };
+  }
+
+  try {
+    return JSON.parse(output);
+  } catch (error) {
+    return {
+      media: { status: "Stopped", title: "Nothing playing", artist: "" },
+      events: "No upcoming events",
+      weather: "Forecast unavailable",
     };
   }
 }
@@ -218,6 +240,21 @@ function buildToggleButton(icon, title, active, onClick) {
   return button;
 }
 
+function buildMiniButton(label, action, arg = null, refresh = false) {
+  const button = new Gtk.Button({ label });
+  addClasses(button, ["mini-button"]);
+  button.connect("clicked", () => {
+    runAction(action, arg);
+    if (refresh) {
+      GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+        populateQuickSettings();
+        return GLib.SOURCE_REMOVE;
+      });
+    }
+  });
+  return button;
+}
+
 function buildExpandCard(state) {
   const card = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
@@ -233,10 +270,20 @@ function buildExpandCard(state) {
       ),
     );
     card.append(makeLabel(state.network.detail, ["section-title"]));
-    const settings = new Gtk.Button({ label: "Network Settings" });
-    addClasses(settings, ["mini-button"]);
-    settings.connect("clicked", () => runAction("network-settings"));
-    card.append(settings);
+    card.append(
+      buildMiniButton(
+        state.network.kind === "wifi" && state.network.connected
+          ? "Disconnect Wi-Fi"
+          : "Toggle Wi-Fi",
+        state.network.kind === "wifi" && state.network.connected
+          ? "disconnect-wifi"
+          : "toggle-wifi",
+        null,
+        true,
+      ),
+    );
+    card.append(buildMiniButton("Networks...", "network-menu"));
+    card.append(buildMiniButton("Network Settings", "network-settings"));
   } else if (expandedSection === "bluetooth") {
     card.append(makeLabel("Bluetooth", ["popup-title"]));
     card.append(
@@ -245,10 +292,16 @@ function buildExpandCard(state) {
         ["section-title"],
       ),
     );
-    const settings = new Gtk.Button({ label: "Bluetooth Settings" });
-    addClasses(settings, ["mini-button"]);
-    settings.connect("clicked", () => runAction("bluetooth-settings"));
-    card.append(settings);
+    card.append(
+      buildMiniButton(
+        state.bluetooth.enabled ? "Disable Bluetooth" : "Enable Bluetooth",
+        "toggle-bluetooth",
+        null,
+        true,
+      ),
+    );
+    card.append(buildMiniButton("Devices...", "bluetooth-menu"));
+    card.append(buildMiniButton("Bluetooth Settings", "bluetooth-settings"));
   } else if (expandedSection === "power") {
     card.append(makeLabel("Power Mode", ["popup-title"]));
     for (const [mode, label] of [
@@ -280,10 +333,8 @@ function buildExpandCard(state) {
       });
       card.append(button);
     }
-    const settings = new Gtk.Button({ label: "Power Settings" });
-    addClasses(settings, ["mini-button"]);
-    settings.connect("clicked", () => runAction("power-settings"));
-    card.append(settings);
+    card.append(buildMiniButton("Session...", "power-menu"));
+    card.append(buildMiniButton("Power Settings", "power-settings"));
   }
 
   return card;
@@ -427,7 +478,14 @@ function createQuickSettingsWindow(app) {
   );
   volumeCard.append(quickWidgets.volumeLabel);
   volumeCard.append(quickWidgets.volumeScale);
-  volumeCard.append(makeIconButton("›", () => runAction("sound-settings")));
+  volumeCard.append(makeIconButton("󰝟", () => {
+    runAction("toggle-mute");
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+      populateQuickSettings();
+      return GLib.SOURCE_REMOVE;
+    });
+  }));
+  volumeCard.append(makeIconButton("›", () => runAction("audio-menu")));
   root.append(volumeCard);
 
   quickWidgets.gridTop = new Gtk.Box({
@@ -575,6 +633,7 @@ function buildCalendarGrid() {
 function populateClockWidgets() {
   const now = new Date();
   const [monthDate, calendarGrid] = buildCalendarGrid();
+  const state = readCenterState();
 
   clockWidgets.heading.set_label(
     `${now.toLocaleDateString(undefined, { weekday: "long" })}\n${now.getDate()} ${now.toLocaleDateString(undefined, { month: "long" })} ${now.getFullYear()}`,
@@ -585,6 +644,15 @@ function populateClockWidgets() {
 
   clearBox(clockWidgets.calendarHolder);
   clockWidgets.calendarHolder.append(calendarGrid);
+
+  clockWidgets.mediaTitle.set_label(state.media.title || "Nothing playing");
+  clockWidgets.mediaDetail.set_label(
+    state.media.artist
+      ? `${state.media.artist} · ${state.media.status}`
+      : state.media.status,
+  );
+  clockWidgets.eventsLabel.set_label(state.events || "No upcoming events");
+  clockWidgets.weatherLabel.set_label(state.weather || "Forecast unavailable");
 }
 
 function buildClockWindow(app) {
@@ -621,17 +689,39 @@ function buildClockWindow(app) {
   });
   addClasses(notificationCard, ["notification-card"]);
   notificationCard.append(makeLabel("Notifications", ["popup-title"]));
-  notificationCard.append(makeLabel("No notifications", ["section-title"]));
+  notificationCard.append(makeLabel("Notification Center", ["section-title"]));
   notificationCard.append(
     makeLabel(
-      "This mirrors the GNOME shell layout, but notification history is not connected here yet.",
+      "Clear visible notifications from mako, dunst, or swaync when one is running.",
       ["section-subtitle"],
     ),
   );
   left.append(notificationCard);
   const clearButton = new Gtk.Button({ label: "Clear" });
   addClasses(clearButton, ["clear-button"]);
+  clearButton.connect("clicked", () => runAction("clear-notifications"));
   left.append(clearButton);
+
+  const mediaCard = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 8,
+  });
+  addClasses(mediaCard, ["text-card"]);
+  mediaCard.append(makeLabel("Media", ["section-subtitle"]));
+  clockWidgets.mediaTitle = makeLabel("Nothing playing", ["section-title"]);
+  clockWidgets.mediaDetail = makeLabel("Stopped", ["section-subtitle"]);
+  mediaCard.append(clockWidgets.mediaTitle);
+  mediaCard.append(clockWidgets.mediaDetail);
+  const mediaButtons = new Gtk.Box({
+    orientation: Gtk.Orientation.HORIZONTAL,
+    spacing: 8,
+    homogeneous: true,
+  });
+  mediaButtons.append(makeIconButton("󰒮", () => runAction("media-prev")));
+  mediaButtons.append(makeIconButton("󰐎", () => runAction("media-play-pause")));
+  mediaButtons.append(makeIconButton("󰒭", () => runAction("media-next")));
+  mediaCard.append(mediaButtons);
+  left.append(mediaCard);
 
   const right = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
@@ -683,36 +773,41 @@ function buildClockWindow(app) {
   calendarCard.append(clockWidgets.calendarHolder);
   right.append(calendarCard);
 
-  const todayCard = new Gtk.Box({
+  const todayCard = new Gtk.Button();
+  addClasses(todayCard, ["text-card"]);
+  const todayBox = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
     spacing: 6,
   });
-  addClasses(todayCard, ["text-card"]);
-  todayCard.append(makeLabel("Today", ["section-subtitle"]));
-  todayCard.append(
+  todayBox.append(makeLabel("Today", ["section-subtitle"]));
+  todayBox.append(
     makeLabel(now.toLocaleDateString(undefined, { weekday: "long" }), [
       "section-title",
     ]),
   );
-  todayCard.append(makeLabel("Nothing scheduled", ["section-subtitle"]));
+  clockWidgets.eventsLabel = makeLabel("No upcoming events", ["section-subtitle"]);
+  todayBox.append(clockWidgets.eventsLabel);
+  todayCard.set_child(todayBox);
+  todayCard.connect("clicked", () => runAction("calendar"));
   right.append(todayCard);
 
-  const worldClocks = new Gtk.Button({ label: "Add World Clocks..." });
+  const worldClocks = new Gtk.Button({ label: "World Clocks" });
   addClasses(worldClocks, ["text-card"]);
+  worldClocks.connect("clicked", () => runAction("clocks"));
   right.append(worldClocks);
 
-  const weatherCard = new Gtk.Box({
+  const weatherCard = new Gtk.Button();
+  addClasses(weatherCard, ["weather-card"]);
+  const weatherBox = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
     spacing: 6,
   });
-  addClasses(weatherCard, ["weather-card"]);
-  weatherCard.append(makeLabel("Weather", ["section-subtitle"]));
-  weatherCard.append(makeLabel("Unavailable", ["section-title"]));
-  weatherCard.append(
-    makeLabel("Weather data is not hooked into this popup yet.", [
-      "section-subtitle",
-    ]),
-  );
+  weatherBox.append(makeLabel("Weather", ["section-subtitle"]));
+  weatherBox.append(makeLabel("Forecast", ["section-title"]));
+  clockWidgets.weatherLabel = makeLabel("Forecast unavailable", ["section-subtitle"]);
+  weatherBox.append(clockWidgets.weatherLabel);
+  weatherCard.set_child(weatherBox);
+  weatherCard.connect("clicked", () => runAction("weather"));
   right.append(weatherCard);
 
   root.append(left);
@@ -777,6 +872,11 @@ app.connect("activate", () => {
   if (MODE === "quick-settings") {
     refreshSource = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3, () => {
       populateQuickSettings();
+      return GLib.SOURCE_CONTINUE;
+    });
+  } else if (MODE === "clock") {
+    refreshSource = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 30, () => {
+      populateClockWidgets();
       return GLib.SOURCE_CONTINUE;
     });
   }

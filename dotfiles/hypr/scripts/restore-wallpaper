@@ -1,0 +1,38 @@
+#!/usr/bin/env sh
+
+set -eu
+
+state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+last_wallpaper="$state_root/hypr/last-wallpaper"
+
+wait_for_awww() {
+    retries=20
+    while [ "$retries" -gt 0 ]; do
+        if awww query >/dev/null 2>&1; then
+            return 0
+        fi
+        retries=$((retries - 1))
+        sleep 0.1
+    done
+    return 1
+}
+
+wait_for_awww || exit 0
+
+if [ -s "$last_wallpaper" ]; then
+    wallpaper=$(sed -n '1p' "$last_wallpaper")
+    if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
+        awww img \
+            --transition-type fade \
+            --transition-step 2 \
+            --transition-angle 30 \
+            --transition-duration 1 \
+            --transition-fps 60 \
+            "$wallpaper"
+        "$config_root/hypr/scripts/apply-wal" "$wallpaper" >/dev/null 2>&1 || true
+        exit 0
+    fi
+fi
+
+awww restore >/dev/null 2>&1 || true

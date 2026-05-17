@@ -1,7 +1,6 @@
 {
   "layer": "bottom",
   "position": "bottom",
-  "output": ["DP-4"],
   "height": 180,
   "exclusive": false,
   "passthrough": true,

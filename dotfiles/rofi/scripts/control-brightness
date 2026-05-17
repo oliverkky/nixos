@@ -6,6 +6,7 @@ config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
 source "$config_root/rofi/scripts/control-lib"
 
 current=$(brightnessctl -m 2>/dev/null | awk -F, 'NR==1 {print $4}')
+apply_profile_display="$config_root/hypr/scripts/apply-power-profile-display"
 profile=""
 if command -v powerprofilesctl >/dev/null 2>&1; then
     profile=$(powerprofilesctl get 2>/dev/null || true)
@@ -34,7 +35,7 @@ case "$choice" in
     *50*) brightnessctl set 50% >/dev/null ;;
     *75*) brightnessctl set 75% >/dev/null ;;
     *100*) brightnessctl set 100% >/dev/null ;;
-    *"Power saver") powerprofilesctl set power-saver ;;
-    *Balanced) powerprofilesctl set balanced ;;
-    *Performance) powerprofilesctl set performance ;;
+    *"Power saver") powerprofilesctl set power-saver && "$apply_profile_display" >/dev/null 2>&1 || true ;;
+    *Balanced) powerprofilesctl set balanced && "$apply_profile_display" >/dev/null 2>&1 || true ;;
+    *Performance) powerprofilesctl set performance && "$apply_profile_display" >/dev/null 2>&1 || true ;;
 esac
