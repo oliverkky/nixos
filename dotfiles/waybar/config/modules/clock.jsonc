@@ -1,0 +1,25 @@
+{
+  "clock": {
+    "format": "󰃱 <span size='11pt'>{:%H:%M}</span>",
+    "format-alt": "󰃱 <span size='11pt'>{:%d %B %Y}</span>",
+    "tooltip-format": "<span size='large'><b>{:%A, %B %-d, %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
+    "on-click": "~/.config/waybar/popup/toggle.sh clock",
+    "calendar": {
+      "mode": "month",
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "format": {
+        "months": "<span weight='bold'>{}</span>",
+        "days": "{}",
+        "weeks": "<span alpha='55%'>W{}</span>",
+        "weekdays": "<span alpha='70%'>{}</span>",
+        "today": "<span background='#3584e4' foreground='#ffffff' weight='bold'> {} </span>"
+      }
+    },
+    "actions": {
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down",
+      "on-click-right": "mode"
+    }
+  }
+}

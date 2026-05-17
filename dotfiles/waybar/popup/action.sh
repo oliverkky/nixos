@@ -129,7 +129,11 @@ case "${1:-}" in
         fi
         ;;
     bluetooth-settings)
-        command -v gnome-control-center >/dev/null 2>&1 && launch_shell 'gnome-control-center bluetooth || gnome-control-center'
+        if [[ -x "$config_root/rofi/scripts/control-bluetooth" ]]; then
+            launch "$config_root/rofi/scripts/control-bluetooth"
+        elif command -v gnome-control-center >/dev/null 2>&1; then
+            launch_shell 'gnome-control-center bluetooth || gnome-control-center'
+        fi
         ;;
     power-settings)
         command -v gnome-control-center >/dev/null 2>&1 && launch_shell 'gnome-control-center power || gnome-control-center'

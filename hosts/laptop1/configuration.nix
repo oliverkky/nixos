@@ -65,7 +65,7 @@ in
 
   console.keyMap = "cz-lat2";
 
-  environment.sessionVariables.HYPR_PRIMARY_MONITOR = "eDP-1";
+  my.host.primaryMonitor = "eDP-1";
 
   # ── Laptop power behavior ───────────────────────────────────────────────────
 

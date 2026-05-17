@@ -14,6 +14,6 @@
     "return-type": "json",
     "exec": "~/.config/waybar/scripts/splash.sh",
     "interval": "once",
-    "tooltip": false,
-  },
+    "tooltip": false
+  }
 }

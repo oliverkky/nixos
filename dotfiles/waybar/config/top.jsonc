@@ -2,137 +2,37 @@
   "layer": "top",
   "position": "top",
   "height": 32,
-  "spacing": 0,
+  "spacing": 6,
   "reload_style_on_change": true,
 
-  "modules-left": ["hyprland/workspaces"],
-  "modules-center": ["clock"],
-  "modules-right": [
-    "tray",
-    "pulseaudio",
-    "custom/power-profile",
-    // "custom/bluetooth",
-    "network",
-    "battery",
-    "custom/power",
+  "include": [
+    "./modules/groups.jsonc",
+    "./modules/launchers.jsonc",
+    "./modules/storage.jsonc",
+    "./modules/system.jsonc",
+    "./modules/power.jsonc",
+    "./modules/workspaces.jsonc",
+    "./modules/audio.jsonc",
+    "./modules/connections.jsonc",
+    "./modules/battery.jsonc",
+    "./modules/clock.jsonc",
+    "./modules/tray.jsonc"
   ],
 
-  "hyprland/workspaces": {
-    "format": "{icon}",
-    "on-click": "activate",
-    "sort-by-number": true,
-    "all-outputs": false,
-    "format-icons": {
-      "active": " ",
-      "default": " ",
-    },
-    "persistent-workspaces": {
-      "1": [],
-      "2": [],
-      "3": [],
-      "4": [],
-    },
-  },
-
-  "clock": {
-    "format": "{:%a %d %b  %H:%M}",
-    "tooltip-format": "<span size='large'><b>{:%A, %B %-d, %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
-    "on-click": "~/.config/waybar/popup/toggle.sh clock",
-    "calendar": {
-      "mode": "month",
-      "weeks-pos": "right",
-      "on-scroll": 1,
-      "format": {
-        "months": "<span weight='bold'>{}</span>",
-        "days": "{}",
-        "weeks": "<span alpha='55%'>W{}</span>",
-        "weekdays": "<span alpha='70%'>{}</span>",
-        "today": "<span background='#3584e4' foreground='#ffffff' weight='bold'> {} </span>",
-      },
-    },
-    "actions": {
-      "on-scroll-up": "shift_up",
-      "on-scroll-down": "shift_down",
-      "on-click-right": "mode",
-    },
-  },
-
-  "tray": {
-    "icon-size": 16,
-    "spacing": 2,
-  },
-  "network": {
-    "format-wifi": "{icon}",
-    "format-ethernet": "󰛳",
-    "format-linked": "󰛳",
-    "format-disconnected": "󰤮",
-    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
-    "tooltip-format-wifi": "Wi-Fi: {essid}\nSignal: {signalStrength}%\nInterface: {ifname}\nAddress: {ipaddr}",
-    "tooltip-format-ethernet": "Ethernet: {ifname}\nAddress: {ipaddr}",
-    "tooltip-format-linked": "Network: {ifname}\nLinked, no IP address",
-    "tooltip-format-disconnected": "Network disconnected\nLeft-click opens networks",
-    "on-click": "~/.config/rofi/scripts/control-network",
-    "on-click-right": "kitty -e nmtui",
-    "interval": 5,
-  },
-
-  "custom/bluetooth": {
-    "exec": "~/.config/waybar/scripts/bluetooth-status.sh",
-    "return-type": "json",
-    "format": "{}",
-    "tooltip": true,
-    "on-click": "~/.config/rofi/scripts/control-bluetooth",
-    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings",
-    "interval": 5,
-  },
-
-  "pulseaudio": {
-    "format": "<span size='x-large'>{icon}</span>",
-    "format-muted": "<span size='x-large'>󰸈</span>",
-    "format-icons": {
-      "default": ["󰕿", "󰖀", "󰕾"],
-    },
-    "tooltip-format": "Audio: {volume}%\nLeft-click opens audio controls\nRight-click opens quick settings",
-    "tooltip-format-muted": "Audio: muted\nLeft-click opens audio controls\nRight-click opens quick settings",
-    "on-click": "~/.config/rofi/scripts/control-audio",
-    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings",
-    "scroll-step": 5,
-  },
-
-  "battery": {
-    "states": {
-      "warning": 30,
-      "critical": 15,
-    },
-    "format": "{icon}",
-    "format-charging": "{icon}",
-    "format-full": "󰁹",
-    "format-icons": {
-      "default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-      "charging": ["󰢟", "󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋", "󰂅"],
-    },
-    "tooltip-format": "Battery: {capacity}%\nTime remaining: {time}\nLeft-click opens power controls",
-    "tooltip-format-charging": "Battery: {capacity}%\nCharging\nTime to full: {time}",
-    "tooltip-format-full": "Battery: 100%\nFully charged",
-    "on-click": "~/.config/rofi/scripts/control-brightness",
-    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings",
-    "interval": 10,
-  },
-
-  "custom/power-profile": {
-    "exec": "~/.config/waybar/scripts/power-profile-status.sh",
-    "return-type": "json",
-    "format": "{}",
-    "tooltip": true,
-    "on-click": "~/.config/waybar/scripts/power-profile-cycle.sh",
-    "interval": 5,
-  },
-
-  "custom/power": {
-    "format": "",
-    "tooltip": true,
-    "tooltip-format": "Quick settings\nRight-click for power menu",
-    "on-click": "~/.config/waybar/popup/toggle.sh quick-settings",
-    "on-click-right": "~/.config/rofi/scripts/control-session",
-  },
+  "modules-left": ["hyprland/workspaces"],
+  "modules-center": [
+    "clock",
+    "group/distro-group",
+    "group/storage",
+    "group/system"
+  ],
+  "modules-right": [
+    "tray",
+    "power-profiles-daemon",
+    "idle_inhibitor",
+    "group/audio",
+    "group/connections",
+    "battery",
+    "custom/power"
+  ]
 }

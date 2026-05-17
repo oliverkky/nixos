@@ -23,7 +23,21 @@
       home-manager,
       ...
     }@inputs:
+    let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    in
     {
+      formatter.x86_64-linux = pkgs.writeShellApplication {
+        name = "nix-fmt";
+        runtimeInputs = [
+          pkgs.findutils
+          pkgs.nixfmt
+        ];
+        text = ''
+          find . -path ./.git -prune -o -name '*.nix' -type f -exec nixfmt {} +
+        '';
+      };
+
       nixosConfigurations.laptop1 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };

@@ -1,7 +1,7 @@
-@import "~/.config/rofi/applets/shared/colors.rasi"
-@import "~/.config/rofi/applets/shared/fonts.rasi"
+@import "~/.config/rofi/colors/onedark.rasi"
 
 * {
+    font: "Cantarell Bold 12";
     background-soft: #ffffff12;
     background-strong: #ffffff1c;
     border-soft: #ffffff20;

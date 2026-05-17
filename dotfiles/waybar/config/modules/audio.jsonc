@@ -1,0 +1,29 @@
+{
+  "pulseaudio": {
+    "format": "{icon}",
+    "format-muted": "󰸈",
+    "format-icons": {
+      "headphone": "󰋋",
+      "headset": "󰋋",
+      "hands-free": "󰋋",
+      "default": ["󰕿", "󰖀", "󰕾"]
+    },
+    "tooltip-format": "Output: {volume}%",
+    "tooltip-format-muted": "Output: muted",
+    "on-click": "~/.config/rofi/scripts/control-audio",
+    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings",
+    "scroll-step": 5
+  },
+
+  "pulseaudio#microphone": {
+    "format": "{format_source}",
+    "format-source": "",
+    "format-source-muted": ""
+  },
+
+  "pulseaudio/slider": {
+    "min": 0,
+    "max": 100,
+    "orientation": "horizontal"
+  }
+}

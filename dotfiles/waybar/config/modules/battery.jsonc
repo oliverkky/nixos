@@ -1,0 +1,20 @@
+{
+  "battery": {
+    "interval": 60,
+    "states": {
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon} <span size='11pt'>{capacity}%</span>",
+    "format-full": "{icon} <span size='11pt'>{capacity}%</span>",
+    "format-charging": "<span size='12pt'>󱐌</span> <span size='11pt'>{capacity}%</span>",
+    "format-plugged": "",
+    "format-alt": "{icon} <span size='11pt'>{time}</span>",
+    "tooltip-format": "{timeTo}\nUsage: {power:0.1f} W\nHealth: {health}%\nCycles: {cycles}",
+    "format-icons": {
+      "default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
+    },
+    "on-click": "~/.config/rofi/scripts/control-brightness",
+    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings"
+  }
+}

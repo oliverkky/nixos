@@ -1,0 +1,30 @@
+{
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Profile: {profile}\nDriver: {driver}",
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "󰶘",
+      "power-saver": ""
+    }
+  },
+
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "󰛨",
+      "deactivated": "󰛩"
+    },
+    "tooltip-format-activated": "Idle inhibitor enabled",
+    "tooltip-format-deactivated": "Idle inhibitor disabled"
+  },
+
+  "custom/power": {
+    "format": "",
+    "tooltip": true,
+    "tooltip-format": "Quick settings\nRight-click for power menu",
+    "on-click": "~/.config/waybar/popup/toggle.sh quick-settings",
+    "on-click-right": "~/.config/rofi/scripts/control-session"
+  }
+}

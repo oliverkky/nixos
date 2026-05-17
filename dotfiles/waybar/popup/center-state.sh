@@ -25,9 +25,7 @@ if command -v playerctl >/dev/null 2>&1; then
 fi
 
 events="No upcoming events"
-if command -v khal >/dev/null 2>&1; then
-    events="$(khal list today 7d 2>/dev/null | sed '/^[[:space:]]*$/d' | head -n 4 || true)"
-elif command -v gcalcli >/dev/null 2>&1; then
+if command -v gcalcli >/dev/null 2>&1; then
     events="$(gcalcli agenda --nostarted --tsv 2>/dev/null | head -n 4 || true)"
 fi
 [[ -n "$events" ]] || events="No upcoming events"

@@ -30,8 +30,9 @@ Note on Hyprland: keep the Hyprland 0.55 GitHub flake pin for now to continue te
 
 5. Move host-specific display data out of shared config. Done.
    - Keep `eDP-1` details in the laptop host layer.
-   - Shared Hyprland reads `HYPR_PRIMARY_MONITOR`; the laptop host sets it to `eDP-1`.
-   - Waybar no longer pins itself to `eDP-1`.
+   - The laptop host sets `my.host.primaryMonitor = "eDP-1"`.
+   - The Hyprland module generates `HYPR_PRIMARY_MONITOR` from that typed option.
+   - Home Manager generates Waybar configs with `output` set to the typed primary monitor.
 
 After those are done, handle update discipline and security posture: kernel choice, trusted Nix user, input group, disk encryption plan, and recovery process.
 
@@ -81,7 +82,7 @@ After those are done, handle update discipline and security posture: kernel choi
 8. Monitor identity is hard-coded everywhere.
    - Hyprland, Waybar, and power-profile display scripts assume `eDP-1`.
    - This is okay for the laptop, bad for uniform multi-machine config.
-   - Done: shared Hyprland config reads `HYPR_PRIMARY_MONITOR`; the laptop host sets it to `eDP-1`. Waybar no longer pins itself to one output.
+   - Done: the laptop host sets `my.host.primaryMonitor = "eDP-1"`, the Hyprland module generates `HYPR_PRIMARY_MONITOR`, and Home Manager generates Waybar configs targeted to that primary monitor.
 
 9. Wallpaper config is duplicated and inconsistent.
    - Previous state: Home Manager linked one Waypaper config, while Hyprland had another nested Waypaper config and scripts forced a different backend.

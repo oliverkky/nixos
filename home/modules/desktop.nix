@@ -1,5 +1,85 @@
-{ config, pkgs, ... }:
+{
+  config,
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}:
 
+let
+  waybarConfigHome = "${config.home.homeDirectory}/.config/waybar";
+  waybarOutput = osConfig.my.host.primaryMonitor;
+  waybarOutputLine = lib.optionalString (waybarOutput != "") ''
+    "output": ${builtins.toJSON waybarOutput},
+  '';
+  waybarTopConfig = pkgs.writeText "waybar-top.jsonc" ''
+        {
+          "layer": "top",
+          "position": "top",
+          "height": 32,
+          "spacing": 6,
+        "reload_style_on_change": true,
+    ${waybarOutputLine}
+        "include": [
+          "${waybarConfigHome}/config/modules/groups.jsonc",
+          "${waybarConfigHome}/config/modules/launchers.jsonc",
+          "${waybarConfigHome}/config/modules/storage.jsonc",
+          "${waybarConfigHome}/config/modules/system.jsonc",
+          "${waybarConfigHome}/config/modules/power.jsonc",
+          "${waybarConfigHome}/config/modules/workspaces.jsonc",
+          "${waybarConfigHome}/config/modules/audio.jsonc",
+          "${waybarConfigHome}/config/modules/connections.jsonc",
+          "${waybarConfigHome}/config/modules/battery.jsonc",
+          "${waybarConfigHome}/config/modules/clock.jsonc",
+          "${waybarConfigHome}/config/modules/tray.jsonc"
+        ],
+
+          "modules-left": ["hyprland/workspaces"],
+          "modules-center": [
+            "clock",
+            "group/distro-group",
+            "group/storage",
+            "group/system"
+          ],
+          "modules-right": [
+            "tray",
+            "power-profiles-daemon",
+            "idle_inhibitor",
+            "group/audio",
+            "group/connections",
+            "battery",
+            "custom/power"
+          ]
+        }
+  '';
+  waybarSplashConfig = pkgs.writeText "waybar-splash.jsonc" ''
+      {
+        "layer": "bottom",
+        "position": "bottom",
+        "height": 180,
+        "exclusive": false,
+        "passthrough": true,
+        "fixed-center": true,
+        "reload_style_on_change": true,
+    ${waybarOutputLine}
+        "modules-center": ["custom/splash"],
+
+        "custom/splash": {
+          "format": "{}",
+          "return-type": "json",
+          "exec": "~/.config/waybar/scripts/splash.sh",
+          "interval": "once",
+          "tooltip": false
+        }
+      }
+  '';
+  waybarConfig = pkgs.runCommand "waybar-config" { } ''
+    cp -R ${../../dotfiles/waybar} "$out"
+    chmod -R u+w "$out"
+    cp ${waybarTopConfig} "$out/config/top.jsonc"
+    cp ${waybarSplashConfig} "$out/config/splash.jsonc"
+  '';
+in
 {
   # ── Cursor ───────────────────────────────────────────────────────────────────
 
@@ -47,7 +127,7 @@
   xdg.configFile = {
     "libinput-gestures.conf".source = ../../dotfiles/libinput-gestures.conf;
     hypr.source = ../../dotfiles/hypr;
-    waybar.source = ../../dotfiles/waybar;
+    waybar.source = waybarConfig;
     rofi.source = ../../dotfiles/rofi;
     mako.source = ../../dotfiles/mako;
     eww.source = ../../dotfiles/eww;
@@ -63,7 +143,6 @@
     grim
     slurp
     wl-clipboard
-    hyprshot
     hypridle
 
     # Desktop daemons and controls
@@ -76,7 +155,6 @@
     gnome-calendar
     gnome-clocks
     gnome-weather
-    khal
     curl
 
     # GTK / desktop integration
@@ -153,19 +231,6 @@
       };
       Service = {
         ExecStart = "${pkgs.waybar}/bin/waybar -c %h/.config/waybar/config/splash.jsonc -s %h/.config/waybar/style/splash.css";
-        Restart = "on-failure";
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
-
-    nm-applet = {
-      Unit = {
-        Description = "NetworkManager tray applet";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        ExecStart = "${pkgs.networkmanagerapplet}/bin/nm-applet --indicator";
         Restart = "on-failure";
       };
       Install.WantedBy = [ "graphical-session.target" ];
