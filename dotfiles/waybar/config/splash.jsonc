@@ -1,0 +1,19 @@
+{
+  "layer": "bottom",
+  "position": "bottom",
+  "height": 180,
+  "exclusive": false,
+  "passthrough": true,
+  "fixed-center": true,
+  "reload_style_on_change": true,
+@WAYBAR_OUTPUT_LINE@
+  "modules-center": ["custom/splash"],
+
+  "custom/splash": {
+    "format": "{}",
+    "return-type": "json",
+    "exec": "~/.config/waybar/scripts/splash.sh",
+    "interval": "once",
+    "tooltip": false
+  }
+}

@@ -12,67 +12,22 @@ let
   waybarOutputLine = lib.optionalString (waybarOutput != "") ''
     "output": ${builtins.toJSON waybarOutput},
   '';
-  waybarTopConfig = pkgs.writeText "waybar-top.jsonc" ''
-        {
-          "layer": "top",
-          "position": "top",
-          "height": 32,
-          "spacing": 6,
-        "reload_style_on_change": true,
-    ${waybarOutputLine}
-        "include": [
-          "${waybarConfigHome}/config/modules/groups.jsonc",
-          "${waybarConfigHome}/config/modules/launchers.jsonc",
-          "${waybarConfigHome}/config/modules/storage.jsonc",
-          "${waybarConfigHome}/config/modules/system.jsonc",
-          "${waybarConfigHome}/config/modules/power.jsonc",
-          "${waybarConfigHome}/config/modules/workspaces.jsonc",
-          "${waybarConfigHome}/config/modules/audio.jsonc",
-          "${waybarConfigHome}/config/modules/connections.jsonc",
-          "${waybarConfigHome}/config/modules/battery.jsonc",
-          "${waybarConfigHome}/config/modules/clock.jsonc",
-          "${waybarConfigHome}/config/modules/tray.jsonc"
-        ],
-
-          "modules-left": ["hyprland/workspaces"],
-          "modules-center": [
-            "clock",
-            "group/distro-group",
-            "group/storage",
-            "group/system"
-          ],
-          "modules-right": [
-            "tray",
-            "power-profiles-daemon",
-            "idle_inhibitor",
-            "group/audio",
-            "group/connections",
-            "battery",
-            "custom/power"
-          ]
-        }
-  '';
-  waybarSplashConfig = pkgs.writeText "waybar-splash.jsonc" ''
-      {
-        "layer": "bottom",
-        "position": "bottom",
-        "height": 180,
-        "exclusive": false,
-        "passthrough": true,
-        "fixed-center": true,
-        "reload_style_on_change": true,
-    ${waybarOutputLine}
-        "modules-center": ["custom/splash"],
-
-        "custom/splash": {
-          "format": "{}",
-          "return-type": "json",
-          "exec": "~/.config/waybar/scripts/splash.sh",
-          "interval": "once",
-          "tooltip": false
-        }
-      }
-  '';
+  renderWaybarConfig =
+    name: path:
+    pkgs.writeText name (
+      builtins.replaceStrings
+        [
+          "@WAYBAR_OUTPUT_LINE@"
+          "@WAYBAR_CONFIG_HOME@"
+        ]
+        [
+          waybarOutputLine
+          waybarConfigHome
+        ]
+        (builtins.readFile path)
+    );
+  waybarTopConfig = renderWaybarConfig "waybar-top.jsonc" ../../dotfiles/waybar/config/top.jsonc;
+  waybarSplashConfig = renderWaybarConfig "waybar-splash.jsonc" ../../dotfiles/waybar/config/splash.jsonc;
   waybarConfig = pkgs.runCommand "waybar-config" { } ''
     cp -R ${../../dotfiles/waybar} "$out"
     chmod -R u+w "$out"

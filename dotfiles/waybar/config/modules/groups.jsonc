@@ -26,7 +26,7 @@
 
   "group/audio": {
     "orientation": "horizontal",
-    "modules": ["pulseaudio", "pulseaudio/slider", "pulseaudio#microphone"],
+    "modules": ["pulseaudio#microphone", "pulseaudio", "pulseaudio/slider"],
   },
 
   "group/connections": {

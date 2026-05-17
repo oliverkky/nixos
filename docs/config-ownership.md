@@ -33,11 +33,12 @@ Some files combine shared dotfiles with host-specific Nix options.
 
 Current example:
 
-- shared Waybar modules, scripts, popup code, and styles live in
-  `/etc/nixos/dotfiles/waybar`
-- `home/modules/desktop.nix` generates final Waybar `top.jsonc` and
-  `splash.jsonc`
-- the generated Waybar configs set `output` from `my.host.primaryMonitor`
+- Waybar templates, modules, scripts, and styles live in
+  `/etc/nixos/dotfiles/waybar`.
+- `home/modules/desktop.nix` renders final Waybar `top.jsonc` and
+  `splash.jsonc` from `dotfiles/waybar/config/top.jsonc` and
+  `dotfiles/waybar/config/splash.jsonc`.
+- the rendered Waybar configs set `output` from `my.host.primaryMonitor`.
 
 This keeps monitor details declared once per host while the shared Waybar
 configuration remains hardware-independent.
