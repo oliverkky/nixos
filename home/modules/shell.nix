@@ -18,7 +18,8 @@
       ls = "eza --icons";
       tree = "eza --tree --icons";
       update = "sudo nixos-rebuild switch --flake /etc/nixos#laptop1";
-      # Convenience: edit the flake and rebuild in one go
+      nixcfg = "cd /etc/nixos";
+      dotcfg = "cd /etc/nixos/dotfiles";
       nixedit = "cd /etc/nixos && $EDITOR .";
     };
 

@@ -43,9 +43,6 @@
     # Wayland compositor toolchain
     rofi
     waybar
-    gjs
-    gtk4
-    libadwaita
     glib
     gsettings-desktop-schemas
     imagemagick

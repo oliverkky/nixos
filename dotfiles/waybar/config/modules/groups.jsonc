@@ -3,42 +3,34 @@
     "orientation": "horizontal",
     "drawer": {
       "transition-duration": 650,
-      "transition-left-to-right": true
+      "transition-left-to-right": true,
     },
     "modules": [
       "custom/distro",
       "custom/terminal",
       "custom/files",
       "custom/obsidian",
-      "custom/browser"
-    ]
+      "custom/browser",
+    ],
   },
 
   "group/storage": {
     "orientation": "horizontal",
-    "modules": ["disk", "memory"]
+    "modules": ["disk", "memory"],
   },
 
   "group/system": {
     "orientation": "horizontal",
-    "modules": ["cpu", "temperature"]
+    "modules": ["cpu", "temperature"],
   },
 
   "group/audio": {
     "orientation": "horizontal",
-    "drawer": {
-      "transition-duration": 650,
-      "transition-left-to-right": false
-    },
-    "modules": ["pulseaudio", "pulseaudio/slider", "pulseaudio#microphone"]
+    "modules": ["pulseaudio", "pulseaudio/slider", "pulseaudio#microphone"],
   },
 
   "group/connections": {
     "orientation": "horizontal",
-    "drawer": {
-      "transition-duration": 500,
-      "transition-left-to-right": false
-    },
-    "modules": ["network", "bluetooth"]
-  }
+    "modules": ["bluetooth", "network"],
+  },
 }

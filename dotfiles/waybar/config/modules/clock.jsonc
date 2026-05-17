@@ -3,7 +3,6 @@
     "format": "󰃱 <span size='11pt'>{:%H:%M}</span>",
     "format-alt": "󰃱 <span size='11pt'>{:%d %B %Y}</span>",
     "tooltip-format": "<span size='large'><b>{:%A, %B %-d, %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
-    "on-click": "~/.config/waybar/popup/toggle.sh clock",
     "calendar": {
       "mode": "month",
       "weeks-pos": "right",

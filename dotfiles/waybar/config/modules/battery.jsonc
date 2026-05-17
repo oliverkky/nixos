@@ -14,7 +14,6 @@
     "format-icons": {
       "default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
     },
-    "on-click": "~/.config/rofi/scripts/control-brightness",
-    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings"
+    "on-click": "~/.config/rofi/scripts/control-brightness"
   }
 }

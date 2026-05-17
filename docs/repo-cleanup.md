@@ -50,7 +50,7 @@ Calendar:
 
 - Kept `gnome-calendar`.
 - Removed `khal`.
-- Removed Khal-specific agenda logic from `dotfiles/waybar/popup/center-state.sh`.
+- Removed the custom Waybar popup stack that previously contained Khal-specific agenda logic.
 
 ### Dotfile Cleanup
 

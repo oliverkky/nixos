@@ -23,8 +23,7 @@
   "custom/power": {
     "format": "",
     "tooltip": true,
-    "tooltip-format": "Quick settings\nRight-click for power menu",
-    "on-click": "~/.config/waybar/popup/toggle.sh quick-settings",
-    "on-click-right": "~/.config/rofi/scripts/control-session"
+    "tooltip-format": "Power menu",
+    "on-click": "~/.config/rofi/scripts/control-session"
   }
 }

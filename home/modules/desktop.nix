@@ -125,6 +125,20 @@ in
   # ── Dotfile symlinks ──────────────────────────────────────────────────────────
 
   xdg.configFile = {
+    "README-NIXOS-MANAGED.md".text = ''
+      # Managed By NixOS
+
+      This directory is the runtime config interface for desktop applications.
+
+      Do not edit Home Manager-managed files here directly. Edit the source files
+      in `/etc/nixos/dotfiles` or the relevant Home Manager module, then rebuild:
+
+      ```sh
+      sudo nixos-rebuild switch --flake /etc/nixos#laptop1
+      ```
+
+      App-created state that is not declared in Home Manager may still live here.
+    '';
     "libinput-gestures.conf".source = ../../dotfiles/libinput-gestures.conf;
     hypr.source = ../../dotfiles/hypr;
     waybar.source = waybarConfig;

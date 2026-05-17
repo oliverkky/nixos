@@ -28,7 +28,6 @@
     "tooltip-format-connected-battery": "{num_connections} connected:\n{device_enumerate}",
     "tooltip-format-enumerate-connected": "{device_alias}",
     "tooltip-format-enumerate-connected-battery": "{device_alias} ({device_battery_percentage}%)",
-    "on-click": "~/.config/rofi/scripts/control-bluetooth",
-    "on-click-right": "~/.config/waybar/popup/toggle.sh quick-settings"
+    "on-click": "~/.config/rofi/scripts/control-bluetooth"
   }
 }
