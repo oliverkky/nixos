@@ -50,6 +50,7 @@
   home.packages = with pkgs; [
     # Nix helpers
     nil # Nix LSP
+    nixd # Nix LSP used by Zed's Nix extension
     nixfmt # Nix formatter
     nix-tree # visualise the dependency graph
 

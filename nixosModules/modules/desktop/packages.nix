@@ -42,18 +42,8 @@
   environment.systemPackages = with pkgs; [
     # Wayland compositor toolchain
     rofi
-    waybar
     glib
     gsettings-desktop-schemas
-    imagemagick
-    eww
-    awww
-    waypaper
-    brightnessctl
-    libnotify
-    pavucontrol
-    hyprlock
-    hyprsunset
 
     # Theming
     bibata-cursors

@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   ...
@@ -50,6 +51,6 @@ in
 
   systemd.tmpfiles.rules = [
     "d /var/lib/sddm-wallpaper 0755 root root -"
-    "f ${silentSddmWallpaper} 0644 oliver users -"
+    "f ${silentSddmWallpaper} 0644 ${config.my.host.primaryUser} users -"
   ];
 }

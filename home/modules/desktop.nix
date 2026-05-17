@@ -157,19 +157,29 @@ in
     grim
     slurp
     wl-clipboard
+    hyprlock
     hypridle
+    hyprsunset
 
     # Desktop daemons and controls
+    waybar
+    eww
+    awww
+    waypaper
     mako
     cliphist
     wl-clip-persist
     libinput-gestures
     playerctl
     polkit_gnome
+    brightnessctl
+    libnotify
+    pavucontrol
     gnome-calendar
     gnome-clocks
     gnome-weather
     curl
+    imagemagick
 
     # GTK / desktop integration
     adwaita-icon-theme

@@ -2,6 +2,7 @@
   config,
   pkgs,
   inputs,
+  primaryUser,
   ...
 }:
 
@@ -33,7 +34,9 @@ in
 
   # ── User ────────────────────────────────────────────────────────────────────
 
-  users.users.oliver = {
+  my.host.primaryUser = primaryUser;
+
+  users.users.${config.my.host.primaryUser} = {
     isNormalUser = true;
     description = "Oliver Klinkovský";
     extraGroups = [
@@ -87,7 +90,7 @@ in
     # Avoid redundant downloads when multiple users build
     trusted-users = [
       "root"
-      "oliver"
+      config.my.host.primaryUser
     ];
   };
 

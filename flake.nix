@@ -25,6 +25,7 @@
     }@inputs:
     let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      primaryUser = "oliver";
     in
     {
       formatter.x86_64-linux = pkgs.writeShellApplication {
@@ -40,7 +41,7 @@
 
       nixosConfigurations.laptop1 = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
+        specialArgs = { inherit inputs primaryUser; };
         modules = [
           ./hosts/laptop1/configuration.nix
           ./nixosModules
@@ -48,7 +49,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.oliver = import ./home;
+            home-manager.users.${primaryUser} = import ./home;
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.backupFileExtension = "backup";
           }
