@@ -17,6 +17,7 @@ in
 {
   imports = [
     ./hardware-configuration.nix
+    ../../nixosModules/modules/laptop/power.nix
   ];
 
   # ── Boot ────────────────────────────────────────────────────────────────────

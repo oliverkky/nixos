@@ -8,7 +8,6 @@
     # Do NOT also set networking.interfaces or networking.wireless.interfaces —
     # those belong to the wpa_supplicant stack, which NM replaces.
     networkmanager.enable = true;
-    networkmanager.wifi.powersave = true;
   };
 
   # Optional: firewall (enabled by default on NixOS, explicitly stated here
