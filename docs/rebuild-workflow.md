@@ -33,3 +33,25 @@ sudo nixos-rebuild switch --flake /etc/nixos#laptop1
 ```
 
 Activates the configuration and makes it the default boot entry.
+
+## Clean Nix Garbage
+
+```sh
+sudo nix-collect-garbage --delete-older-than 14d
+```
+
+Removes old, unreachable Nix store paths and generations older than 14 days.
+Use this after confirming the current system generation works.
+
+```sh
+sudo nix-collect-garbage -d
+```
+
+## Clean Boot Menu
+
+```sh
+sudo nixos-rebuild boot --flake /etc/nixos#laptop1
+```
+
+Regenerates the bootloader entries from the remaining system generations. This
+is useful after garbage collection if old boot entries are still visible.
