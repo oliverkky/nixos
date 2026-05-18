@@ -18,7 +18,7 @@ Other package ownership decisions:
 
 - Kitty is provided by Home Manager through `programs.kitty`; the system-level `kitty` package was removed.
 - `unzip` is kept in `home/modules/shell.nix`; the system-level `unzip` package was removed.
-- `btop` is kept in `home/modules/shell.nix`; the duplicate development package entry was removed.
+- Mission Center is kept in `home/modules/desktop.nix` for graphical system monitoring.
 
 ### Single App Path Per Desktop Function
 

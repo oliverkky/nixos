@@ -39,7 +39,7 @@ return function(ctx)
             dim_inactive = true,
             dim_strength = 0.10,
             shadow = {
-                enabled = true,
+                enabled = false,
                 range = 4,
                 render_power = 9,
                 color = "rgba(1a1a1aaa)",

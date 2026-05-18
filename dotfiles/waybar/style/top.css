@@ -55,6 +55,10 @@
 }
 
 #clock,
+#distro-group,
+#metrics,
+#storage,
+#system,
 #workspaces,
 #tray,
 #network,
@@ -138,7 +142,11 @@
     background: @surface_strong;
 }
 
-#clock {
+#clock,
+#distro-group,
+#metrics,
+#storage,
+#system {
     border-radius: 999px;
     padding: 0 16px;
     margin: 2px 0px;
@@ -245,6 +253,10 @@
 }
 
 #clock:hover,
+#distro-group:hover,
+#metrics:hover,
+#storage:hover,
+#system:hover,
 #workspaces button:hover {
     background: @surface_soft_hover;
     border-top-color: @border;

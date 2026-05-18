@@ -59,7 +59,6 @@
     zstd
 
     # System inspection
-    btop
     iotop
     iftop
     lsof

@@ -21,10 +21,9 @@
 
   "modules-left": ["hyprland/workspaces"],
   "modules-center": [
-    "clock",
     "group/distro-group",
-    "group/storage",
-    "group/system"
+    "clock",
+    "group/metrics"
   ],
   "modules-right": [
     "tray",

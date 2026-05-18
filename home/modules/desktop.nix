@@ -133,6 +133,7 @@ in
     gnome-calendar
     gnome-clocks
     gnome-weather
+    mission-center
     curl
     imagemagick
 

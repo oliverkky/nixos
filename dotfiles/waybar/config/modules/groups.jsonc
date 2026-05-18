@@ -24,6 +24,11 @@
     "modules": ["cpu", "temperature"],
   },
 
+  "group/metrics": {
+    "orientation": "horizontal",
+    "modules": ["disk", "memory", "cpu", "temperature"],
+  },
+
   "group/audio": {
     "orientation": "horizontal",
     "modules": ["pulseaudio#microphone", "pulseaudio", "pulseaudio/slider"],
