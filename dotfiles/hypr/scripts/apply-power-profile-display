@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -u
+set -euo pipefail
 
 monitor="${HYPR_PRIMARY_MONITOR:-}"
 
@@ -24,7 +24,27 @@ if command -v powerprofilesctl >/dev/null 2>&1; then
     profile="$(powerprofilesctl get 2>/dev/null || printf balanced)"
 fi
 
+cap_brightness_for_power_saver() {
+    if ! command -v brightnessctl >/dev/null 2>&1; then
+        return
+    fi
+
+    local current
+    current="$(
+        brightnessctl -m 2>/dev/null \
+            | awk -F, 'NR == 1 { gsub(/%/, "", $4); print int($4 + 0) }'
+    )"
+
+    if [[ -n "$current" && "$current" -gt 25 ]]; then
+        brightnessctl set 25% >/dev/null
+    fi
+}
+
 case "$profile" in
+    power-saver)
+        cap_brightness_for_power_saver
+        refresh="60"
+        ;;
     performance)
         refresh="90"
         ;;
@@ -63,4 +83,11 @@ if [[ -z "$mode" ]]; then
     mode="${resolution}@${refresh}"
 fi
 
-hyprctl eval "hl.monitor({ output = \"$monitor\", mode = \"$mode\", position = \"${x}x${y}\", scale = $scale })" >/dev/null 2>&1 || true
+lua_config="hl.monitor({ output = \"$monitor\", mode = \"$mode\", position = \"${x}x${y}\", scale = $scale })"
+
+if hyprctl eval "$lua_config"; then
+    exit 0
+fi
+
+printf 'hyprctl eval failed, trying legacy monitor keyword\n' >&2
+hyprctl keyword monitor "${monitor},${mode},${x}x${y},${scale}"

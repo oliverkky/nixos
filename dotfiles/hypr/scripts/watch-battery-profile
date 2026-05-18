@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+threshold=15
+interval=60
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+apply_display="$config_root/hypr/scripts/apply-power-profile-display"
+
+find_battery() {
+    local supply
+    for supply in /sys/class/power_supply/BAT*; do
+        if [[ -r "$supply/capacity" && -r "$supply/status" ]]; then
+            printf '%s\n' "$supply"
+            return 0
+        fi
+    done
+    return 1
+}
+
+enforce_power_saver() {
+    local battery=$1
+    local capacity status profile
+
+    capacity="$(<"$battery/capacity")"
+    status="$(<"$battery/status")"
+
+    if [[ "$status" != "Discharging" || "$capacity" -gt "$threshold" ]]; then
+        return
+    fi
+
+    profile="$(powerprofilesctl get 2>/dev/null || true)"
+    if [[ "$profile" != "power-saver" ]]; then
+        powerprofilesctl set power-saver
+    fi
+
+    if [[ -x "$apply_display" ]]; then
+        "$apply_display" || true
+    fi
+}
+
+if ! command -v powerprofilesctl >/dev/null 2>&1; then
+    exit 0
+fi
+
+while true; do
+    if battery="$(find_battery)"; then
+        enforce_power_saver "$battery"
+    fi
+    sleep "$interval"
+done

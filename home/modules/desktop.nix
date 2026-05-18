@@ -284,6 +284,19 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
+    hypr-battery-profile = {
+      Unit = {
+        Description = "Switch to power saver on low battery";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "%h/.config/hypr/scripts/watch-battery-profile";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     cliphist = {
       Unit = {
         Description = "Clipboard history";
