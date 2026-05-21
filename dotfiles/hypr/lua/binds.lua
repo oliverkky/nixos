@@ -25,6 +25,7 @@ return function(ctx)
     bind(main_mod .. " + W", hl.dsp.exec_cmd(config_root .. "/waybar/scripts/launch.sh"))
     bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd("waypaper"))
     bind(main_mod .. " + SHIFT + s", hl.dsp.exec_cmd(config_root .. "/rofi/scripts/control-screenshot"))
+    bind(main_mod .. " + CTRL + SHIFT + ESCAPE", hl.dsp.exec_cmd("missioncenter"))
 
     bind(main_mod .. " + h", hl.dsp.focus({ direction = "left" }))
     bind(main_mod .. " + l", hl.dsp.focus({ direction = "right" }))
