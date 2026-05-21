@@ -18,6 +18,7 @@
 @define-color accent @color4;
 @define-color critical @color1;
 @define-color warning @color3;
+
 * {
     font-family: Cantarell, "Symbols Nerd Font", sans-serif;
     font-size: 12px;

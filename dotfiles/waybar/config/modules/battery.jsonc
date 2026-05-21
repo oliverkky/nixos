@@ -7,10 +7,10 @@
     },
     "format": "{icon}",
     "format-full": "{icon}",
-    "format-charging": "<span size='12pt'>󱐌</span>",
+    "format-charging": "<span size='12pt'>{icon}󱐌</span>",
     "format-plugged": "",
     "format-alt": "{icon}",
-    "tooltip-format": "{timeTo}\nUsage: {power:0.1f} W\nHealth: {health}%\nCycles: {cycles}",
+    "tooltip-format": "{timeTo}\nCharge: {capacity}%\nUsage: {power:0.1f} W",
     "format-icons": {
       "default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
     },

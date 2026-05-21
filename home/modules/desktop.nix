@@ -94,7 +94,6 @@ in
 
       App-created state that is not declared in Home Manager may still live here.
     '';
-    "libinput-gestures.conf".source = ../../dotfiles/libinput-gestures.conf;
     hypr.source = ../../dotfiles/hypr;
     waybar.source = waybarConfig;
     rofi.source = ../../dotfiles/rofi;
@@ -124,7 +123,6 @@ in
     mako
     cliphist
     wl-clip-persist
-    libinput-gestures
     playerctl
     polkit_gnome
     brightnessctl
@@ -324,17 +322,5 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
-    libinput-gestures = {
-      Unit = {
-        Description = "Touchpad gesture dispatcher";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        ExecStart = "${pkgs.libinput-gestures}/bin/libinput-gestures";
-        Restart = "on-failure";
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
   };
 }

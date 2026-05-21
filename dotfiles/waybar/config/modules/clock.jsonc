@@ -1,6 +1,6 @@
 {
   "clock": {
-    "format": "󰃱 <span size='11pt'>{:%d %b %H:%M}</span>",
+    "format": "<span size='11pt'>{:%H:%M | %d %b %Y }</span>",
     "tooltip-format": "<span size='large'><b>{:%A, %B %-d, %Y}</b></span>\n\n<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
@@ -11,12 +11,12 @@
         "days": "{}",
         "weeks": "<span alpha='55%'>W{}</span>",
         "weekdays": "<span alpha='70%'>{}</span>",
-        "today": "<span background='#3584e4' foreground='#ffffff' weight='bold'> {} </span>"
-      }
+        "today": "<span background='#3584e4' foreground='#ffffff' weight='bold'> {} </span>",
+      },
     },
     "actions": {
       "on-scroll-up": "shift_up",
-      "on-scroll-down": "shift_down"
-    }
-  }
+      "on-scroll-down": "shift_down",
+    },
+  },
 }

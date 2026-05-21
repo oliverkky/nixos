@@ -1,30 +1,31 @@
 {
   "custom/distro": {
     "format": "",
-    "tooltip": false
+    "on-click": "rofi -show drun",
+    "tooltip": false,
   },
 
   "custom/terminal": {
     "format": "󰆍",
     "on-click": "kitty",
-    "tooltip": false
+    "tooltip": false,
   },
 
   "custom/files": {
     "format": "",
     "on-click": "nautilus",
-    "tooltip": false
+    "tooltip": false,
   },
 
   "custom/obsidian": {
     "format": "󰹕",
     "on-click": "obsidian",
-    "tooltip": false
+    "tooltip": false,
   },
 
   "custom/browser": {
     "format": "󰖟",
     "on-click": "brave",
-    "tooltip": false
-  }
+    "tooltip": false,
+  },
 }
