@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
+import Quickshell.Wayland
 import "." as Components
 
 Item {
@@ -22,6 +23,11 @@ Item {
     property var sink: Pipewire.defaultAudioSink
     property var source: Pipewire.defaultAudioSource
     property var battery: UPower.displayDevice
+    property real brightnessPercent: 0
+    property bool brightnessAvailable: false
+    property bool idleInhibited: false
+    property bool expandedSurfaceReady: false
+    readonly property string osdctlPath: "/etc/nixos/dotfiles/hypr/scripts/osdctl"
 
     implicitWidth: container.width
     implicitHeight: 28
@@ -32,11 +38,33 @@ Item {
         objects: [root.sink, root.source]
     }
 
+    IdleInhibitor {
+        window: root.parentWindow
+        enabled: root.idleInhibited
+    }
+
+    Process {
+        id: brightnessReader
+
+        stdout: StdioCollector {
+            onStreamFinished: root.loadBrightness(this.text)
+        }
+
+        onExited: (exitCode) => {
+            if (exitCode !== 0)
+                root.brightnessAvailable = false;
+        }
+    }
+
+    Component.onCompleted: root.refreshBrightness()
+
     Rectangle {
         id: container
         width: systemRow.implicitWidth + 24
         height: 28
         radius: 999
+        visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
+        enabled: root.activePanel.length === 0
         color: containerMouse.containsMouse ? root.ui.surfaceHover : root.ui.surface
         border.width: 1
         border.color: root.ui.border
@@ -45,6 +73,7 @@ Item {
             id: containerMouse
             anchors.fill: parent
             hoverEnabled: true
+            enabled: root.activePanel.length === 0
             acceptedButtons: Qt.NoButton
         }
 
@@ -57,21 +86,39 @@ Item {
                 ui: root.ui
                 icon: root.bluetoothIcon()
                 active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                onClicked: root.togglePanel("bluetooth")
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["blueman-manager"]);
+                    else
+                        root.togglePanel("bluetooth");
+                }
             }
 
             IconButton {
                 ui: root.ui
                 icon: root.networkIcon()
                 active: root.networkConnected()
-                onClicked: root.togglePanel("network")
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
+                    else
+                        root.togglePanel("network");
+                }
             }
 
             IconButton {
                 ui: root.ui
                 icon: root.volumeIcon()
                 active: root.sink && root.sink.audio && !root.sink.audio.muted
-                onClicked: root.togglePanel("audio")
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["pavucontrol"]);
+                    else
+                        root.togglePanel("audio");
+                }
             }
 
             IconButton {
@@ -83,6 +130,14 @@ Item {
                 warning: root.hasBattery() && root.batteryPercent() < 30
                 critical: root.hasBattery() && root.batteryPercent() < 15
                 compact: false
+                onClicked: root.togglePanel("battery")
+            }
+
+            IconButton {
+                visible: root.idleInhibited
+                ui: root.ui
+                icon: "󰅶"
+                active: root.idleInhibited
                 onClicked: root.togglePanel("battery")
             }
 
@@ -100,19 +155,113 @@ Item {
         ui: root.ui
         anchor.window: root.parentWindow
         anchor.rect.x: Math.max(12, root.x + root.width - implicitWidth)
-        anchor.rect.y: 32
+        anchor.rect.y: root.y
         implicitWidth: root.activePanel === "power" ? 220 : 360
         implicitHeight: root.panelHeight()
+        originX: Math.max(0, implicitWidth - root.width)
+        originY: 0
+        originWidth: root.width
+        originHeight: root.height
         visible: root.activePanel.length > 0
-        onVisibleChanged: if (!visible) root.activePanel = ""
+        onVisibleChanged: {
+            if (!visible) {
+                root.activePanel = "";
+                root.expandedSurfaceReady = false;
+            }
+        }
+        onSurfaceOpened: root.expandedSurfaceReady = true
+        onSurfaceClosed: root.expandedSurfaceReady = false
 
-        Loader {
+        Column {
             anchors.fill: parent
-            sourceComponent: root.activePanel === "power" ? powerPanel
-                : root.activePanel === "network" ? networkPanel
-                : root.activePanel === "bluetooth" ? bluetoothPanel
-                : root.activePanel === "audio" ? audioPanel
-                : batteryPanel
+            spacing: 10
+
+            Row {
+                width: parent.width
+                height: 28
+
+                Text {
+                    width: parent.width - statusHeaderRow.implicitWidth
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.panelTitle()
+                    color: root.ui.text
+                    elide: Text.ElideRight
+                    font.family: "Cantarell"
+                    font.pixelSize: 13
+                    font.weight: Font.Bold
+                }
+
+                Row {
+                    id: statusHeaderRow
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+
+                    IconButton {
+                        ui: root.ui
+                        icon: root.bluetoothIcon()
+                        active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
+                        onClicked: root.togglePanel("bluetooth")
+                    }
+
+                    IconButton {
+                        ui: root.ui
+                        icon: root.networkIcon()
+                        active: root.networkConnected()
+                        onClicked: root.togglePanel("network")
+                    }
+
+                    IconButton {
+                        ui: root.ui
+                        icon: root.volumeIcon()
+                        active: root.sink && root.sink.audio && !root.sink.audio.muted
+                        onClicked: root.togglePanel("audio")
+                    }
+
+                    IconButton {
+                        visible: root.hasBattery()
+                        ui: root.ui
+                        icon: root.batteryIcon()
+                        label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
+                        active: true
+                        warning: root.hasBattery() && root.batteryPercent() < 30
+                        critical: root.hasBattery() && root.batteryPercent() < 15
+                        compact: false
+                        onClicked: root.togglePanel("battery")
+                    }
+
+                    IconButton {
+                        visible: root.idleInhibited
+                        ui: root.ui
+                        icon: "󰅶"
+                        active: root.idleInhibited
+                        onClicked: root.togglePanel("battery")
+                    }
+
+                    IconButton {
+                        ui: root.ui
+                        icon: ""
+                        active: true
+                        onClicked: root.togglePanel("power")
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.ui.borderSoft
+            }
+
+            Loader {
+                width: parent.width
+                height: parent.height - 51
+                clip: true
+                sourceComponent: root.activePanel === "power" ? powerPanel
+                    : root.activePanel === "network" ? networkPanel
+                    : root.activePanel === "bluetooth" ? bluetoothPanel
+                    : root.activePanel === "audio" ? audioPanel
+                    : batteryPanel
+            }
         }
     }
 
@@ -230,16 +379,32 @@ Item {
             Rectangle {
                 visible: root.passwordTarget !== null
                 width: parent.width
-                height: 74
+                height: root.passwordError.length > 0 ? 104 : 86
                 radius: 8
                 color: root.ui.surface
                 border.width: 1
                 border.color: root.ui.borderSoft
+                onVisibleChanged: {
+                    if (visible) {
+                        passwordInput.text = "";
+                        passwordInput.forceActiveFocus();
+                    }
+                }
 
                 Column {
                     anchors.fill: parent
                     anchors.margins: 10
-                    spacing: 8
+                    spacing: 6
+
+                    Text {
+                        width: parent.width
+                        text: root.passwordTarget ? `Password for ${root.passwordTarget.name || "hidden network"}` : "Wi-Fi password"
+                        color: root.ui.textMuted
+                        elide: Text.ElideRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                    }
 
                     TextInput {
                         id: passwordInput
@@ -254,6 +419,9 @@ Item {
                         font.weight: Font.Bold
                         focus: root.passwordTarget !== null
                         clip: true
+                        Keys.onReturnPressed: root.submitPassword(passwordInput.text)
+                        Keys.onEnterPressed: root.submitPassword(passwordInput.text)
+                        Keys.onEscapePressed: root.cancelPasswordPrompt(passwordInput)
                     }
 
                     Row {
@@ -264,12 +432,7 @@ Item {
                             ui: root.ui
                             icon: "󰌑"
                             text: "Connect"
-                            onClicked: {
-                                if (root.passwordTarget)
-                                    root.passwordTarget.connectWithPsk(passwordInput.text);
-                                root.passwordTarget = null;
-                                passwordInput.text = "";
-                            }
+                            onClicked: root.submitPassword(passwordInput.text)
                         }
 
                         PanelAction {
@@ -277,13 +440,30 @@ Item {
                             ui: root.ui
                             icon: "󰅖"
                             text: "Cancel"
-                            onClicked: {
-                                root.passwordTarget = null;
-                                passwordInput.text = "";
-                            }
+                            onClicked: root.cancelPasswordPrompt(passwordInput)
                         }
                     }
+
+                    Text {
+                        visible: root.passwordError.length > 0
+                        width: parent.width
+                        text: root.passwordError
+                        color: root.ui.warning
+                        elide: Text.ElideRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 11
+                        font.weight: Font.Bold
+                    }
                 }
+            }
+
+            PanelAction {
+                width: parent.width
+                ui: root.ui
+                icon: ""
+                text: "Open nmtui"
+                subtext: "Native NetworkManager fallback"
+                onClicked: root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"])
             }
 
             PanelAction {
@@ -340,8 +520,49 @@ Item {
                 }
             }
 
+            Rectangle {
+                visible: root.bluetoothAdapter && root.bluetoothAdapter.discovering
+                width: parent.width
+                height: 28
+                radius: 8
+                color: root.ui.surface
+                border.width: 1
+                border.color: root.ui.borderSoft
+
+                Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 10
+
+                    Text {
+                        width: 18
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "󰑓"
+                        color: root.ui.text
+                        font.family: "Symbols Nerd Font"
+                        font.pixelSize: 14
+                        font.weight: Font.Bold
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Text {
+                        width: parent.width - 28
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Scanning for devices"
+                        color: root.ui.textMuted
+                        elide: Text.ElideRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                    }
+                }
+            }
+
             Repeater {
-                model: root.bluetoothAdapter ? root.bluetoothAdapter.devices : null
+                model: ScriptModel {
+                    values: root.sortedBluetoothDevices()
+                }
 
                 PanelAction {
                     required property var modelData
@@ -354,6 +575,15 @@ Item {
                     active: modelData.connected
                     onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
                 }
+            }
+
+            PanelAction {
+                width: parent.width
+                ui: root.ui
+                icon: "󰂯"
+                text: "Open Bluetooth manager"
+                subtext: "Native BlueZ fallback"
+                onClicked: root.runNativeTool(["blueman-manager"])
             }
         }
     }
@@ -391,6 +621,78 @@ Item {
                 text: root.source && root.source.audio && root.source.audio.muted ? "Unmute microphone" : "Mute microphone"
                 onClicked: if (root.source && root.source.audio) root.source.audio.muted = !root.source.audio.muted
             }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.ui.borderSoft
+            }
+
+            Text {
+                width: parent.width
+                text: "Output"
+                color: root.ui.textMuted
+                elide: Text.ElideRight
+                font.family: "Cantarell"
+                font.pixelSize: 11
+                font.weight: Font.Bold
+            }
+
+            Repeater {
+                model: ScriptModel {
+                    values: root.audioOutputDevices()
+                }
+
+                PanelAction {
+                    required property var modelData
+
+                    width: parent.width
+                    ui: root.ui
+                    icon: root.audioNodeIcon(modelData)
+                    text: root.audioNodeLabel(modelData)
+                    subtext: modelData === root.sink ? "Default output" : "Set as default output"
+                    active: modelData === root.sink
+                    onClicked: Pipewire.preferredDefaultAudioSink = modelData
+                }
+            }
+
+            Text {
+                visible: root.audioInputDevices().length > 0
+                width: parent.width
+                text: "Input"
+                color: root.ui.textMuted
+                elide: Text.ElideRight
+                font.family: "Cantarell"
+                font.pixelSize: 11
+                font.weight: Font.Bold
+            }
+
+            Repeater {
+                model: ScriptModel {
+                    values: root.audioInputDevices()
+                }
+
+                PanelAction {
+                    required property var modelData
+
+                    width: parent.width
+                    ui: root.ui
+                    icon: "󰍬"
+                    text: root.audioNodeLabel(modelData)
+                    subtext: modelData === root.source ? "Default input" : "Set as default input"
+                    active: modelData === root.source
+                    onClicked: Pipewire.preferredDefaultAudioSource = modelData
+                }
+            }
+
+            PanelAction {
+                width: parent.width
+                ui: root.ui
+                icon: "󰓃"
+                text: "Open pavucontrol"
+                subtext: "Native PipeWire/Pulse fallback"
+                onClicked: root.runNativeTool(["pavucontrol"])
+            }
         }
     }
 
@@ -409,6 +711,55 @@ Item {
                 warning: root.hasBattery() && root.batteryPercent() < 30
             }
 
+            Column {
+                visible: root.brightnessAvailable
+                width: parent.width
+                spacing: 2
+
+                Row {
+                    width: parent.width
+                    height: 18
+
+                    Text {
+                        width: parent.width - 48
+                        text: "Brightness"
+                        color: root.ui.text
+                        elide: Text.ElideRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                    }
+
+                    Text {
+                        width: 48
+                        text: `${Math.round(root.brightnessPercent)}%`
+                        color: root.ui.textMuted
+                        horizontalAlignment: Text.AlignRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 11
+                    }
+                }
+
+                SliderRow {
+                    width: parent.width
+                    ui: root.ui
+                    icon: "󰃠"
+                    value: root.brightnessPercent
+                    maximum: 100
+                    onMoved: value => root.setBrightness(value)
+                }
+            }
+
+            PanelAction {
+                width: parent.width
+                ui: root.ui
+                icon: root.idleInhibited ? "󰅶" : "󰾪"
+                text: root.idleInhibited ? "Idle inhibited" : "Idle allowed"
+                subtext: root.idleInhibited ? "Lock and sleep timers are paused" : "Hypridle timers are active"
+                active: root.idleInhibited
+                onClicked: root.idleInhibited = !root.idleInhibited
+            }
+
             PanelAction {
                 width: parent.width
                 ui: root.ui
@@ -421,7 +772,7 @@ Item {
             PanelAction {
                 width: parent.width
                 ui: root.ui
-                icon: "󰾅"
+                icon: ""
                 text: "Balanced"
                 active: PowerProfiles.profile === PowerProfile.Balanced
                 onClicked: PowerProfiles.profile = PowerProfile.Balanced
@@ -431,7 +782,7 @@ Item {
                 visible: PowerProfiles.hasPerformanceProfile
                 width: parent.width
                 ui: root.ui
-                icon: "󰓅"
+                icon: ""
                 text: "Performance"
                 active: PowerProfiles.profile === PowerProfile.Performance
                 onClicked: PowerProfiles.profile = PowerProfile.Performance
@@ -440,9 +791,19 @@ Item {
     }
 
     property var passwordTarget: null
+    property string passwordError: ""
 
     function togglePanel(name) {
-        activePanel = activePanel === name ? "" : name;
+        if (activePanel === name) {
+            activePanel = "";
+            expandedSurfaceReady = false;
+        } else {
+            expandedSurfaceReady = activePanel.length > 0;
+            activePanel = name;
+        }
+
+        if (activePanel === "battery")
+            refreshBrightness();
     }
 
     function runAndClose(command) {
@@ -450,16 +811,35 @@ Item {
         Quickshell.execDetached(command);
     }
 
+    function runNativeTool(command) {
+        activePanel = "";
+        Quickshell.execDetached(command);
+    }
+
     function panelHeight() {
         if (activePanel === "power")
-            return 196;
+            return 235;
         if (activePanel === "audio")
-            return 130;
+            return 399;
         if (activePanel === "battery")
-            return 184;
+            return root.brightnessAvailable ? 323 : 265;
         if (activePanel === "bluetooth")
-            return 300;
-        return 420;
+            return 381;
+        return 501;
+    }
+
+    function panelTitle() {
+        if (activePanel === "power")
+            return "Power";
+        if (activePanel === "network")
+            return "Wi-Fi";
+        if (activePanel === "bluetooth")
+            return "Bluetooth";
+        if (activePanel === "audio")
+            return "Audio";
+        if (activePanel === "battery")
+            return "Power";
+        return "";
     }
 
     function wifiDevice() {
@@ -537,6 +917,29 @@ Item {
 
     function promptForNetwork(network) {
         root.passwordTarget = network;
+        root.passwordError = "";
+    }
+
+    function submitPassword(password) {
+        const value = String(password || "");
+        if (!passwordTarget)
+            return;
+
+        if (value.length < 8) {
+            passwordError = "Password must be at least 8 characters";
+            return;
+        }
+
+        passwordTarget.connectWithPsk(value);
+        passwordTarget = null;
+        passwordError = "";
+    }
+
+    function cancelPasswordPrompt(input) {
+        passwordTarget = null;
+        passwordError = "";
+        if (input)
+            input.text = "";
     }
 
     function bluetoothIcon() {
@@ -555,6 +958,22 @@ Item {
         return "Connected";
     }
 
+    function sortedBluetoothDevices() {
+        if (!bluetoothAdapter)
+            return [];
+
+        return [...bluetoothAdapter.devices.values].sort((left, right) => {
+            if (left.connected !== right.connected)
+                return left.connected ? -1 : 1;
+            if (left.paired !== right.paired)
+                return left.paired ? -1 : 1;
+
+            const leftName = (left.name || left.deviceName || left.address || "").toLowerCase();
+            const rightName = (right.name || right.deviceName || right.address || "").toLowerCase();
+            return leftName.localeCompare(rightName);
+        });
+    }
+
     function volumeIcon() {
         if (!sink || !sink.audio)
             return "󰕿";
@@ -565,6 +984,37 @@ Item {
         if (sink.audio.volume < 0.67)
             return "󰖀";
         return "󰕾";
+    }
+
+    function audioOutputDevices() {
+        return Pipewire.nodes.values.filter(node => node.audio && node.isSink && !node.isStream).sort(audioNodeCompare);
+    }
+
+    function audioInputDevices() {
+        return Pipewire.nodes.values.filter(node => node.audio && !node.isSink && !node.isStream).sort(audioNodeCompare);
+    }
+
+    function audioNodeCompare(left, right) {
+        if (left === sink || left === source)
+            return -1;
+        if (right === sink || right === source)
+            return 1;
+        return audioNodeLabel(left).toLowerCase().localeCompare(audioNodeLabel(right).toLowerCase());
+    }
+
+    function audioNodeLabel(node) {
+        if (!node)
+            return "Audio device";
+        return node.description || node.nickname || node.name || "Audio device";
+    }
+
+    function audioNodeIcon(node) {
+        const label = audioNodeLabel(node).toLowerCase();
+        if (label.includes("hdmi") || label.includes("displayport"))
+            return "󰍹";
+        if (label.includes("headphone") || label.includes("headset"))
+            return "󰋋";
+        return "󰓃";
     }
 
     function hasBattery() {
@@ -609,5 +1059,33 @@ Item {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.round((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
+    }
+
+    function refreshBrightness() {
+        brightnessReader.exec(["brightnessctl", "-m"]);
+    }
+
+    function loadBrightness(output) {
+        const line = String(output || "").trim().split("\n")[0] || "";
+        const parts = line.split(",");
+        if (parts.length < 4) {
+            brightnessAvailable = false;
+            return;
+        }
+
+        const value = Number(parts[3].replace("%", ""));
+        if (Number.isNaN(value)) {
+            brightnessAvailable = false;
+            return;
+        }
+
+        brightnessPercent = Math.max(0, Math.min(100, value));
+        brightnessAvailable = true;
+    }
+
+    function setBrightness(value) {
+        const percentage = Math.round(Math.max(0, Math.min(100, value)));
+        brightnessPercent = percentage;
+        Quickshell.execDetached(["brightnessctl", "-n2", "set", `${percentage}%`]);
     }
 }

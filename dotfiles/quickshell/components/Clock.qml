@@ -9,6 +9,7 @@ MouseArea {
     required property var parentWindow
 
     property date shownMonth: new Date(clock.date.getFullYear(), clock.date.getMonth(), 1)
+    property bool expandedSurfaceReady: false
 
     implicitWidth: clockText.implicitWidth + 32
     implicitHeight: 28
@@ -26,6 +27,7 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: 999
+        visible: !calendar.visible || !root.expandedSurfaceReady
         color: root.containsMouse ? root.ui.surfaceHover : root.ui.surface
         border.width: 1
         border.color: root.ui.border
@@ -34,6 +36,7 @@ MouseArea {
     Text {
         id: clockText
         anchors.centerIn: parent
+        visible: !calendar.visible || !root.expandedSurfaceReady
         text: Qt.formatDateTime(clock.date, "hh:mm | dd MMM yyyy")
         color: root.ui.text
         font.family: "Cantarell"
@@ -46,14 +49,43 @@ MouseArea {
         ui: root.ui
         anchor.window: root.parentWindow
         anchor.rect.x: root.x + root.width / 2 - implicitWidth / 2
-        anchor.rect.y: 32
+        anchor.rect.y: root.y
         implicitWidth: 300
-        implicitHeight: 306
+        implicitHeight: 345
+        originX: Math.max(0, (implicitWidth - root.width) / 2)
+        originY: 0
+        originWidth: root.width
+        originHeight: root.height
         visible: false
+        onVisibleChanged: {
+            if (!visible)
+                root.expandedSurfaceReady = false;
+        }
+        onSurfaceOpened: root.expandedSurfaceReady = true
+        onSurfaceClosed: root.expandedSurfaceReady = false
 
         Column {
             anchors.fill: parent
             spacing: 10
+
+            Text {
+                width: parent.width
+                height: 28
+                text: Qt.formatDateTime(clock.date, "hh:mm | dd MMM yyyy")
+                color: root.ui.text
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+                font.family: "Cantarell"
+                font.pixelSize: 12
+                font.weight: Font.Bold
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.ui.borderSoft
+            }
 
             Row {
                 width: parent.width

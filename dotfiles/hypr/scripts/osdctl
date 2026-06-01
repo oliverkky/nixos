@@ -147,6 +147,21 @@ handle_brightness() {
         down)
             brightnessctl -e4 -n2 set 5%- >/dev/null
             ;;
+        set)
+            local target=${2:-}
+            if [[ ! "$target" =~ ^[0-9]+$ ]]; then
+                echo "brightness-set requires a percentage from 0 to 100" >&2
+                exit 1
+            fi
+
+            if [ "$target" -lt 0 ]; then
+                target=0
+            elif [ "$target" -gt 100 ]; then
+                target=100
+            fi
+
+            brightnessctl -n2 set "${target}%" >/dev/null
+            ;;
     esac
 
     local value
@@ -174,8 +189,11 @@ case "${1:-}" in
     brightness-down)
         handle_brightness down
         ;;
+    brightness-set)
+        handle_brightness set "${2:-}"
+        ;;
     *)
-        echo "usage: osdctl {volume-up|volume-down|volume-mute|mic-mute|brightness-up|brightness-down}" >&2
+        echo "usage: osdctl {volume-up|volume-down|volume-mute|mic-mute|brightness-up|brightness-down|brightness-set PERCENT}" >&2
         exit 1
         ;;
 esac

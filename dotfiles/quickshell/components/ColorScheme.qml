@@ -13,8 +13,8 @@ QtObject {
 
     readonly property color text: foreground
     readonly property color textMuted: withAlpha(foreground, 0.62)
-    readonly property color surface: withAlpha(foreground, 0.11)
-    readonly property color surfaceHover: withAlpha(foreground, 0.17)
+    readonly property color surface: withAlpha(foreground, 0.20)
+    readonly property color surfaceHover: withAlpha(foreground, 0.28)
     readonly property color surfaceStrong: withAlpha(foreground, 0.90)
     readonly property color surfaceStrongHover: foreground
     readonly property color panelSurface: withAlpha(background, 0.92)
