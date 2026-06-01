@@ -2,24 +2,10 @@
 
 set -euo pipefail
 
-config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
-eww_bin="${EWW_BIN:-eww}"
-osd_timer_file="$runtime_dir/eww-osd-hide.pid"
-
-ensure_eww() {
-    if ! command -v "$eww_bin" >/dev/null 2>&1; then
-        exit 0
-    fi
-
-    "$eww_bin" daemon >/dev/null 2>&1 || true
-}
-
-ensure_window() {
-    if ! "$eww_bin" active-windows 2>/dev/null | grep -q '^[^:]*: osd$'; then
-        "$eww_bin" open osd >/dev/null 2>&1 || true
-    fi
-}
+osd_state_dir="$runtime_dir/quickshell-osd"
+osd_state_file="$osd_state_dir/state.json"
+osd_timer_file="$osd_state_dir/hide.pid"
 
 schedule_hide() {
     if [ -f "$osd_timer_file" ]; then
@@ -31,9 +17,31 @@ schedule_hide() {
 
     (
         sleep 0.5
-        "$eww_bin" update osd_visible=false >/dev/null 2>&1 || true
+        write_state false "" "" 0
     ) &
     echo $! > "$osd_timer_file"
+}
+
+json_escape() {
+    local value=$1
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    value=${value//$'\n'/ }
+    printf '%s' "$value"
+}
+
+write_state() {
+    local visible=$1
+    local icon=$2
+    local text=$3
+    local value=$4
+
+    mkdir -p "$osd_state_dir"
+    printf '{"visible":%s,"icon":"%s","text":"%s","value":%s}\n' \
+        "$visible" \
+        "$(json_escape "$icon")" \
+        "$(json_escape "$text")" \
+        "$value" > "$osd_state_file"
 }
 
 render_osd() {
@@ -41,13 +49,7 @@ render_osd() {
     local text=$2
     local value=$3
 
-    ensure_eww
-    ensure_window
-    "$eww_bin" update \
-        osd_icon="$icon" \
-        osd_text="$text" \
-        osd_value="$value" \
-        osd_visible=true >/dev/null 2>&1 || true
+    write_state true "$icon" "$text" "$value"
     schedule_hide
 }
 

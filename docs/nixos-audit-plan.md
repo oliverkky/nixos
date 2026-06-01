@@ -21,7 +21,8 @@ Note on Hyprland: keep the Hyprland 0.55 GitHub flake pin for now to continue te
 3. Consolidate daemon supervision. Done.
    - Move long-running desktop daemons toward systemd user services.
    - Keep Hyprland autostart for compositor-specific one-shot setup only.
-   - Moved Waybar, nm-applet, eww, hyprsunset, awww-daemon, wallpaper restore, and the power-profile display watcher to systemd user services.
+   - Moved long-running desktop daemons to systemd user services.
+   - Later removed Waybar and Eww from the active desktop graph after the Quickshell migration.
 
 4. Fix wallpaper config duplication. Done.
    - Pick one canonical Waypaper config.
@@ -30,9 +31,9 @@ Note on Hyprland: keep the Hyprland 0.55 GitHub flake pin for now to continue te
 
 5. Move host-specific display data out of shared config. Done.
    - Keep `eDP-1` details in the laptop host layer.
-   - The laptop host sets `my.host.primaryMonitor = "eDP-1"`.
+   - The laptop host sets `host.primaryMonitor = "eDP-1"` through `hosts/laptop1/constants.nix`.
    - The Hyprland module generates `HYPR_PRIMARY_MONITOR` from that typed option.
-   - Home Manager generates Waybar configs with `output` set to the typed primary monitor.
+   - Waybar-specific generated config was removed after Quickshell became the active shell.
 
 After those are done, handle update discipline and security posture: kernel choice, trusted Nix user, input group, disk encryption plan, and recovery process.
 
@@ -74,24 +75,22 @@ After those are done, handle update discipline and security posture: kernel choi
    - GUI privilege prompts may randomly fail or do nothing.
    - Done: added `polkit_gnome` and a systemd user service for it.
 
-7. GNOME-style toggles are partially fake.
-   - Waybar scripts toggle `org.gnome.settings-daemon.plugins.color night-light-enabled`, but GNOME Settings Daemon is not running.
-   - `hyprsunset` is autostarted separately.
-   - Action: make quick settings reflect actual Hyprland/Hyprsunset state instead of GNOME-only state.
+7. GNOME-style toggles were partially fake.
+   - Previous Waybar scripts toggled `org.gnome.settings-daemon.plugins.color night-light-enabled`, but GNOME Settings Daemon was not running.
+   - Done: removed the Waybar path. Keep Quickshell controls tied to actual Hyprland/Hyprsunset state.
 
-8. Monitor identity is hard-coded everywhere.
-   - Hyprland, Waybar, and power-profile display scripts assume `eDP-1`.
+8. Monitor identity is hard-coded in laptop-specific places.
+   - Hyprland and power-profile display scripts assume the laptop panel identity.
    - This is okay for the laptop, bad for uniform multi-machine config.
-   - Done: the laptop host sets `my.host.primaryMonitor = "eDP-1"`, the Hyprland module generates `HYPR_PRIMARY_MONITOR`, and Home Manager generates Waybar configs targeted to that primary monitor.
+   - Done: the laptop host sets `host.primaryMonitor = "eDP-1"` through constants, and the Hyprland module generates `HYPR_PRIMARY_MONITOR`.
 
 9. Wallpaper config is duplicated and inconsistent.
    - Previous state: Home Manager linked one Waypaper config, while Hyprland had another nested Waypaper config and scripts forced a different backend.
    - Done: top-level `dotfiles/waypaper` is canonical, uses `awww`, and includes the stylesheet.
 
-10. Desktop daemons are split awkwardly.
-    - Mako, cliphist, wl-clip-persist, and gestures are systemd user services.
-    - Waybar, nm-applet, eww, wallpaper restore, power profile watcher, and hyprsunset are Hyprland autostart.
+10. Desktop daemons were split awkwardly.
     - Done: long-running desktop daemons are now systemd user services, including the wallpaper daemon.
+    - Waybar and Eww have since been removed from the active graph.
 
 ## Missing For A Strong Daily Driver
 

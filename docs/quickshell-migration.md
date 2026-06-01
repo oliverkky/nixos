@@ -1,486 +1,456 @@
 # Waybar to Quickshell Migration
 
-This document describes the current Waybar setup and the intended Quickshell
-replacement. The goal is not to clone Waybar module-for-module. The goal is to
-keep the compact glassy top-bar identity while moving interactive desktop
-controls into one coherent shell.
+This document tracks the migration from a Waybar/Eww/Rofi desktop surface to a
+Quickshell-owned shell. It should describe the current state first, then the
+remaining direction.
 
-## Goals
+The goal is still the same: keep the compact glassy top-bar identity, but move
+desktop controls into one coherent Quickshell configuration instead of spreading
+them across Waybar modules, Eww windows, and Rofi scripts.
 
-- Replace Waybar as the primary top bar.
-- Keep the same visual rhythm: workspaces left, date/time center, system state
-  right.
-- Move the separate Rofi control scripts into native Quickshell panels over
-  time.
-- Prefer shell-native controls for networking, Bluetooth, audio, battery, power
-  profiles, brightness, calendar, and session actions.
-- Keep the first version small enough to ship, then grow it into a real control
-  center.
+## Current State
 
-## Current Waybar Setup
+Quickshell is now the primary shell surface.
 
-The current top bar is defined by:
+Implemented pieces live under:
 
-- `dotfiles/waybar/config/top.jsonc`
-- `dotfiles/waybar/style/top.css`
-- module snippets under `dotfiles/waybar/config/modules/`
-- Home Manager service definitions in `home/modules/desktop.nix`
+- `dotfiles/quickshell/shell.qml`
+- `dotfiles/quickshell/components/Bar.qml`
+- `dotfiles/quickshell/components/Workspaces.qml`
+- `dotfiles/quickshell/components/Clock.qml`
+- `dotfiles/quickshell/components/StatusArea.qml`
+- `dotfiles/quickshell/components/Osd.qml`
+- `dotfiles/quickshell/components/Splash.qml`
+- shared components such as `ColorScheme.qml`, `IconButton.qml`,
+  `PanelAction.qml`, `PopoverSurface.qml`, and `SliderRow.qml`
 
-Waybar runs as two user services:
+Home Manager wires Quickshell through `home/desktop`:
 
-- `waybar-top.service` for the main bar.
-- `waybar-splash.service` for the existing splash overlay.
+- `xdg.configFile.quickshell.source = ../../dotfiles/quickshell`
+- `home.packages` includes `pkgs.quickshell`
+- `systemd.user.services.quickshell` is enabled for the graphical session
+- a hidden `oliver.quickshell` desktop entry exists for the AppId/portal path
+- the service seeds `%t/quickshell-osd/state.json` before startup so the OSD
+  file watcher has a real path to watch
 
-The top bar is 32px tall, transparent at the Waybar window level, and visually
-composed from rounded translucent capsules. Colors come from pywal through
-`.cache/wal/colors-waybar.css`.
+Waybar has been removed from the active Home Manager graph and from
+`dotfiles`. Quickshell owns the top bar and splash surface.
 
-### Left Area
+Eww is no longer part of the active desktop setup. The old OSD daemon service,
+package entry, and config symlink have been removed.
 
-The left area contains only Hyprland workspaces:
+## Current Layout
 
-- persistent workspaces `1` through `4`
-- no visible labels
-- inactive workspaces appear as short rounded pills
-- the active workspace expands to a wider pill
-- all workspace indicators use the same capsule/glass styling
-
-This is one of the strongest parts of the current setup and should be preserved
-almost exactly.
-
-### Center Area
-
-The center currently contains:
-
-- `group/distro-group`
-- `clock`
-- `group/metrics`
-
-The clock format is:
-
-```text
-HH:MM | DD Mon YYYY
-```
-
-Its tooltip contains a month calendar with week numbers and highlighted today.
-
-The distro group is a drawer with launchers:
-
-- NixOS/menu launcher
-- terminal
-- files
-- Obsidian
-- browser
-
-The metrics group includes:
-
-- disk
-- memory
-- CPU
-- temperature
-
-For the Quickshell replacement, the center should initially become just the
-date/time capsule. Launchers and metrics can move into a macOS/GNOME-inspired
-overview or quick settings panel instead of staying in the bar.
-
-### Right Area
-
-The right area is one long rounded system capsule with:
-
-- tray
-- power profile
-- idle inhibitor
-- microphone
-- output volume
-- output volume slider
-- Bluetooth
-- network
-- battery
-- power menu
-
-The visual treatment is compact and icon-first. Individual modules do not have
-their own backgrounds; they sit inside the shared capsule. Disconnected,
-disabled, muted, warning, and critical states are expressed through muted,
-warning, and critical colors.
-
-Existing click actions currently open Rofi scripts:
-
-- audio opens `~/.config/rofi/scripts/control-audio`
-- network opens `~/.config/rofi/scripts/control-network`
-- Bluetooth opens `~/.config/rofi/scripts/control-bluetooth`
-- battery opens `~/.config/rofi/scripts/control-brightness`
-- power opens `~/.config/rofi/scripts/control-session`
-
-Quickshell should replace these with native popovers/panels.
-
-## Target Quickshell Layout
-
-The first Quickshell version should be a single top layer shell with three fixed
-zones.
+The top bar keeps three fixed zones:
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ workspaces                         date/time                         system │
+│ workspaces                         date/time                          status │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Top Left: Workspaces
+### Workspaces
 
-Keep the current visual behavior:
+`Workspaces.qml` owns the left side.
 
-- four persistent workspace pills
+Current behavior:
+
+- at least four Hyprland workspace indicators
+- the rendered range is `1..N`, where `N` is the largest of four, the active
+  workspace number, and the highest occupied workspace number
+- textless indicators
 - active workspace expands
-- inactive occupied workspaces remain short
-- empty persistent workspaces remain visible but subdued
-- clicking a pill switches workspace
-- scrolling can move between workspaces if it feels natural
+- occupied inactive workspaces remain visible
+- empty workspaces inside the rendered range stay visible but subdued
+- click switches workspace
+- scroll moves within the currently rendered workspace range
 
-Implementation notes:
+The workspace sizing is intentionally local to `Workspaces.qml` so it can be
+tuned quickly while the visual balance settles.
 
-- Use Quickshell's Hyprland integration for workspace state.
-- Keep workspace indicators textless.
-- Use the current dimensions as the baseline:
-  - inactive width: about 16px
-  - active width: about 32px
-  - height: about 2px to 4px
-  - rounded ends
+### Clock
 
-### Top Center: Date And Time
+`Clock.qml` owns the center.
 
-Keep the top-level clock simple:
+Current behavior:
 
-```text
-HH:MM | DD Mon YYYY
-```
+- top-level format: `HH:MM | DD Mon YYYY`
+- click opens a calendar popover
+- calendar supports month navigation
+- today is highlighted
 
-Clicking the clock should open a calendar popover.
+Future calendar work should stay restrained: compact month grid first, events
+later only if calendar integration is reliable.
 
-Calendar panel plan:
+### Status Area
 
-- month grid with today highlighted
-- previous/next month controls
-- optional week numbers
-- upcoming events section later, once calendar integration exists
-- GNOME Calendar-style density: calm, readable, not a giant dashboard
+`StatusArea.qml` owns the right side.
 
-This gives the current Waybar clock tooltip a proper home without depending on
-tooltip behavior.
+Current order, left to right:
 
-### Top Right: System Capsule
-
-The right capsule should contain, in this order:
-
-1. Power menu
-2. Battery, only on laptop or when a battery exists
+1. Bluetooth
+2. Network
 3. Volume
-4. Wi-Fi/Ethernet
-5. Bluetooth
+4. Battery, when a laptop battery exists
+5. Power
 
-This differs slightly from the current Waybar order, but it matches the desired
-order and makes the system area read like one quick settings entry point.
+This puts the power action on the far right while keeping network, Bluetooth,
+audio, battery, and session actions in one shared status surface.
 
-Each item should be an icon button with a concise state:
+When the idle inhibitor is active, a small inhibitor indicator appears between
+battery and power and opens the battery/power panel.
 
-- power: power icon
-- battery: battery level icon, charging glyph when charging
-- volume: speaker icon by volume range, muted icon when muted
-- network: Wi-Fi strength, ethernet, disconnected, or disabled icon
-- Bluetooth: off, on, connected
+Current panels:
 
-Click behavior:
+- power actions: lock, logout, suspend, reboot, shutdown
+- network state, Wi-Fi toggle, rescan, visible networks, known-network connect,
+  guarded password prompt for secured unknown networks, active Wi-Fi disconnect,
+  and `nmtui` fallback
+- Bluetooth controller toggle, scan toggle, paired devices, connect/disconnect,
+  connected-device-first sorting, scan feedback, simple battery display where
+  available, and `blueman-manager` fallback
+- output volume slider, output mute toggle, microphone mute toggle, output
+  device selection, input device selection, and `pavucontrol` fallback
+- battery status, time/power detail, brightness slider, idle inhibitor toggle,
+  and power profile controls
 
-- clicking any system icon opens the relevant panel
-- clicking empty space or a combined chevron can open the full quick settings
-  panel
-- right-click can expose advanced/system-native tools later
+Right-click shortcuts are available on the Bluetooth, network, and audio bar
+icons for the native fallback tools.
 
-## Visual Direction
+Status and clock expanded surfaces replace the visible collapsed segment instead
+of appearing underneath it. The rounded surface starts from the collapsed pill's
+geometry and expands outward while persistent header content remains visible.
+New content is revealed by the expanding clipped surface below a subtle divider.
+`PopoverSurface.qml` requests compositor blur through Quickshell's
+`BackgroundEffect.blurRegion`, matched to the animated rounded surface.
 
-The current style is already close to a good Quickshell target:
+The battery percentage must go through `batteryPercent()`. Quickshell's UPower
+binding can expose `percentage` as a `0.0` to `1.0` ratio, so using the raw value
+directly will show `1%` or `0%` on a healthy battery.
 
-- transparent bar window
-- top padding around 4px
-- 32px nominal height
-- 12px outer margin on the right/left
-- translucent surfaces
-- bright but soft borders
-- pill-shaped controls
-- compact bold Cantarell text
-- Nerd Font symbols for shell/status icons
+## OSD
 
-The Quickshell version should preserve this rather than moving to a large
-material dashboard.
+Quickshell now owns the OSD through `Osd.qml`.
 
-Recommended visual language:
-
-- Use the current pywal palette as the base.
-- Keep bar controls in rounded capsules.
-- Use one shared right-side system capsule instead of separate cards.
-- Use popovers for controls, not separate apps.
-- Use macOS Control Center as inspiration for quick toggles and sliders.
-- Use GNOME as inspiration for spacing, labels, calendar density, and restraint.
-- Avoid oversized hero panels, ornamental gradients, and decorative backgrounds.
-
-Popover styling:
-
-- translucent background, stronger than the bar
-- 1px border using the current foreground/border color
-- 12px to 16px radius for panels
-- 8px radius for repeated rows and buttons
-- subtle shadow
-- icon-first controls with labels only where needed
-
-## Desired Panels
-
-### Quick Settings
-
-Opened from the system capsule. This should eventually replace the Rofi control
-center and parts of the separate network/Bluetooth/audio scripts.
-
-Initial sections:
-
-- network
-- Bluetooth
-- volume
-- brightness on laptop
-- battery/power profile on laptop
-- idle inhibitor
-- session controls
-
-Layout inspiration:
-
-- macOS-style grouped toggles for Wi-Fi, Bluetooth, and power profile
-- GNOME-style sliders for volume and brightness
-- compact list sections for devices/networks
-
-### Network Panel
-
-This is the biggest reason to move beyond Waybar.
-
-Required behavior:
-
-- show current Wi-Fi/Ethernet state
-- show active SSID and signal strength
-- list visible Wi-Fi networks
-- connect to known networks
-- prompt for password for unknown secured networks
-- disconnect current Wi-Fi
-- toggle Wi-Fi on/off
-- rescan networks
-- expose advanced fallback action for `nmtui` if needed
-
-Implementation options:
-
-- First version can shell out to `nmcli` for scanning and connecting.
-- Later version can use DBus/NetworkManager bindings if Quickshell exposes
-  enough of what is needed or if a small helper is worth adding.
-
-The panel should replace:
-
-- `dotfiles/rofi/scripts/control-network`
-- Waybar network click action
-- `Super+N` Rofi network binding, eventually
-
-### Bluetooth Panel
-
-Required behavior:
-
-- show controller powered state
-- toggle Bluetooth on/off
-- show paired devices
-- show connected devices first
-- connect/disconnect paired devices
-- trigger scan mode
-- show simple battery percentage where available
-
-Implementation options:
-
-- Prefer Quickshell BlueZ integration for live state.
-- Use `bluetoothctl` only as a fallback for actions that are awkward early on.
-
-The panel should replace:
-
-- `dotfiles/rofi/scripts/control-bluetooth`
-- Waybar Bluetooth click action
-- `Super+Shift+B` Rofi Bluetooth binding, eventually
-
-### Audio Panel
-
-Required behavior:
-
-- show output volume
-- mute/unmute output
-- show microphone mute state
-- mute/unmute microphone
-- output volume slider
-- optionally list output devices later
-
-Implementation notes:
-
-- Use Quickshell PipeWire support where possible.
-- Preserve the current icon language:
-  - muted output
-  - low/medium/high output
-  - muted microphone
-  - active microphone
-
-### Battery And Power Panel
-
-Laptop-only visible state:
-
-- battery percentage
-- charging/discharging/full
-- estimated time
-- power draw if available
-- warning below 30%
-- critical below 15%
-
-Controls:
-
-- power saver
-- balanced
-- performance
-- brightness slider
-
-This panel should eventually absorb the current brightness/power profile Rofi
-script behavior while preserving the existing power profile display logic in
-`dotfiles/hypr/scripts/apply-power-profile-display`.
-
-### Power Menu
-
-Required actions:
-
-- lock
-- logout
-- suspend
-- reboot
-- shutdown
-
-This should be a small confirmation panel, not a full-screen launcher. It can
-borrow the clarity of GNOME's session dialogs while keeping the current compact
-visual style.
-
-## Implementation Plan
-
-### Phase 1: Parallel Quickshell Prototype
-
-Do not remove Waybar immediately.
-
-Add:
-
-- `dotfiles/quickshell/`
-- a basic `shell.qml`
-- component files for:
-  - `Bar.qml`
-  - `WorkspacePills.qml`
-  - `ClockPill.qml`
-  - `SystemCapsule.qml`
-  - `PanelWindow.qml`
-- Home Manager package entry for `pkgs.quickshell`
-- optional `quickshell.service`, disabled at first or started manually
-
-Manual test command:
+Media and brightness keys still call:
 
 ```sh
-quickshell -c ~/.config/quickshell
+dotfiles/hypr/scripts/osdctl
 ```
 
-Acceptance criteria:
+That script performs the actual `wpctl` or `brightnessctl` action, then writes a
+small JSON state file:
 
-- bar appears on the configured monitor
-- workspaces track Hyprland
+```text
+$XDG_RUNTIME_DIR/quickshell-osd/state.json
+```
+
+`Osd.qml` watches that file and renders the overlay. This keeps the Hyprland
+keybindings simple while removing the Eww dependency.
+
+Current OSD actions:
+
+- volume up
+- volume down
+- output mute
+- microphone mute
+- brightness up
+- brightness down
+
+Future OSD work can improve animation, placement, and media metadata, but the
+ownership should stay in Quickshell.
+
+## Splash Text
+
+Quickshell now owns the splash text through `Splash.qml`.
+
+It reads:
+
+```text
+~/.config/hypr/splash_messages.conf
+```
+
+The behavior mirrors the old Waybar splash script: ignore empty/comment lines,
+pick one message randomly, and fall back to `Hello World!`.
+
+The old `waybar-splash.service` should not come back unless Quickshell loses
+this responsibility.
+
+## Colors And Live Updates
+
+`ColorScheme.qml` reads pywal colors from:
+
+```text
+$XDG_CACHE_HOME/wal/colors.json
+```
+
+It watches that file, so color changes should update without restarting
+Quickshell once the running configuration points at the current files.
+
+Important NixOS/Home Manager detail:
+
+- `quickshell -p /etc/nixos/dotfiles/quickshell` runs directly from the working
+  tree and sees edits immediately.
+- `quickshell.service` runs `%h/.config/quickshell`, which Home Manager links to
+  a Nix store generation.
+- Changes under `/etc/nixos/dotfiles/quickshell` do not affect the service until
+  the system generation is switched.
+
+Apply normal changes with:
+
+```sh
+sudo nixos-rebuild switch --flake /etc/nixos#laptop1
+systemctl --user restart quickshell.service
+```
+
+Use the source-tree command for quick iteration:
+
+```sh
+quickshell -p /etc/nixos/dotfiles/quickshell
+```
+
+## Hyprland Bindings
+
+The old desktop-control Rofi bindings have been removed:
+
+- `Super+X` control center
+- `Super+N` network
+- `Super+Shift+B` Bluetooth
+- `Super+A` audio
+
+`Super+W` now restarts `quickshell.service`, which is useful while iterating on
+the shell.
+
+Some Rofi scripts still exist for unrelated workflows such as clipboard and
+screenshot. Those are outside the current Quickshell status-area migration and
+can be handled separately.
+
+## Waybar And Eww Status
+
+Waybar:
+
+- removed from the active Home Manager configuration
+- no longer has a user service definition
+- no longer has config material linked by Home Manager
+- no longer has dotfiles in this repository
+
+Eww:
+
+- no longer owns OSD
+- no longer has an active user service
+- no longer appears in `home.packages`
+- no longer has an active config symlink
+
+Quickshell is now the only declared top bar and splash surface.
+
+## Current Acceptance Criteria
+
+The current Quickshell setup should satisfy:
+
+- top bar appears through the user service
+- workspaces track Hyprland state
 - clock renders in the center
-- system capsule renders on the right
-- no overlap at common laptop and external monitor widths
+- calendar popover opens from the clock
+- status area renders on the right with power on the far right
+- network, Bluetooth, audio, battery, and power panels open
+- media and brightness keys show the Quickshell OSD
+- splash text appears without Waybar
+- pywal colors load through `colors.json`
+- no Waybar or Eww service is required for normal operation
 
-### Phase 2: Replace Top Waybar
+## Remaining Work
 
-Once the prototype is visually close:
+### Status Area
 
-- disable `waybar-top.service`
-- enable `quickshell.service`
-- keep `waybar-splash.service` temporarily if still wanted
-- keep Rofi scripts as fallback actions from Quickshell panels
+- Decide whether to add a combined quick settings panel in addition to the
+  individual panels.
+- Decide whether a tray still belongs in the top bar or should remain omitted.
 
-Home Manager changes will be in `home/modules/desktop.nix`:
+### Network
 
-- remove or comment the `waybar-top` user service
-- add a `quickshell` user service
-- add `quickshell` to `home.packages`
-- add `xdg.configFile."quickshell".source = ../../dotfiles/quickshell`
+- Keep testing known-network connect behavior.
+- Consider DBus/NetworkManager integration only if Quickshell's networking API
+  is not enough.
 
-### Phase 3: Native Popovers
+### Bluetooth
 
-Replace each Rofi dependency one at a time:
+- Show device battery where the BlueZ data is available.
+- Keep `bluetoothctl` as a possible fallback only for actions Quickshell cannot
+  do cleanly.
 
-1. Power menu
-2. Audio panel
-3. Bluetooth panel
-4. Network panel
-5. Calendar panel
-6. Battery/brightness/power profile panel
+### Audio
 
-Network and Bluetooth should keep command fallback paths until the native panels
-are reliable.
+- Keep PipeWire integration shell-native.
+- Preserve the current icon language for muted, low, medium, high, and
+  microphone states.
 
-### Phase 4: Remove Obsolete Pieces
+### Battery And Power
 
-After the Quickshell shell owns the interactions:
+- Keep all percentage display routed through `batteryPercent()`.
+- Preserve idle inhibitor state/control.
+- Preserve power profile controls.
+- Decide whether `dotfiles/hypr/scripts/apply-power-profile-display` still has
+  a role or should be folded into Quickshell.
+- Keep warning below 30% and critical below 15%.
 
-- remove Waybar top config and service
-- decide whether `waybar-splash` still has a role
-- remove Rofi control scripts only after their keybindings have been moved
-- decide whether Eww still owns OSD or whether Quickshell should absorb it
+### Calendar
 
-## NixOS And Home Manager Notes
+- Keep the current compact month view.
+- Add week numbers only if they do not add clutter.
+- Add events later, after choosing a reliable calendar data source.
 
-Existing system dependencies are already aligned with the target:
+### OSD
 
-- NetworkManager is enabled in `nixosModules/modules/networking.nix`.
-- Bluetooth is enabled in `nixosModules/modules/desktop/bluetooth.nix`.
-- UPower is enabled in `nixosModules/modules/desktop/power.nix`.
-- `power-profiles-daemon` is enabled for laptop hosts in
-  `nixosModules/modules/laptop/power.nix`.
+- Tune position and dimensions across laptop and external monitors.
+- Consider showing media metadata for play/pause/next/previous later.
+- Keep the runtime JSON bridge unless a cleaner Quickshell IPC path is added.
 
-The initial Quickshell Home Manager service should look roughly like:
+### Splash
 
-```nix
-systemd.user.services.quickshell = {
-  Unit = {
-    Description = "Quickshell desktop shell";
-    PartOf = [ "graphical-session.target" ];
-    After = [ "graphical-session.target" ];
-  };
-  Service = {
-    ExecStart = "${pkgs.quickshell}/bin/quickshell -c %h/.config/quickshell";
-    Restart = "on-failure";
-  };
-  Install.WantedBy = [ "graphical-session.target" ];
-};
+- Decide whether splash should show on every monitor or only the primary
+  monitor.
+- Consider refreshing the message on wallpaper/session changes.
+- Keep the text lightweight and wallpaper-friendly.
+
+### Cleanup
+
+- Remove Rofi control scripts after every remaining useful action has a
+  Quickshell or native replacement.
+- Revisit older audit notes that still describe removed components as active.
+
+## Design Direction
+
+Keep the visual language compact and utilitarian:
+
+- transparent shell windows
+- 32px top bar target height
+- small outer margins
+- translucent surfaces
+- soft borders
+- compact bold Cantarell text
+- Nerd Font status symbols
+- icon-first status controls
+- restrained popovers
+
+Avoid drifting into a large dashboard. Popovers should feel like quick desktop
+controls, not a separate application. The shell should stay quiet, readable, and
+easy to scan.
+
+## Expanded Surfaces
+
+The long-term interaction model should feel like the existing bar surface
+expands to reveal more information, not like a detached app window appears. The
+implementation may still use Quickshell popup/layer primitives where required,
+but visually the expanded state should remain attached to the control that
+opened it.
+
+Core behavior:
+
+- clicking a bar control toggles its expanded surface
+- only one expanded surface is open at a time
+- clicking another control switches the expanded content without opening a
+  second panel
+- clicking outside, pressing Escape, or triggering the same control again closes
+  the expanded surface
+- the original control row remains visible inside the expanded surface header
+- the header keeps the same icon order and active state as the collapsed bar
+- content appears below a subtle divider
+- dimensions animate from the collapsed control geometry to the expanded
+  geometry
+- opacity and content should fade in slightly after the size begins changing
+- close animation should reverse the same path
+- layout must clamp to the monitor work area and never overlap screen edges
+- reduced-motion support should disable geometry animation and keep only a short
+  opacity transition
+
+The animation should be quick and quiet: roughly 140-200ms with an ease-out
+curve for opening, and slightly faster for closing. Avoid bouncy, elastic, or
+oversized motion. The shell should feel responsive, not theatrical.
+
+Temporary debugging note:
+
+- `PopoverSurface.qml` currently uses intentionally slow debug timings:
+  `debugAnimationDuration: 1200` and `debugSurfaceReadyDelay: 80`.
+- Before considering the expanded-surface animation settled, restore production
+  timings around 140-200ms and a short first-frame handoff delay.
+
+For example, the clock starts as:
+
+```text
+┌────────────────────────────┐
+│ 12:00 │ Mon 1 January 2000 │
+└────────────────────────────┘
 ```
 
-Keep the Waybar service nearby during the transition so rollback is a single
-service switch.
+When expanded, the same surface grows downward:
 
-## Open Design Decisions
+```text
+┌────────────────────────────────────────┐
+│       12:00 │ Mon 1 January 2000       │
+│       ──────────────────────────       │
+│                                        │
+│   Calendar                             │
+│    1    2    3    4    5    6    7     │
+│    etc.                                │
+│                                        │
+│                                        │
+└────────────────────────────────────────┘
+```
 
-- Whether the top-right system capsule opens one combined quick settings panel
-  or separate panels per icon.
-- Whether launchers stay in the bar as a hidden drawer or move to an overview.
-- Whether metrics stay visible, move to a panel, or are dropped.
-- Whether Quickshell should eventually replace Eww OSD.
-- Whether pywal colors should be read directly by Quickshell or converted into a
-  generated QML/JSON theme file.
+The status area follows the same rule. Collapsed:
 
-## Recommended First Build
+```text
+┌─────────────────┐
+│  󰂯  󰤨  󰕾  󰁹    │
+└─────────────────┘
+```
 
-Start with the smallest version that proves Quickshell belongs here:
+When Wi-Fi is selected, the surface expands leftward and downward while keeping
+the status controls visible in the header:
 
-- workspace pills
-- date/time pill
-- right system capsule
-- click-to-open power menu
-- click-to-open network panel shell with current state and Wi-Fi toggle
+```text
+┌────────────────────────────────────────┐
+│  WiFi 󰤨                 󰂯  󰤨  󰕾  󰁹    │
+│  ────────────────────────────────────  │
+│                                        │
+│  Connected wifi name                   │
+│  -------------------                   │
+│  Available wifi 1                      │
+│                                        │
+│  Available wifi 2                      │
+│                                        │
+│  Available wifi 3                      │
+│                                        │
+│                                        │
+└────────────────────────────────────────┘
+```
 
-That gives immediate value over Waybar without trying to rebuild every desktop
-control at once.
+When Bluetooth is selected, the header remains in place and only the content
+mode changes:
+
+```text
+┌────────────────────────────────────────┐
+│  Bluetooth 󰂯            󰂯  󰤨  󰕾  󰁹    │
+│  ────────────────────────────────────  │
+│                                        │
+│  Connected bluetooth device 1          │
+│                                        │
+│  Connected bluetooth device 2          │
+│  -------------------                   │
+│  Available bluetooth device 1          │
+│                                        │
+│  Available bluetooth device 2          │
+│                                        │
+│  Available bluetooth device 3          │
+│                                        │
+│                                        │
+└────────────────────────────────────────┘
+```
+
+Volume should use the same expanded-surface model and must include the output
+volume slider in the first version. Later audio content can add output and input
+device selection below the slider.
+
+Power should remain compact. It can expand from the power icon, but it should
+not become a large launcher or dashboard. The destructive shutdown action should
+stay visually distinct.

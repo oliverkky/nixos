@@ -17,8 +17,8 @@ User-session tools now live in Home Manager instead of the system package list:
 Other package ownership decisions:
 
 - Kitty is provided by Home Manager through `programs.kitty`; the system-level `kitty` package was removed.
-- `unzip` is kept in `home/modules/shell.nix`; the system-level `unzip` package was removed.
-- Mission Center is kept in `home/modules/desktop.nix` for graphical system monitoring.
+- `unzip` is kept in `home/shell/packages.nix`; the system-level `unzip` package was removed.
+- Mission Center is kept in `home/desktop/packages.nix` for graphical system monitoring.
 
 ### Single App Path Per Desktop Function
 
@@ -39,7 +39,7 @@ Bluetooth:
 - Kept `services.blueman.enable`.
 - Kept Rofi Bluetooth controls based on `bluetoothctl`.
 - Removed `overskride`.
-- Waybar Bluetooth actions now open the Rofi Bluetooth controller.
+- Legacy Waybar Bluetooth actions were replaced during the Quickshell migration.
 
 Session / power UI:
 
@@ -71,15 +71,15 @@ Calendar:
 - `desktop/packages.nix`
 - `desktop/power.nix`
 
-Host display data now uses a typed local option:
+Host display data now uses host constants:
 
-- `my.host.primaryMonitor = "eDP-1";`
+- `primaryMonitor = "eDP-1";`
 
 Shared desktop config derives machine-specific output targeting from that option:
 
 - Hyprland session tooling still receives `HYPR_PRIMARY_MONITOR`, but the environment variable is generated from the typed option.
-- Home Manager generates Waybar `top.jsonc` and `splash.jsonc` with `output` set to the same primary monitor.
-- Shared Waybar module/style/script dotfiles stay hardware-independent.
+- Quickshell and Hyprland receive host display data through the host constants path.
+- Waybar module/style/script dotfiles have been removed.
 
 ### Update / Reliability
 

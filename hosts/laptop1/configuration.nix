@@ -1,23 +1,14 @@
 {
   config,
+  host,
   pkgs,
-  inputs,
-  primaryUser,
   ...
 }:
 
-let
-  laptopPanelEdid = pkgs.runCommand "mne007za1-edid" { } ''
-        mkdir -p $out/lib/firmware/edid
-        base64 -d > $out/lib/firmware/edid/mne007za1-60hz.bin <<'EOF'
-    AP///////wAObwwUAAAAAAAfAQS1HhN4Au6Vo1RMmSYPUFQAAAABAQEBAQEBAQEBAQEBAQEBtshAoLAITnAwIDYALrwQAAAYz4VAoLAITnAwIDYALrwQAAAYAAAA/gBDU09UIFQzCiAgICAgAAAA/gBNTkUwMDdaQTEtMwogAJw=
-    EOF
-  '';
-in
 {
   imports = [
+    ./edid.nix
     ./hardware-configuration.nix
-    ../../nixosModules/modules/laptop/power.nix
   ];
 
   # ── Boot ────────────────────────────────────────────────────────────────────
@@ -26,18 +17,10 @@ in
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelParams = [
-    "drm.edid_firmware=eDP-1:edid/mne007za1-60hz.bin"
-  ];
-  boot.initrd.extraFiles."lib/firmware/edid/mne007za1-60hz.bin".source =
-    "${laptopPanelEdid}/lib/firmware/edid/mne007za1-60hz.bin";
-  hardware.firmware = [ laptopPanelEdid ];
 
   # ── User ────────────────────────────────────────────────────────────────────
 
-  my.host.primaryUser = primaryUser;
-
-  users.users.${config.my.host.primaryUser} = {
+  users.users.${host.primaryUser} = {
     isNormalUser = true;
     description = "Oliver Klinkovský";
     extraGroups = [
@@ -69,7 +52,16 @@ in
 
   console.keyMap = "cz-lat2";
 
-  my.host.primaryMonitor = "eDP-1";
+  my.nixos = {
+    desktop.enable = true;
+    development.enable = true;
+    laptop.enable = true;
+    networking = {
+      enable = true;
+      hostName = host.hostName;
+    };
+    shell.enable = true;
+  };
 
   # ── Laptop power behavior ───────────────────────────────────────────────────
 
@@ -91,7 +83,7 @@ in
     # Avoid redundant downloads when multiple users build
     trusted-users = [
       "root"
-      config.my.host.primaryUser
+      host.primaryUser
     ];
   };
 
@@ -108,5 +100,5 @@ in
   # ── State version ───────────────────────────────────────────────────────────
   # Set this to the NixOS release you FIRST installed on this machine.
   # Do NOT update it when upgrading NixOS. See `man configuration.nix`.
-  system.stateVersion = "24.11";
+  system.stateVersion = host.stateVersion;
 }

@@ -11,7 +11,6 @@ image_path=$1
 wal_bin=${WAL_BIN:-"$HOME/.local/bin/wal"}
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
-waybar_colors="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors-waybar.css"
 sddm_wallpaper="/var/lib/sddm-wallpaper/current-wallpaper.png"
 last_wallpaper="$state_root/hypr/last-wallpaper"
 
@@ -38,18 +37,5 @@ fi
 "$wal_bin" -i "$image_path" -n
 
 hyprctl reload >/dev/null 2>&1 || true
-
-if pgrep -x waybar >/dev/null 2>&1; then
-    retries=50
-    while [ "$retries" -gt 0 ]; do
-        if [ -s "$waybar_colors" ] && grep -q "@define-color" "$waybar_colors" 2>/dev/null; then
-            break
-        fi
-        retries=$((retries - 1))
-        sleep 0.1
-    done
-
-    "$config_root/waybar/scripts/launch.sh" >/dev/null 2>&1 &
-fi
 
 kitty @ --to unix:/tmp/kitty-theme load-config "$config_root/kitty/kitty.conf" >/dev/null 2>&1 || true

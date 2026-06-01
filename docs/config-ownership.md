@@ -20,28 +20,18 @@ applications.
 Applications read configuration from paths under `~/.config`, for example:
 
 - `~/.config/hypr`
-- `~/.config/waybar`
+- `~/.config/quickshell`
 - `~/.config/rofi`
 - `~/.config/mako`
 
 For managed files, treat `~/.config` as generated output. Do not edit those
 files directly; the next Home Manager activation can replace them.
 
-## Generated Config
+## Host-Specific Config
 
-Some files combine shared dotfiles with host-specific Nix options.
-
-Current example:
-
-- Waybar templates, modules, scripts, and styles live in
-  `/etc/nixos/dotfiles/waybar`.
-- `home/modules/desktop.nix` renders final Waybar `top.jsonc` and
-  `splash.jsonc` from `dotfiles/waybar/config/top.jsonc` and
-  `dotfiles/waybar/config/splash.jsonc`.
-- the rendered Waybar configs set `output` from `my.host.primaryMonitor`.
-
-This keeps monitor details declared once per host while the shared Waybar
-configuration remains hardware-independent.
+Host facts live in `hosts/<name>/constants.nix` and are passed into both NixOS
+and Home Manager as `host`. Shared modules should read those facts through the
+module argument instead of importing a host file directly.
 
 ## App-Created State
 
