@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if ! command -v bluetoothctl >/dev/null 2>&1; then
+    exit 0
+fi
+
+if ! find /sys/class/power_supply/BAT* -maxdepth 0 -type l -exec sh -c '
+    for battery do
+        [ -r "$battery/status" ] && [ "$(cat "$battery/status")" = "Discharging" ] && exit 0
+    done
+    exit 1
+' sh {} + 2>/dev/null; then
+    exit 0
+fi
+
+if bluetoothctl show 2>/dev/null | grep -q "Discovering: yes"; then
+    exit 0
+fi
+
+if bluetoothctl devices Connected 2>/dev/null | grep -q '^Device '; then
+    exit 0
+fi
+
+if bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
+    bluetoothctl power off >/dev/null
+fi

@@ -28,6 +28,7 @@ Item {
     property bool idleInhibited: false
     property bool expandedSurfaceReady: false
     readonly property string osdctlPath: "/etc/nixos/dotfiles/hypr/scripts/osdctl"
+    readonly property string powerProfileDisplayPath: "/etc/nixos/dotfiles/hypr/scripts/set-power-profile-display"
 
     implicitWidth: container.width
     implicitHeight: 28
@@ -766,7 +767,7 @@ Item {
                 icon: "󰌪"
                 text: "Power saver"
                 active: PowerProfiles.profile === PowerProfile.PowerSaver
-                onClicked: PowerProfiles.profile = PowerProfile.PowerSaver
+                onClicked: root.setPowerProfile("power-saver")
             }
 
             PanelAction {
@@ -775,7 +776,7 @@ Item {
                 icon: ""
                 text: "Balanced"
                 active: PowerProfiles.profile === PowerProfile.Balanced
-                onClicked: PowerProfiles.profile = PowerProfile.Balanced
+                onClicked: root.setPowerProfile("balanced")
             }
 
             PanelAction {
@@ -785,7 +786,7 @@ Item {
                 icon: ""
                 text: "Performance"
                 active: PowerProfiles.profile === PowerProfile.Performance
-                onClicked: PowerProfiles.profile = PowerProfile.Performance
+                onClicked: root.setPowerProfile("performance")
             }
         }
     }
@@ -1087,5 +1088,9 @@ Item {
         const percentage = Math.round(Math.max(0, Math.min(100, value)));
         brightnessPercent = percentage;
         Quickshell.execDetached(["brightnessctl", "-n2", "set", `${percentage}%`]);
+    }
+
+    function setPowerProfile(profile) {
+        Quickshell.execDetached([powerProfileDisplayPath, profile]);
     }
 }

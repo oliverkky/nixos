@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+profile="${1:-}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+apply_display="$script_dir/apply-power-profile-display"
+
+case "$profile" in
+    power-saver | balanced | performance) ;;
+    *)
+        echo "usage: set-power-profile-display {power-saver|balanced|performance}" >&2
+        exit 2
+        ;;
+esac
+
+powerprofilesctl set "$profile"
+
+if [[ -x "$apply_display" ]]; then
+    exec "$apply_display" "$profile"
+fi

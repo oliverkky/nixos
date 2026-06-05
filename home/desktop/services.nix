@@ -143,6 +143,14 @@ in
         Install.WantedBy = [ "graphical-session.target" ];
       };
 
+      bluetooth-auto-power-save = {
+        Unit.Description = "Power off idle Bluetooth while on battery";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "%h/.config/hypr/scripts/bluetooth-auto-power-save";
+        };
+      };
+
       cliphist = {
         Unit = {
           Description = "Clipboard history";
@@ -168,6 +176,16 @@ in
         };
         Install.WantedBy = [ "graphical-session.target" ];
       };
+    };
+
+    systemd.user.timers.bluetooth-auto-power-save = {
+      Unit.Description = "Periodically power off idle Bluetooth while on battery";
+      Timer = {
+        OnBootSec = "10min";
+        OnUnitActiveSec = "10min";
+        Unit = "bluetooth-auto-power-save.service";
+      };
+      Install.WantedBy = [ "timers.target" ];
     };
   };
 }

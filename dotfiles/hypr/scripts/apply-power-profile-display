@@ -8,20 +8,25 @@ if ! command -v hyprctl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
     exit 0
 fi
 
+monitors_json="$(hyprctl -j monitors 2>/dev/null)" || exit 1
+
 if [[ -z "$monitor" ]]; then
     monitor="$(
-        hyprctl -j monitors 2>/dev/null \
+        printf '%s\n' "$monitors_json" \
             | jq -r 'map(select(.focused == true))[0].name // .[0].name // empty'
     )"
 fi
 
 if [[ -z "$monitor" ]]; then
-    exit 0
+    exit 1
 fi
 
-profile="balanced"
-if command -v powerprofilesctl >/dev/null 2>&1; then
-    profile="$(powerprofilesctl get 2>/dev/null || printf balanced)"
+profile="${1:-}"
+if [[ -z "$profile" ]]; then
+    profile="balanced"
+    if command -v powerprofilesctl >/dev/null 2>&1; then
+        profile="$(powerprofilesctl get 2>/dev/null || printf balanced)"
+    fi
 fi
 
 cap_brightness_for_power_saver() {
@@ -46,7 +51,7 @@ case "$profile" in
         refresh="60"
         ;;
     performance)
-        refresh="90"
+        refresh=""
         ;;
     *)
         refresh="60"
@@ -54,7 +59,7 @@ case "$profile" in
 esac
 
 active="$(
-    hyprctl -j monitors 2>/dev/null \
+    printf '%s\n' "$monitors_json" \
         | jq -r --arg name "$monitor" '
             map(select(.name == $name))[0]
             | if . == null then empty else "\(.x) \(.y) \(.scale) \(.width)x\(.height)" end
@@ -62,24 +67,44 @@ active="$(
 )"
 
 if [[ -z "$active" ]]; then
-    exit 0
+    exit 1
 fi
 
 read -r x y scale resolution <<<"$active"
 
-mode="$(
-    hyprctl -j monitors all 2>/dev/null \
-        | jq -r --arg name "$monitor" --arg refresh "$refresh" --arg resolution "$resolution" '
-            map(select(.name == $name))[0].availableModes // []
-            | (
-                map(select(startswith($resolution + "@") and test("@" + $refresh + "(\\.[0-9]+)?Hz$")))[0]
-                // map(select(test("@" + $refresh + "(\\.[0-9]+)?Hz$")))[0]
+all_monitors_json="$(hyprctl -j monitors all 2>/dev/null)" || exit 1
+
+if [[ -n "$refresh" ]]; then
+    mode="$(
+        printf '%s\n' "$all_monitors_json" \
+            | jq -r --arg name "$monitor" --arg refresh "$refresh" --arg resolution "$resolution" '
+                map(select(.name == $name))[0].availableModes // []
+                | (
+                    map(select(startswith($resolution + "@") and test("@" + $refresh + "(\\.[0-9]+)?Hz$")))[0]
+                    // map(select(test("@" + $refresh + "(\\.[0-9]+)?Hz$")))[0]
+                    // empty
+                )
+            '
+    )"
+else
+    mode="$(
+        printf '%s\n' "$all_monitors_json" \
+            | jq -r --arg name "$monitor" --arg resolution "$resolution" '
+                def hz: try (capture("@(?<hz>[0-9]+(\\.[0-9]+)?)Hz$").hz | tonumber) catch 0;
+                map(select(.name == $name))[0].availableModes // []
+                | (
+                    map(select(startswith($resolution + "@"))) | sort_by(hz) | last
+                )
+                // (sort_by(hz) | last)
                 // empty
-            )
-        '
-)"
+            '
+    )"
+fi
 
 if [[ -z "$mode" ]]; then
+    if [[ -z "$refresh" ]]; then
+        exit 1
+    fi
     mode="${resolution}@${refresh}"
 fi
 

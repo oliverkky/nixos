@@ -33,6 +33,19 @@ in
       xwayland.enable = true;
     };
 
+    # Hyprland's portal handles compositor-specific interfaces, but it does
+    # not provide the file chooser used by apps such as Brave and Zed.
+    xdg.portal = {
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      config.common = {
+        default = [
+          "hyprland"
+          "gtk"
+        ];
+        "org.freedesktop.impl.portal.FileChooser" = "gtk";
+      };
+    };
+
     environment.sessionVariables = {
       HYPR_PRIMARY_MONITOR = host.primaryMonitor;
       XCURSOR_THEME = "Bibata-Modern-Classic";
