@@ -1,17 +1,10 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
 }:
 
-let
-  braveOriginPkgs = import inputs.nixpkgs-brave-origin {
-    system = pkgs.stdenv.hostPlatform.system;
-    config.allowUnfree = true;
-  };
-in
 {
   options.my.nixos.desktop.packages.enable =
     lib.mkEnableOption "desktop packages and integration services";
@@ -73,7 +66,7 @@ in
       # Misc
       fastfetch
       obsidian
-      braveOriginPkgs.brave-origin-nightly
+      brave
     ];
   };
 }

@@ -2,7 +2,6 @@
   description = "Oliver's NixOS configuration";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-brave-origin.url = "github:NixOS/nixpkgs/pull/513143/head";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

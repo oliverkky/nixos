@@ -32,14 +32,12 @@ My setup intentionally tracks adventurous inputs now, because I'm irresponsible:
 - `nixos-unstable`
 - upstream Hyprland
 - SilentSDDM from GitHub
-- Brave Origin from a nixpkgs PR branch
 
 TODO, when this approach bites me in the ass.
 
-1. Replace the Brave Origin PR input with a normal nixpkgs package when it comes.
-2. Switch Hyprland back to the nixpkgs package once the needed version is there.
-3. Replace or pin SilentSDDM more conservatively.
-4. Move from `nixos-unstable` to a NixOS release.
+1. Switch Hyprland back to the nixpkgs package once the needed version is there.
+2. Replace or pin SilentSDDM more conservatively.
+3. Move from `nixos-unstable` to a NixOS release.
 
 ## Ownership
 
