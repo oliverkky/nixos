@@ -6,6 +6,7 @@
     ./dotfiles.nix
     ./gtk.nix
     ./packages.nix
+    ./reaper.nix
     ./services.nix
     ./xdg.nix
   ];
@@ -18,6 +19,7 @@
       dotfiles.enable = lib.mkDefault true;
       gtk.enable = lib.mkDefault true;
       packages.enable = lib.mkDefault true;
+      reaper.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
       xdg.enable = lib.mkDefault true;
     };

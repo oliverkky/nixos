@@ -1,24 +1,30 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }:
 
 let
-  setBatteryLongLife = pkgs.writeShellScript "set-battery-long-life" ''
-    set -eu
+  batteryChargeType = host.battery.chargeType or null;
+  setBatteryChargeType =
+    chargeType:
+    pkgs.writeShellScript "set-battery-charge-type" ''
+      set -eu
 
-    for battery in /sys/class/power_supply/BAT*; do
-      charge_types="$battery/charge_types"
+      charge_type=${lib.escapeShellArg chargeType}
 
-      if [ ! -w "$charge_types" ] || ! grep -qw Long_Life "$charge_types"; then
-        continue
-      fi
+      for battery in /sys/class/power_supply/BAT*; do
+        charge_types="$battery/charge_types"
 
-      printf Long_Life > "$charge_types" || true
-    done
-  '';
+        if [ ! -w "$charge_types" ] || ! grep -qw "$charge_type" "$charge_types"; then
+          continue
+        fi
+
+        printf '%s' "$charge_type" > "$charge_types" || true
+      done
+    '';
 in
 {
   options.my.nixos.laptop.power.enable = lib.mkEnableOption "laptop power management";
@@ -47,13 +53,14 @@ in
       options iwlwifi power_save=1
     '';
 
-    # Prefer the battery firmware's longevity mode when it is exposed.
-    systemd.services.battery-long-life = {
-      description = "Set battery charge mode to Long_Life when supported";
+    # Select a firmware charge mode when the host declares one. Leave this
+    # unset for hosts where firmware charge policy should be managed manually.
+    systemd.services.battery-charge-type = lib.mkIf (batteryChargeType != null) {
+      description = "Set battery charge mode when supported";
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = setBatteryLongLife;
+        ExecStart = setBatteryChargeType batteryChargeType;
       };
     };
 

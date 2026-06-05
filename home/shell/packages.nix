@@ -55,6 +55,9 @@
       gnutar
       nix-output-monitor # `nom`: prettier nix build output
       glow # markdown previewer
+      age # file encryption recipient tool for future secrets/backups
+      sops # structured secrets encryption
+      restic # backup client
     ];
   };
 }

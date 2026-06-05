@@ -41,16 +41,16 @@ After those are done, handle update discipline and security posture: kernel choi
 
 - `nix flake check --no-build` passed.
 - `nix eval .#nixosConfigurations.laptop1.config.system.build.toplevel.drvPath` passed.
-- `nix build .#nixosConfigurations.laptop1.config.system.build.toplevel --dry-run` passed after allowing Nix cache access.
+- `nix build .#nixosConfigurations.laptop1.config.system.build.toplevel --dry-run` passed after allowing Nix daemon access.
 - The repo is dirty, so the current state is not a clean reproducible checkpoint.
 
 ## Highest Priority Findings
 
 1. Update strategy is too close to nightly for the stated goal.
    - `flake.nix` uses `nixos-unstable`, which is acceptable for "new but not beta".
-   - `boot.kernelPackages = pkgs.linuxPackages_latest` is riskier than necessary.
+   - Done: removed `boot.kernelPackages = pkgs.linuxPackages_latest`; the host now uses the nixpkgs default kernel.
    - Hyprland is intentionally pulled from GitHub for now to test 0.55 Lua config.
-   - Action: keep Hyprland upstream temporarily, but later switch back to nixpkgs once 0.55 lands. Consider using the regular nixpkgs kernel unless the latest kernel is needed for hardware support.
+   - Action: keep Hyprland upstream temporarily, but later switch back to nixpkgs once 0.55 lands.
 
 2. There is no idle locking.
    - `hyprlock` is installed, but there is no `hypridle`, swayidle, systemd sleep hook, or lid/suspend lock integration.
@@ -60,16 +60,17 @@ After those are done, handle update discipline and security posture: kernel choi
 3. No disk encryption is visible.
    - The laptop mounts plain ext4 by UUID and has no `boot.initrd.luks.devices`.
    - For a portable laptop, this is a major security gap.
-   - Action: plan full disk encryption for this laptop or next reinstall.
+   - Done: added `docs/disk-encryption-plan.md`.
+   - Action: implement full disk encryption during reinstall or a planned offline migration.
 
 4. `oliver` is a trusted Nix user.
    - `trusted-users = [ "root" "oliver" ];` is effectively root-equivalent in Nix terms.
    - It is convenient, but not hardened.
-   - Action: decide whether convenience is worth the security tradeoff.
+   - Done: removed `oliver` from `nix.settings.trusted-users`; use root or sudo for trusted operations.
 
 5. User is in the `input` group.
    - Direct input-device access broadens keylogging/input access.
-   - Action: prefer udev/logind-based access if possible, or document why this is required.
+   - Done: removed `input` from the primary user's supplementary groups.
 
 6. No Polkit agent is configured.
    - GUI privilege prompts may randomly fail or do nothing.
@@ -94,19 +95,19 @@ After those are done, handle update discipline and security posture: kernel choi
 
 ## Missing For A Strong Daily Driver
 
-- Add `fwupd`.
-- Add `fstrim`.
-- Add battery charge thresholds if the laptop supports them.
-- Add `thermald` or vendor-specific power tooling if appropriate.
-- Add zram.
-- Add SMART/disk health monitoring.
-- Add a real backup plan.
-- Add lid behavior.
-- Add suspend behavior.
-- Add idle lock behavior.
-- Add screenshot directory policy.
-- Add secrets handling.
-- Add recovery documentation.
+- Add `fwupd`. Done.
+- Add `fstrim`. Done.
+- Add battery charge thresholds if the laptop supports them. Done as a host-selectable charge type; `laptop1` uses `Standard` after `Long_Life` capped charging near 60%.
+- Add `thermald` or vendor-specific power tooling if appropriate. Done.
+- Add zram. Done.
+- Add SMART/disk health monitoring. Done.
+- Add a real backup plan. Planned in `docs/backup-plan.md`; declarative service awaits a real repository and password source.
+- Add lid behavior. Done.
+- Add suspend behavior. Done.
+- Add idle lock behavior. Done.
+- Add screenshot directory policy. Done: screenshots go to `$XDG_PICTURES_DIR/Screenshots`.
+- Add secrets handling. Baseline tools and policy documented in `docs/secrets.md`; deploy integration awaits real secrets.
+- Add recovery documentation. Done.
 
 ## Development Direction
 

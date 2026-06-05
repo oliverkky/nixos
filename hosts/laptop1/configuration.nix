@@ -16,7 +16,6 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # ── User ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +27,6 @@
       "wheel"
       "video"
       "audio"
-      "input"
     ];
     shell = pkgs.zsh;
   };
@@ -83,7 +81,6 @@
     # Avoid redundant downloads when multiple users build
     trusted-users = [
       "root"
-      host.primaryUser
     ];
   };
 

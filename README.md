@@ -1,12 +1,14 @@
-# Oliver's NixOS Configuration
+# My NixOS Configuration
 
-Personal NixOS and Home Manager configuration for `laptop1`.
+Personal NixOS and Home Manager configuration for `laptop1`... for now.
 
 ## Rebuild
 
 ```sh
 sudo nixos-rebuild switch --flake /etc/nixos#laptop1
 ```
+
+More in `docs/rebuild-workflow.md`.
 
 ## Format And Check
 
@@ -25,25 +27,19 @@ nix flake check --no-build
 
 ## Update Posture
 
-This setup intentionally tracks adventurous inputs:
+My setup intentionally tracks adventurous inputs now, because I'm irresponsible:
 
 - `nixos-unstable`
-- `linuxPackages_latest`
 - upstream Hyprland
 - SilentSDDM from GitHub
 - Brave Origin from a nixpkgs PR branch
 
-That keeps the desktop current, but it also means updates can fail or cause
-runtime regressions. When that tradeoff stops being worth it, the first
-stabilization pass should pin or replace those inputs in roughly this order:
+TODO, when this approach bites me in the ass.
 
-1. Use the default nixpkgs kernel instead of `linuxPackages_latest`.
-2. Replace the Brave Origin PR input with a normal nixpkgs package or a stable
-   external source.
-3. Switch Hyprland back to the nixpkgs package once the needed version is there.
-4. Replace or pin SilentSDDM more conservatively.
-5. Move from `nixos-unstable` to a NixOS release branch if system updates are
-   still too noisy.
+1. Replace the Brave Origin PR input with a normal nixpkgs package when it comes.
+2. Switch Hyprland back to the nixpkgs package once the needed version is there.
+3. Replace or pin SilentSDDM more conservatively.
+4. Move from `nixos-unstable` to a NixOS release.
 
 ## Ownership
 

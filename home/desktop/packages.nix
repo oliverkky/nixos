@@ -37,6 +37,13 @@
       curl
       imagemagick
 
+      # Audio production
+      reaper
+      qpwgraph
+      crosspipe
+      carla
+      raysession
+
       # GTK / desktop integration
       adwaita-icon-theme
       gnome-themes-extra
