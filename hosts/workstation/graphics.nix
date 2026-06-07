@@ -7,7 +7,9 @@
 
 let
   workstationHyprlandEnv = {
-    AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:03:00.0-card";
+    # Aquamarine uses ':' as the AQ_DRM_DEVICES separator, so the PCI by-path
+    # symlink is not usable here because it contains ':' characters.
+    AQ_DRM_DEVICES = "/dev/dri/card1";
     AQ_NO_MODIFIERS = "1";
     AQ_TRACE = "1";
     LIBVA_DRIVER_NAME = "radeonsi";
