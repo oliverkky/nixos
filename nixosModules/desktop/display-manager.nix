@@ -24,7 +24,15 @@ in
     inputs.silentSDDM.nixosModules.default
   ];
 
-  options.my.nixos.desktop.displayManager.enable = lib.mkEnableOption "SDDM desktop login";
+  options.my.nixos.desktop.displayManager = {
+    enable = lib.mkEnableOption "SDDM desktop login";
+
+    wayland.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to run the SDDM greeter through its Wayland backend.";
+    };
+  };
 
   config = lib.mkIf config.my.nixos.desktop.displayManager.enable {
     # ── Display server ────────────────────────────────────────────────────────
@@ -36,7 +44,7 @@ in
     };
 
     # ── Display manager ───────────────────────────────────────────────────────
-    # SDDM with Wayland support. No desktop manager; Hyprland handles the session.
+    # SDDM login. No desktop manager; Hyprland handles the user session.
 
     programs.silentSDDM = {
       enable = true;
@@ -46,7 +54,7 @@ in
 
     services.displayManager.sddm = {
       enable = true;
-      wayland.enable = lib.mkForce true;
+      wayland.enable = lib.mkForce config.my.nixos.desktop.displayManager.wayland.enable;
       settings.Theme = {
         CursorTheme = "Bibata-Modern-Classic";
         CursorSize = 24;

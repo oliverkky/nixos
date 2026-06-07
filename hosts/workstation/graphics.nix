@@ -18,6 +18,8 @@
   };
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
+  my.nixos.desktop.displayManager.wayland.enable = false;
+
   services.xserver.videoDrivers = [ "amdgpu" ];
 
   environment.sessionVariables = {
