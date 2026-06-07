@@ -24,6 +24,7 @@
 
   environment.sessionVariables = {
     AQ_DRM_DEVICES = "/dev/dri/by-path/pci-0000:03:00.0-card";
+    AQ_NO_MODIFIERS = "1";
     LIBVA_DRIVER_NAME = "radeonsi";
     VDPAU_DRIVER = "radeonsi";
   };
