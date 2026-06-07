@@ -51,7 +51,10 @@
 
   my.nixos = {
     desktop.enable = true;
-    development.enable = true;
+    development = {
+      enable = true;
+      codexCli.enable = false;
+    };
     networking = {
       enable = true;
       hostName = host.hostName;

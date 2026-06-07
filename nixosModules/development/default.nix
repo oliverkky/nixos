@@ -7,39 +7,48 @@
 }:
 
 {
-  options.my.nixos.development.enable = lib.mkEnableOption "system development tools";
+  options.my.nixos.development = {
+    enable = lib.mkEnableOption "system development tools";
+
+    codexCli.enable = lib.mkEnableOption "Codex CLI package";
+  };
 
   config = lib.mkIf config.my.nixos.development.enable {
-    environment.systemPackages = with pkgs; [
-      # Editors
-      neovim
-      zed-editor
+    my.nixos.development.codexCli.enable = lib.mkDefault true;
 
-      # Rust toolchain
-      rustc
-      rustfmt
-      cargo
-      rust-analyzer
+    environment.systemPackages =
+      with pkgs;
+      [
+        # Editors
+        neovim
+        zed-editor
 
-      # Python: keep the interpreter and libraries on the same store path.
-      (python3.withPackages (
-        ps: with ps; [
-          python-lsp-server
-          # Add more packages here as needed, e.g.: ps.requests ps.numpy
-        ]
-      ))
+        # Rust toolchain
+        rustc
+        rustfmt
+        cargo
+        rust-analyzer
 
-      # C toolchain (needed for many Rust crates and Python extensions)
-      gcc
+        # Python: keep the interpreter and libraries on the same store path.
+        (python3.withPackages (
+          ps: with ps; [
+            python-lsp-server
+            # Add more packages here as needed, e.g.: ps.requests ps.numpy
+          ]
+        ))
 
-      # Linting / formatting
-      ruff
+        # C toolchain (needed for many Rust crates and Python extensions)
+        gcc
 
-      # Core tools
-      git
+        # Linting / formatting
+        ruff
 
-      # Codex CLI
-      inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
+        # Core tools
+        git
+      ]
+      ++ lib.optionals config.my.nixos.development.codexCli.enable [
+        # Codex CLI
+        inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+      ];
   };
 }
