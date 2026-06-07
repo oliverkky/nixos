@@ -18,7 +18,7 @@
 
     xresources.properties = {
       "Xcursor.size" = 24;
-      "Xft.dpi" = 96; # adjust to your display
+      "Xft.dpi" = 96; # move to constants, make dependent on host
     };
   };
 }
