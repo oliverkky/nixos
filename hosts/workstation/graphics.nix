@@ -45,20 +45,17 @@ let
   };
 in
 {
-  # The workstation has an RX 9070-class AMD GPU, a GTX 1050 Ti, and an AMD iGPU.
-  # Prefer the discrete AMD card and leave the NVIDIA card unused for now.
+  # The workstation has an RX 9070-class AMD GPU and an AMD iGPU.
   boot.initrd.kernelModules = [ "amdgpu" ];
-  boot.blacklistedKernelModules = [
-    "nouveau"
-    "nvidia"
-    "nvidia_drm"
-    "nvidia_modeset"
-    "nvidia_uvm"
-  ];
 
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
+    extraPackages = with pkgs; [
+      rocmPackages.clr.icd
+      rocmPackages.rocblas
+      rocmPackages.hipblas
+    ];
   };
   hardware.enableRedistributableFirmware = lib.mkDefault true;
 
@@ -67,7 +64,12 @@ in
   services.xserver.videoDrivers = [ "amdgpu" ];
 
   environment.sessionVariables = workstationHyprlandEnv;
-  environment.systemPackages = [ startHyprlandWorkstation ];
+  environment.systemPackages = with pkgs; [
+    startHyprlandWorkstation
+    rocmPackages.hipcc
+    rocmPackages.rocminfo
+    rocmPackages.rocm-smi
+  ];
 
   services.displayManager.sessionPackages = [ hyprlandWorkstationSession ];
   systemd.services.display-manager.environment = workstationHyprlandEnv;

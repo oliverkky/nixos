@@ -5,6 +5,18 @@
   ...
 }:
 
+let
+  blenderRocm = pkgs.symlinkJoin {
+    name = "blender-rocm";
+    paths = [ pkgs.pkgsRocm.blender ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm "$out/bin/blender"
+      makeWrapper "${pkgs.pkgsRocm.blender}/bin/blender" "$out/bin/blender" \
+        --set LD_PRELOAD "${pkgs.rocmPackages.llvm.llvm.lib}/lib/libLLVM.so.22.0"
+    '';
+  };
+in
 {
   options.my.nixos.desktop.packages.enable =
     lib.mkEnableOption "desktop packages and integration services";
@@ -67,6 +79,7 @@
       fastfetch
       obsidian
       brave
+      blenderRocm
     ];
   };
 }

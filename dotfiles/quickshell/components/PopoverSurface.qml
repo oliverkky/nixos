@@ -51,7 +51,7 @@ QS.PopupWindow {
         height: root.implicitHeight
         radius: 16
         clip: true
-        color: root.ui.surface
+        color: root.ui.panelSurface
         border.width: 1
         border.color: root.ui.border
 

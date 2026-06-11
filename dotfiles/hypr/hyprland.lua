@@ -12,7 +12,10 @@ local ctx = {
     menu = "rofi -show drun",
     zed = "zeditor",
     main_mod = "SUPER",
+    monitors = os.getenv("HYPR_MONITORS") or "",
     primary_monitor = os.getenv("HYPR_PRIMARY_MONITOR") or "",
+    secondary_monitor = os.getenv("HYPR_SECONDARY_MONITOR") or "",
+    secondary_monitor_workspace = tonumber(os.getenv("HYPR_SECONDARY_MONITOR_WORKSPACE") or ""),
 }
 
 local function load_module(name)

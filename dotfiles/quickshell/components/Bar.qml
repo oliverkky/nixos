@@ -1,5 +1,7 @@
 import QtQuick
+import Quickshell
 import Quickshell as QS
+import Quickshell.Wayland
 
 QS.PanelWindow {
     id: root
@@ -17,6 +19,25 @@ QS.PanelWindow {
     aboveWindows: true
     color: "transparent"
 
+    WlrLayershell.namespace: "oliver.quickshell"
+
+    BackgroundEffect.blurRegion: Region {
+        Region {
+            item: workspaces
+            radius: 10
+        }
+
+        Region {
+            item: clock
+            radius: clock.height / 2
+        }
+
+        Region {
+            item: statusArea
+            radius: statusArea.height / 2
+        }
+    }
+
     ColorScheme {
         id: colorScheme
     }
@@ -25,6 +46,8 @@ QS.PanelWindow {
         anchors.fill: parent
 
         Workspaces {
+            id: workspaces
+
             anchors.left: parent.left
             anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
@@ -32,12 +55,16 @@ QS.PanelWindow {
         }
 
         Clock {
+            id: clock
+
             anchors.centerIn: parent
             ui: colorScheme
             parentWindow: root
         }
 
         StatusArea {
+            id: statusArea
+
             anchors.right: parent.right
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter

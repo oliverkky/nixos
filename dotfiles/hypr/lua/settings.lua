@@ -1,7 +1,20 @@
 return function(ctx)
     local wal = ctx.wal
 
-    if ctx.primary_monitor ~= "" then
+    if ctx.monitors ~= "" then
+        for monitor in string.gmatch(ctx.monitors, "([^;]+)") do
+            local output, mode, position, scale = string.match(monitor, "^([^,]+),([^,]+),([^,]+),([^,]+)$")
+
+            if output and mode and position and scale then
+                hl.monitor({
+                    output = output,
+                    mode = mode,
+                    position = position,
+                    scale = tonumber(scale) or 1,
+                })
+            end
+        end
+    elseif ctx.primary_monitor ~= "" then
         hl.monitor({
             output = ctx.primary_monitor,
             mode = "preferred",

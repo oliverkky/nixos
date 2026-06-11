@@ -28,7 +28,7 @@ MouseArea {
         anchors.fill: parent
         radius: 999
         visible: !calendar.visible || !root.expandedSurfaceReady
-        color: root.containsMouse ? root.ui.surfaceHover : root.ui.surface
+        color: root.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
         border.width: 1
         border.color: root.ui.border
     }

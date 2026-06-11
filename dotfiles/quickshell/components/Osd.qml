@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell as QS
+import Quickshell.Wayland
 
 QS.PanelWindow {
     id: root
@@ -30,6 +31,13 @@ QS.PanelWindow {
     focusable: false
     color: "transparent"
 
+    WlrLayershell.namespace: "oliver.quickshell"
+
+    BackgroundEffect.blurRegion: Region {
+        item: surface
+        radius: surface.radius
+    }
+
     ColorScheme {
         id: colorScheme
     }
@@ -47,6 +55,8 @@ QS.PanelWindow {
     }
 
     Rectangle {
+        id: surface
+
         anchors.fill: parent
         radius: 16
         color: colorScheme.panelSurface

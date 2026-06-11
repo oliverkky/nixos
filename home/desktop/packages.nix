@@ -36,9 +36,11 @@
       mission-center
       curl
       imagemagick
+      ffmpeg
+      prismlauncher
+      lmstudio
 
       # Audio production
-      reaper
       qpwgraph
       crosspipe
       carla

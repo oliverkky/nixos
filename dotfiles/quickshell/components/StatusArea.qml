@@ -66,7 +66,7 @@ Item {
         radius: 999
         visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
         enabled: root.activePanel.length === 0
-        color: containerMouse.containsMouse ? root.ui.surfaceHover : root.ui.surface
+        color: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
         border.width: 1
         border.color: root.ui.border
 

@@ -111,8 +111,9 @@ Row {
     }
 
     function switchRelative(delta) {
-        const next = Math.max(1, Math.min(workspaceIds.length, focusedId + delta));
-        switchToWorkspace(next);
+        const currentIndex = Math.max(0, workspaceIds.indexOf(focusedId));
+        const nextIndex = Math.max(0, Math.min(workspaceIds.length - 1, currentIndex + delta));
+        switchToWorkspace(workspaceIds[nextIndex]);
     }
 
     function switchToWorkspace(id) {
@@ -182,17 +183,21 @@ Row {
     }
 
     function buildWorkspaceIds() {
-        let highest = Math.max(4, focusedId);
+        let highest = focusedId === 10 ? 4 : Math.max(4, focusedId);
 
         for (let i = 0; i < workspaceList.length; i++) {
             const workspace = workspaceList[i];
-            if (workspace.id > highest && workspace.toplevels.values.length > 0)
+            if (workspace.id > highest && workspace.id < 10 && workspace.toplevels.values.length > 0)
                 highest = workspace.id;
         }
 
         const ids = [];
         for (let id = 1; id <= highest; id++)
             ids.push(id);
+
+        if (focusedId === 10)
+            ids.push(10);
+
         return ids;
     }
 }

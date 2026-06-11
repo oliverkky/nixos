@@ -1,5 +1,5 @@
 return function(ctx)
-    for workspace = 1, 4 do
+    for workspace = 1, 9 do
         local rule = {
             workspace = tostring(workspace),
             default = workspace == 1,
@@ -9,6 +9,15 @@ return function(ctx)
             rule.monitor = ctx.primary_monitor
         end
         hl.workspace_rule(rule)
+    end
+
+    if ctx.secondary_monitor ~= "" and ctx.secondary_monitor_workspace then
+        hl.workspace_rule({
+            workspace = tostring(ctx.secondary_monitor_workspace),
+            monitor = ctx.secondary_monitor,
+            default = true,
+            persistent = true,
+        })
     end
 
     hl.window_rule({
@@ -32,6 +41,13 @@ return function(ctx)
     hl.layer_rule({
         name = "blur-rofi",
         match = { namespace = "rofi" },
+        blur = true,
+        ignore_alpha = 0.0,
+    })
+
+    hl.layer_rule({
+        name = "blur-quickshell",
+        match = { namespace = "oliver.quickshell" },
         blur = true,
         ignore_alpha = 0.0,
     })

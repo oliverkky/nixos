@@ -26,6 +26,7 @@
       "networkmanager"
       "wheel"
       "video"
+      "render"
       "audio"
     ];
     shell = pkgs.zsh;
@@ -50,11 +51,88 @@
 
   console.keyMap = "cz-lat2";
 
+  # ── Data disks ──────────────────────────────────────────────────────────────
+
+  environment.systemPackages = with pkgs; [
+    ldmtool
+    ntfs3g
+  ];
+
+  systemd.services.ldmtool-create-all = {
+    description = "Create Windows Dynamic Disk device-mapper volumes";
+    wantedBy = [ "local-fs-pre.target" ];
+    before = [ "local-fs-pre.target" ];
+    wants = [ "systemd-udev-settle.service" ];
+    after = [ "systemd-udev-settle.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.ldmtool}/bin/ldmtool create all";
+      RemainAfterExit = true;
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /mnt/bigboi 0755 root root -"
+  ];
+
+  fileSystems."/mnt/bigboi" = {
+    device = "/dev/disk/by-label/BigBoi";
+    fsType = "ntfs3";
+    options = [
+      "rw"
+      "uid=1000"
+      "gid=100"
+      "umask=0022"
+      "nofail"
+      "x-systemd.device-timeout=5s"
+      "x-gvfs-show"
+      "x-gvfs-name=BigBoi"
+    ];
+  };
+
+  fileSystems."/mnt/hdd" = {
+    device = "/dev/disk/by-label/HDD";
+    fsType = "ntfs3";
+    options = [
+      "rw"
+      "uid=1000"
+      "gid=100"
+      "umask=0022"
+      "nofail"
+      "x-systemd.device-timeout=5s"
+      "x-gvfs-show"
+      "x-gvfs-name=HDD"
+    ];
+  };
+
+  fileSystems."/mnt/ssd" = {
+    device = "/dev/disk/by-label/SSD";
+    fsType = "ntfs3";
+    options = [
+      "rw"
+      "uid=1000"
+      "gid=100"
+      "umask=0022"
+      "nofail"
+      "x-systemd.device-timeout=5s"
+      "x-gvfs-show"
+      "x-gvfs-name=SSD"
+    ];
+  };
+
   my.nixos = {
-    desktop.enable = true;
+    desktop = {
+      enable = true;
+      audio.production.enable = true;
+      gaming.enable = true;
+    };
     development = {
       enable = true;
-      codexCli.enable = false;
+      codexCli.enable = true;
+    };
+    drivers = {
+      dualsense.enable = true;
+      g920.enable = true;
     };
     networking = {
       enable = true;
@@ -66,6 +144,17 @@
   # ── Nix ─────────────────────────────────────────────────────────────────────
 
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.overlays = [
+    (_final: prev: {
+      ldmtool = prev.ldmtool.overrideAttrs (old: {
+        postPatch = (old.postPatch or "") + ''
+
+          substituteInPlace src/ldmtool.c \
+            --replace-fail 'ldm_new(&err)' 'ldm_new()'
+        '';
+      });
+    })
+  ];
 
   nix.settings = {
     experimental-features = [

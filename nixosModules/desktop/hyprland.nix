@@ -20,6 +20,15 @@ let
       GIT_TAG = "v${hyprlandVersion}";
     };
   };
+  hyprMonitor =
+    monitor:
+    lib.concatStringsSep "," [
+      monitor.output
+      monitor.mode
+      monitor.position
+      (toString monitor.scale)
+    ];
+  hyprMonitors = lib.concatStringsSep ";" (map hyprMonitor (host.monitors or [ ]));
 in
 {
   options.my.nixos.desktop.hyprland.enable = lib.mkEnableOption "Hyprland compositor";
@@ -47,7 +56,10 @@ in
     };
 
     environment.sessionVariables = {
+      HYPR_MONITORS = hyprMonitors;
       HYPR_PRIMARY_MONITOR = host.primaryMonitor;
+      HYPR_SECONDARY_MONITOR = host.secondaryMonitor or "";
+      HYPR_SECONDARY_MONITOR_WORKSPACE = toString (host.secondaryMonitorWorkspace or "");
       XCURSOR_THEME = "Bibata-Modern-Classic";
       XCURSOR_SIZE = "24";
     };

@@ -5,6 +5,7 @@
     ./audio.nix
     ./bluetooth.nix
     ./display-manager.nix
+    ./gaming.nix
     ./hyprland.nix
     ./packages.nix
     ./power.nix

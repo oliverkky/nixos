@@ -17,6 +17,7 @@
       nix-tree # visualise the dependency graph
 
       # Misc dev tools
+      asciidoctor
       hugo
     ];
   };
