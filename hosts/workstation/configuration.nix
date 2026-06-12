@@ -15,6 +15,12 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;
+  boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
+  boot.loader.systemd-boot.windows.windows = {
+    title = "Windows";
+    efiDeviceHandle = "HD2b";
+    sortKey = "z_windows";
+  };
   boot.loader.efi.canTouchEfiVariables = true;
 
   # ── User ────────────────────────────────────────────────────────────────────
@@ -60,8 +66,16 @@
 
   systemd.services.ldmtool-create-all = {
     description = "Create Windows Dynamic Disk device-mapper volumes";
-    wantedBy = [ "local-fs-pre.target" ];
-    before = [ "local-fs-pre.target" ];
+    wantedBy = [
+      "mnt-bigboi.mount"
+      "mnt-hdd.mount"
+      "mnt-ssd.mount"
+    ];
+    before = [
+      "mnt-bigboi.mount"
+      "mnt-hdd.mount"
+      "mnt-ssd.mount"
+    ];
     wants = [ "systemd-udev-settle.service" ];
     after = [ "systemd-udev-settle.service" ];
     serviceConfig = {

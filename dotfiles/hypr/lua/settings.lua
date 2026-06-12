@@ -99,8 +99,14 @@ return function(ctx)
         },
     })
 
-    hl.device({
-        name = "epic-mouse-v1",
-        sensitivity = -0.5,
-    })
+    for _, device_name in ipairs({
+        "razer-deathadder-v4-pro",
+        "razer-deathadder-v4-pro-keyboard-1",
+        "razer-deathadder-v4-pro-mouse",
+    }) do
+        hl.device({
+            name = device_name,
+            sensitivity = -0.75,
+        })
+    end
 end
