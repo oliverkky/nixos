@@ -74,6 +74,7 @@ in
       nautilus
       file-roller
       evince
+      gnome-disk-utility
 
       # Misc
       fastfetch
