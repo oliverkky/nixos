@@ -9,13 +9,15 @@
 let
   uiScale = host.reaper.uiScale or null;
   pipewireLatency = host.reaper.pipewireLatency or "128/48000";
+  lv2Path = "${config.home.profileDirectory}/lib/lv2";
   reaper = pkgs.symlinkJoin {
     name = "reaper-pipewire-jack";
     paths = [ pkgs.reaper ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram "$out/bin/reaper" \
-        --set PIPEWIRE_LATENCY "${pipewireLatency}"
+        --set PIPEWIRE_LATENCY "${pipewireLatency}" \
+        --prefix LV2_PATH : "${lv2Path}"
     '';
   };
 in

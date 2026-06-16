@@ -45,6 +45,7 @@
       crosspipe
       carla
       raysession
+      neural-amp-modeler-lv2
 
       # GTK / desktop integration
       adwaita-icon-theme
