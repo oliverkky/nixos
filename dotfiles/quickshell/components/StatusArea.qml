@@ -6,7 +6,9 @@ import Quickshell.Bluetooth
 import Quickshell.Io
 import Quickshell.Networking
 import Quickshell.Services.Pipewire
+import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
+import Quickshell.Widgets
 import Quickshell.Wayland
 import "." as Components
 
@@ -23,6 +25,7 @@ Item {
     property var sink: Pipewire.defaultAudioSink
     property var source: Pipewire.defaultAudioSource
     property var battery: UPower.displayDevice
+    property var trayItems: SystemTray.items.values
     property real brightnessPercent: 0
     property bool brightnessAvailable: false
     property bool idleInhibited: false
@@ -30,7 +33,7 @@ Item {
     readonly property string osdctlPath: "/etc/nixos/dotfiles/hypr/scripts/osdctl"
     readonly property string powerProfileDisplayPath: "/etc/nixos/dotfiles/hypr/scripts/set-power-profile-display"
 
-    implicitWidth: container.width
+    implicitWidth: capsuleRow.implicitWidth
     implicitHeight: 28
     width: implicitWidth
     height: implicitHeight
@@ -59,94 +62,207 @@ Item {
 
     Component.onCompleted: root.refreshBrightness()
 
-    Rectangle {
-        id: container
-        width: systemRow.implicitWidth + 24
-        height: 28
-        radius: 999
-        visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
-        enabled: root.activePanel.length === 0
-        color: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-        border.width: 1
-        border.color: root.ui.border
+    Row {
+        id: capsuleRow
 
-        MouseArea {
-            id: containerMouse
-            anchors.fill: parent
-            hoverEnabled: true
+        height: 28
+        spacing: 6
+
+        Rectangle {
+            id: trayContainer
+            width: trayRow.implicitWidth + 12
+            height: 28
+            radius: 999
+            visible: root.trayItems.length > 0 && (root.activePanel.length === 0 || !root.expandedSurfaceReady)
             enabled: root.activePanel.length === 0
-            acceptedButtons: Qt.NoButton
+            color: trayMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
+            border.width: 1
+            border.color: root.ui.border
+
+            MouseArea {
+                id: trayMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                enabled: root.activePanel.length === 0
+                acceptedButtons: Qt.NoButton
+            }
+
+            Row {
+                id: trayRow
+                anchors.centerIn: parent
+                spacing: 2
+
+                Repeater {
+                    model: root.trayItems
+
+                    MouseArea {
+                        required property var modelData
+
+                        id: trayButton
+
+                        implicitWidth: 26
+                        implicitHeight: 24
+                        width: implicitWidth
+                        height: implicitHeight
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 8
+                            color: trayButton.containsMouse ? root.ui.surfaceHover : "transparent"
+                        }
+
+                        IconImage {
+                            id: trayIcon
+
+                            anchors.centerIn: parent
+                            width: 16
+                            height: 16
+                            source: trayButton.modelData ? trayButton.modelData.icon : ""
+                            asynchronous: true
+                            mipmap: true
+                            opacity: trayButton.modelData && trayButton.modelData.status === Status.Passive ? 0.55 : 1
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: !trayButton.modelData || trayButton.modelData.icon.length === 0 || trayIcon.status === Image.Error
+                            text: "•"
+                            color: root.ui.textMuted
+                            font.family: "Cantarell"
+                            font.pixelSize: 16
+                            font.weight: Font.Bold
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        onClicked: mouse => {
+                            if (!trayButton.modelData)
+                                return;
+
+                            if (mouse.button === Qt.RightButton) {
+                                trayButton.openMenu();
+                            } else if (mouse.button === Qt.MiddleButton) {
+                                trayButton.modelData.secondaryActivate();
+                            } else if (trayButton.modelData.onlyMenu && trayButton.modelData.hasMenu) {
+                                trayButton.openMenu();
+                            } else {
+                                trayButton.modelData.activate();
+                            }
+                        }
+
+                        onWheel: wheel => {
+                            if (!trayButton.modelData)
+                                return;
+
+                            if (Math.abs(wheel.angleDelta.x) > Math.abs(wheel.angleDelta.y))
+                                trayButton.modelData.scroll(wheel.angleDelta.x, true);
+                            else
+                                trayButton.modelData.scroll(wheel.angleDelta.y, false);
+                        }
+
+                        function openMenu() {
+                            if (!trayButton.modelData || !trayButton.modelData.hasMenu)
+                                return;
+
+                            const point = trayButton.mapToItem(null, trayButton.width / 2, trayButton.height);
+                            trayButton.modelData.display(root.parentWindow, point.x, point.y);
+                        }
+                    }
+                }
+            }
         }
 
-        Row {
-            id: systemRow
-            anchors.centerIn: parent
-            spacing: 2
+        Rectangle {
+            id: container
+            width: systemRow.implicitWidth + 24
+            height: 28
+            radius: 999
+            visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
+            enabled: root.activePanel.length === 0
+            color: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
+            border.width: 1
+            border.color: root.ui.border
 
-            IconButton {
-                ui: root.ui
-                icon: root.bluetoothIcon()
-                active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: mouse => {
-                    if (mouse.button === Qt.RightButton)
-                        root.runNativeTool(["blueman-manager"]);
-                    else
-                        root.togglePanel("bluetooth");
+            MouseArea {
+                id: containerMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                enabled: root.activePanel.length === 0
+                acceptedButtons: Qt.NoButton
+            }
+
+            Row {
+                id: systemRow
+                anchors.centerIn: parent
+                spacing: 2
+
+                IconButton {
+                    ui: root.ui
+                    icon: root.bluetoothIcon()
+                    active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            root.runNativeTool(["blueman-manager"]);
+                        else
+                            root.togglePanel("bluetooth");
+                    }
                 }
-            }
 
-            IconButton {
-                ui: root.ui
-                icon: root.networkIcon()
-                active: root.networkConnected()
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: mouse => {
-                    if (mouse.button === Qt.RightButton)
-                        root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
-                    else
-                        root.togglePanel("network");
+                IconButton {
+                    ui: root.ui
+                    icon: root.networkIcon()
+                    active: root.networkConnected()
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
+                        else
+                            root.togglePanel("network");
+                    }
                 }
-            }
 
-            IconButton {
-                ui: root.ui
-                icon: root.volumeIcon()
-                active: root.sink && root.sink.audio && !root.sink.audio.muted
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onClicked: mouse => {
-                    if (mouse.button === Qt.RightButton)
-                        root.runNativeTool(["pavucontrol"]);
-                    else
-                        root.togglePanel("audio");
+                IconButton {
+                    ui: root.ui
+                    icon: root.volumeIcon()
+                    active: root.sink && root.sink.audio && !root.sink.audio.muted
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.RightButton)
+                            root.runNativeTool(["pavucontrol"]);
+                        else
+                            root.togglePanel("audio");
+                    }
                 }
-            }
 
-            IconButton {
-                visible: root.hasBattery()
-                ui: root.ui
-                icon: root.batteryIcon()
-                label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
-                active: true
-                warning: root.hasBattery() && root.batteryPercent() < 30
-                critical: root.hasBattery() && root.batteryPercent() < 15
-                compact: false
-                onClicked: root.togglePanel("battery")
-            }
+                IconButton {
+                    visible: root.hasBattery()
+                    ui: root.ui
+                    icon: root.batteryIcon()
+                    label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
+                    active: true
+                    warning: root.hasBattery() && root.batteryPercent() < 30
+                    critical: root.hasBattery() && root.batteryPercent() < 15
+                    compact: false
+                    onClicked: root.togglePanel("battery")
+                }
 
-            IconButton {
-                visible: root.idleInhibited
-                ui: root.ui
-                icon: "󰅶"
-                active: root.idleInhibited
-                onClicked: root.togglePanel("battery")
-            }
+                IconButton {
+                    visible: root.idleInhibited
+                    ui: root.ui
+                    icon: "󰅶"
+                    active: root.idleInhibited
+                    onClicked: root.togglePanel("battery")
+                }
 
-            IconButton {
-                ui: root.ui
-                icon: ""
-                active: true
-                onClicked: root.togglePanel("power")
+                IconButton {
+                    ui: root.ui
+                    icon: ""
+                    active: true
+                    onClicked: root.togglePanel("power")
+                }
             }
         }
     }
@@ -157,7 +273,7 @@ Item {
         anchor.window: root.parentWindow
         anchor.rect.x: Math.max(12, root.x + root.width - implicitWidth)
         anchor.rect.y: root.y
-        implicitWidth: root.activePanel === "power" ? 220 : 360
+        implicitWidth: 360
         implicitHeight: root.panelHeight()
         originX: Math.max(0, implicitWidth - root.width)
         originY: 0
@@ -319,9 +435,12 @@ Item {
         id: networkPanel
 
         Column {
+            width: parent.width
+            height: parent.height
             spacing: 8
 
             Row {
+                id: networkHeader
                 width: parent.width
                 height: 30
 
@@ -356,28 +475,52 @@ Item {
                 }
             }
 
-            Repeater {
-                model: root.wifiDevice() ? root.wifiDevice().networks : null
+            Flickable {
+                id: wifiScroller
 
-                PanelAction {
-                    required property var modelData
+                width: parent.width
+                height: Math.max(102, parent.height
+                    - networkHeader.height
+                    - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0)
+                    - networkFallback.height
+                    - networkDisconnect.height
+                    - 32)
+                clip: true
+                contentWidth: width
+                contentHeight: wifiList.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
 
-                    width: parent.width
-                    ui: root.ui
-                    icon: root.wifiNetworkIcon(modelData)
-                    text: modelData.name || "Hidden network"
-                    subtext: modelData.connected ? "Connected" : modelData.known ? "Known" : root.securityLabel(modelData)
-                    active: modelData.connected
-                    onClicked: {
-                        if (modelData.known || modelData.security === WifiSecurityType.Open)
-                            modelData.connect();
-                        else
-                            root.promptForNetwork(modelData);
+                Column {
+                    id: wifiList
+
+                    width: wifiScroller.width
+                    spacing: 8
+
+                    Repeater {
+                        model: root.wifiDevice() ? root.wifiDevice().networks : null
+
+                        PanelAction {
+                            required property var modelData
+
+                            width: parent.width
+                            ui: root.ui
+                            icon: root.wifiNetworkIcon(modelData)
+                            text: modelData.name || "Hidden network"
+                            subtext: modelData.connected ? "Connected" : modelData.known ? "Known" : root.securityLabel(modelData)
+                            active: modelData.connected
+                            onClicked: {
+                                if (modelData.known || modelData.security === WifiSecurityType.Open)
+                                    modelData.connect();
+                                else
+                                    root.promptForNetwork(modelData);
+                            }
+                        }
                     }
                 }
             }
 
             Rectangle {
+                id: passwordPrompt
                 visible: root.passwordTarget !== null
                 width: parent.width
                 height: root.passwordError.length > 0 ? 104 : 86
@@ -459,6 +602,7 @@ Item {
             }
 
             PanelAction {
+                id: networkFallback
                 width: parent.width
                 ui: root.ui
                 icon: ""
@@ -468,6 +612,7 @@ Item {
             }
 
             PanelAction {
+                id: networkDisconnect
                 width: parent.width
                 ui: root.ui
                 icon: "󰤭"
@@ -487,9 +632,12 @@ Item {
         id: bluetoothPanel
 
         Column {
+            width: parent.width
+            height: parent.height
             spacing: 8
 
             Row {
+                id: bluetoothHeader
                 width: parent.width
                 height: 30
 
@@ -522,6 +670,7 @@ Item {
             }
 
             Rectangle {
+                id: bluetoothScanning
                 visible: root.bluetoothAdapter && root.bluetoothAdapter.discovering
                 width: parent.width
                 height: 28
@@ -560,25 +709,48 @@ Item {
                 }
             }
 
-            Repeater {
-                model: ScriptModel {
-                    values: root.sortedBluetoothDevices()
-                }
+            Flickable {
+                id: bluetoothScroller
 
-                PanelAction {
-                    required property var modelData
+                width: parent.width
+                height: Math.max(102, parent.height
+                    - bluetoothHeader.height
+                    - (bluetoothScanning.visible ? bluetoothScanning.height + 8 : 0)
+                    - bluetoothFallback.height
+                    - 24)
+                clip: true
+                contentWidth: width
+                contentHeight: bluetoothList.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
 
-                    width: parent.width
-                    ui: root.ui
-                    icon: modelData.connected ? "󰂱" : "󰂯"
-                    text: modelData.name || modelData.deviceName || modelData.address
-                    subtext: modelData.connected ? root.bluetoothBatteryLabel(modelData) : BluetoothDeviceState.toString(modelData.state)
-                    active: modelData.connected
-                    onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
+                Column {
+                    id: bluetoothList
+
+                    width: bluetoothScroller.width
+                    spacing: 8
+
+                    Repeater {
+                        model: ScriptModel {
+                            values: root.sortedBluetoothDevices()
+                        }
+
+                        PanelAction {
+                            required property var modelData
+
+                            width: parent.width
+                            ui: root.ui
+                            icon: modelData.connected ? "󰂱" : "󰂯"
+                            text: modelData.name || modelData.deviceName || modelData.address
+                            subtext: modelData.connected ? root.bluetoothBatteryLabel(modelData) : BluetoothDeviceState.toString(modelData.state)
+                            active: modelData.connected
+                            onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
+                        }
+                    }
                 }
             }
 
             PanelAction {
+                id: bluetoothFallback
                 width: parent.width
                 ui: root.ui
                 icon: "󰂯"
@@ -819,9 +991,9 @@ Item {
 
     function panelHeight() {
         if (activePanel === "power")
-            return 235;
+            return 282;
         if (activePanel === "audio")
-            return 399;
+            return Math.max(456, 304 + ((audioOutputDevices().length + audioInputDevices().length) * 44));
         if (activePanel === "battery")
             return root.brightnessAvailable ? 323 : 265;
         if (activePanel === "bluetooth")

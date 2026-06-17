@@ -42,6 +42,22 @@ QS.PopupWindow {
         }
     }
 
+    onImplicitWidthChanged: syncOpenSurface()
+    onImplicitHeightChanged: syncOpenSurface()
+    onOriginXChanged: syncOpenSurface()
+    onOriginYChanged: syncOpenSurface()
+
+    function syncOpenSurface() {
+        if (!visible || openAnimation.running)
+            return;
+
+        surface.x = 0;
+        surface.y = 0;
+        surface.width = root.implicitWidth;
+        surface.height = root.implicitHeight;
+        surface.radius = 16;
+    }
+
     Rectangle {
         id: surface
 

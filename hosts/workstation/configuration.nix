@@ -18,7 +18,7 @@
   boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
   boot.loader.systemd-boot.windows.windows = {
     title = "Windows";
-    efiDeviceHandle = "HD2b";
+    efiDeviceHandle = "FS1";
     sortKey = "z_windows";
   };
   boot.loader.efi.canTouchEfiVariables = true;
