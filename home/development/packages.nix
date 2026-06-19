@@ -13,6 +13,7 @@
       # Nix helpers
       nil # Nix LSP
       nixd # Nix LSP used by Zed's Nix extension
+      qt6.qtdeclarative # QML LSP for Zed's QML extension
       nixfmt # Nix formatter
       nix-tree # visualise the dependency graph
 
