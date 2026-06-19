@@ -17,7 +17,7 @@ MouseArea {
     height: implicitHeight
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    onClicked: calendar.visible = !calendar.visible
+    onClicked: calendar.expanded = !calendar.expanded
 
     SystemClock {
         id: clock
@@ -27,7 +27,7 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: 999
-        visible: !calendar.visible || !root.expandedSurfaceReady
+        visible: !calendar.expanded || !root.expandedSurfaceReady
         color: root.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
         border.width: 1
         border.color: root.ui.border
@@ -36,7 +36,7 @@ MouseArea {
     Text {
         id: clockText
         anchors.centerIn: parent
-        visible: !calendar.visible || !root.expandedSurfaceReady
+        visible: !calendar.expanded || !root.expandedSurfaceReady
         text: Qt.formatDateTime(clock.date, "hh:mm | dd MMM yyyy")
         color: root.ui.text
         font.family: "Cantarell"
@@ -56,11 +56,9 @@ MouseArea {
         originY: 0
         originWidth: root.width
         originHeight: root.height
-        visible: false
-        onVisibleChanged: {
-            if (!visible)
-                root.expandedSurfaceReady = false;
-        }
+        expanded: false
+        closeKey: expanded ? "calendar" : ""
+        onCloseRequested: calendar.expanded = false
         onSurfaceOpened: root.expandedSurfaceReady = true
         onSurfaceClosed: root.expandedSurfaceReady = false
 

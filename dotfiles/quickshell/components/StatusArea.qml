@@ -19,6 +19,8 @@ Item {
     required property var parentWindow
 
     property string activePanel: ""
+    property string visiblePanel: ""
+    property bool panelVisible: false
     property var devices: Networking.devices.values
     property var bluetoothAdapter: Bluetooth.defaultAdapter
     property var bluetoothDevices: Bluetooth.devices.values
@@ -31,6 +33,7 @@ Item {
     property bool idleInhibited: false
     property bool expandedSurfaceReady: false
     property int powerSelectedIndex: 0
+    readonly property bool powerProfilesAvailable: root.hasBattery()
     readonly property var powerActions: [
         { icon: "", text: "Lock", command: ["loginctl", "lock-session"] },
         { icon: "󰍃", text: "Logout", command: ["hyprctl", "dispatch", "exit"] },
@@ -38,8 +41,8 @@ Item {
         { icon: "󰜉", text: "Reboot", command: ["systemctl", "reboot"] },
         { icon: "", text: "Shutdown", command: ["systemctl", "poweroff"], danger: true },
     ]
-    readonly property string osdctlPath: "/etc/nixos/dotfiles/hypr/scripts/osdctl"
-    readonly property string powerProfileDisplayPath: "/etc/nixos/dotfiles/hypr/scripts/set-power-profile-display"
+    readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
+    readonly property string powerProfileDisplayPath: `${configHome}/hypr/scripts/set-power-profile-display`
 
     implicitWidth: capsuleRow.implicitWidth
     implicitHeight: 28
@@ -69,6 +72,11 @@ Item {
     }
 
     Component.onCompleted: root.refreshBrightness()
+
+    onActivePanelChanged: {
+        if (activePanel.length > 0)
+            visiblePanel = activePanel;
+    }
 
     Row {
         id: capsuleRow
@@ -287,19 +295,24 @@ Item {
         originY: 0
         originWidth: root.width
         originHeight: root.height
-        visible: root.activePanel.length > 0
+        expanded: root.activePanel.length > 0
+        closeKey: root.activePanel
         onVisibleChanged: {
-            if (!visible) {
-                root.activePanel = "";
-                root.expandedSurfaceReady = false;
-            }
+            root.panelVisible = visible;
+        }
+        onCloseRequested: {
+            root.activePanel = "";
         }
         onSurfaceOpened: root.expandedSurfaceReady = true
-        onSurfaceClosed: root.expandedSurfaceReady = false
+        onSurfaceClosed: {
+            root.activePanel = "";
+            root.visiblePanel = "";
+            root.expandedSurfaceReady = false;
+        }
 
         Item {
             anchors.fill: parent
-            focus: root.activePanel === "power"
+            focus: root.visiblePanel === "power"
             Keys.onPressed: event => {
                 if (root.handlePowerKey(event.key))
                     event.accepted = true;
@@ -390,11 +403,12 @@ Item {
                     width: parent.width
                     height: parent.height - 51
                     clip: true
-                    sourceComponent: root.activePanel === "power" ? powerPanel
-                        : root.activePanel === "network" ? networkPanel
-                        : root.activePanel === "bluetooth" ? bluetoothPanel
-                        : root.activePanel === "audio" ? audioPanel
-                        : batteryPanel
+                    sourceComponent: root.visiblePanel === "power" ? powerPanel
+                        : root.visiblePanel === "network" ? networkPanel
+                        : root.visiblePanel === "bluetooth" ? bluetoothPanel
+                        : root.visiblePanel === "audio" ? audioPanel
+                        : root.visiblePanel === "battery" ? batteryPanel
+                        : null
                 }
             }
         }
@@ -929,30 +943,32 @@ Item {
             }
 
             PanelAction {
+                visible: root.powerProfilesAvailable
                 width: parent.width
                 ui: root.ui
                 icon: "󰌪"
                 text: "Power saver"
-                active: PowerProfiles.profile === PowerProfile.PowerSaver
+                active: root.powerProfileActive(PowerProfile.PowerSaver)
                 onClicked: root.setPowerProfile("power-saver")
             }
 
             PanelAction {
+                visible: root.powerProfilesAvailable
                 width: parent.width
                 ui: root.ui
                 icon: ""
                 text: "Balanced"
-                active: PowerProfiles.profile === PowerProfile.Balanced
+                active: root.powerProfileActive(PowerProfile.Balanced)
                 onClicked: root.setPowerProfile("balanced")
             }
 
             PanelAction {
-                visible: PowerProfiles.hasPerformanceProfile
+                visible: root.powerProfilesAvailable && PowerProfiles.hasPerformanceProfile
                 width: parent.width
                 ui: root.ui
                 icon: ""
                 text: "Performance"
-                active: PowerProfiles.profile === PowerProfile.Performance
+                active: root.powerProfileActive(PowerProfile.Performance)
                 onClicked: root.setPowerProfile("performance")
             }
         }
@@ -964,7 +980,6 @@ Item {
     function togglePanel(name) {
         if (activePanel === name) {
             activePanel = "";
-            expandedSurfaceReady = false;
         } else {
             expandedSurfaceReady = activePanel.length > 0;
             activePanel = name;
@@ -1027,27 +1042,29 @@ Item {
     }
 
     function panelHeight() {
-        if (activePanel === "power")
+        const panelName = visiblePanel.length > 0 ? visiblePanel : activePanel;
+        if (panelName === "power")
             return 282;
-        if (activePanel === "audio")
+        if (panelName === "audio")
             return Math.max(456, 304 + ((audioOutputDevices().length + audioInputDevices().length) * 44));
-        if (activePanel === "battery")
+        if (panelName === "battery")
             return root.brightnessAvailable ? 323 : 265;
-        if (activePanel === "bluetooth")
+        if (panelName === "bluetooth")
             return 381;
         return 501;
     }
 
     function panelTitle() {
-        if (activePanel === "power")
+        const panelName = visiblePanel.length > 0 ? visiblePanel : activePanel;
+        if (panelName === "power")
             return "Power";
-        if (activePanel === "network")
+        if (panelName === "network")
             return "Wi-Fi";
-        if (activePanel === "bluetooth")
+        if (panelName === "bluetooth")
             return "Bluetooth";
-        if (activePanel === "audio")
+        if (panelName === "audio")
             return "Audio";
-        if (activePanel === "battery")
+        if (panelName === "battery")
             return "Power";
         return "";
     }
@@ -1299,7 +1316,14 @@ Item {
         Quickshell.execDetached(["brightnessctl", "-n2", "set", `${percentage}%`]);
     }
 
+    function powerProfileActive(profile) {
+        return powerProfilesAvailable && PowerProfiles.profile === profile;
+    }
+
     function setPowerProfile(profile) {
+        if (!powerProfilesAvailable)
+            return;
+
         Quickshell.execDetached([powerProfileDisplayPath, profile]);
     }
 }

@@ -11,8 +11,12 @@ QS.PopupWindow {
     property real originY: 0
     property real originWidth: 1
     property real originHeight: 28
-    readonly property int debugAnimationDuration: 1200
-    readonly property int debugSurfaceReadyDelay: 80
+    property bool expanded: false
+    property string closeKey: expanded ? "expanded" : ""
+    property bool hidingAfterClose: false
+    readonly property int debugAnimationDuration: 160
+    readonly property int closeAnimationDuration: 120
+    readonly property int debugSurfaceReadyDelay: debugAnimationDuration
     default property alias content: content.data
     signal surfaceOpened()
     signal surfaceClosed()
@@ -21,31 +25,41 @@ QS.PopupWindow {
     color: "transparent"
     grabFocus: true
 
-    Keys.onEscapePressed: {
-        root.closeRequested();
-        root.visible = false;
-    }
-
     BackgroundEffect.blurRegion: Region {
         item: surface
         radius: surface.radius
     }
 
+    onExpandedChanged: {
+        if (expanded)
+            startOpenAnimation();
+        else
+            startCloseAnimation();
+    }
+
     onVisibleChanged: {
-        if (visible) {
-            openAnimation.stop();
-            surface.x = root.originX;
-            surface.y = root.originY;
-            surface.width = root.originWidth;
-            surface.height = root.originHeight;
-            surface.radius = root.originHeight / 2;
-            openAnimation.start();
-            openedTimer.restart();
-        } else {
-            openedTimer.stop();
-            openAnimation.stop();
-            surfaceClosed();
+        if (visible)
+            return;
+
+        openedTimer.stop();
+
+        if (hidingAfterClose) {
+            hidingAfterClose = false;
+            if (!closeAnimation.running)
+                surfaceClosed();
+            return;
         }
+
+        openAnimation.stop();
+        closeAnimation.stop();
+
+        if (expanded) {
+            visible = true;
+            closeRequested();
+            return;
+        }
+
+        surfaceClosed();
     }
 
     onImplicitWidthChanged: syncOpenSurface()
@@ -54,7 +68,7 @@ QS.PopupWindow {
     onOriginYChanged: syncOpenSurface()
 
     function syncOpenSurface() {
-        if (!visible || openAnimation.running)
+        if (!visible || !expanded || openAnimation.running || closeAnimation.running)
             return;
 
         surface.x = 0;
@@ -62,6 +76,32 @@ QS.PopupWindow {
         surface.width = root.implicitWidth;
         surface.height = root.implicitHeight;
         surface.radius = 16;
+    }
+
+    function startOpenAnimation() {
+        closeAnimation.stop();
+        openAnimation.stop();
+        if (!visible)
+            visible = true;
+
+        surface.x = root.originX;
+        surface.y = root.originY;
+        surface.width = root.originWidth;
+        surface.height = root.originHeight;
+        surface.radius = root.originHeight / 2;
+        openAnimation.start();
+        openedTimer.restart();
+    }
+
+    function startCloseAnimation() {
+        openedTimer.stop();
+        openAnimation.stop();
+        if (!visible) {
+            surfaceClosed();
+            return;
+        }
+
+        closeAnimation.start();
     }
 
     Rectangle {
@@ -85,6 +125,11 @@ QS.PopupWindow {
             anchors.topMargin: 0
             anchors.bottomMargin: 12
             clip: true
+            focus: root.visible
+
+            Keys.onEscapePressed: {
+                root.closeRequested();
+            }
         }
     }
 
@@ -129,6 +174,57 @@ QS.PopupWindow {
             to: 16
             duration: root.debugAnimationDuration
             easing.type: Easing.OutCubic
+        }
+    }
+
+    ParallelAnimation {
+        id: closeAnimation
+
+        onFinished: {
+            if (!root.expanded) {
+                root.hidingAfterClose = true;
+                root.visible = false;
+            }
+        }
+
+        NumberAnimation {
+            target: surface
+            property: "x"
+            to: root.originX
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: surface
+            property: "y"
+            to: root.originY
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: surface
+            property: "width"
+            to: root.originWidth
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: surface
+            property: "height"
+            to: root.originHeight
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: surface
+            property: "radius"
+            to: root.originHeight / 2
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
         }
     }
 
