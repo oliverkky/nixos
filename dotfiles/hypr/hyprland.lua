@@ -1,6 +1,7 @@
 -- Hyprland 0.55+ Lua config.
 
-local home = os.getenv("HOME") or "/home/oliver"
+local user = os.getenv("USER")
+local home = os.getenv("HOME") or (user and ("/home/" .. user) or ".")
 local config_root = os.getenv("XDG_CONFIG_HOME") or (home .. "/.config")
 local module_root = config_root .. "/hypr/lua"
 

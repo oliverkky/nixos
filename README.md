@@ -11,8 +11,8 @@ The problem? In which order do I prioritize these traits?
 
 ## Layout
 
-- `flake.nix` wires inputs, the formatter, the NixOS host, and Home Manager.
-- `hosts/laptop1` contains machine-specific facts and hardware configuration.
+- `flake.nix` wires inputs, the formatter, the NixOS hosts, and Home Manager.
+- `hosts/*` contains machine-specific facts and hardware configuration.
 - `nixosModules` contains system modules under the `my.nixos.*` option tree.
 - `home` contains Home Manager modules under the `my.home.*` option tree.
 - `dotfiles` contains application configs linked into `~/.config`.
