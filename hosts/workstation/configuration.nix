@@ -158,17 +158,6 @@
   # ── Nix ─────────────────────────────────────────────────────────────────────
 
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = [
-    (_final: prev: {
-      ldmtool = prev.ldmtool.overrideAttrs (old: {
-        postPatch = (old.postPatch or "") + ''
-
-          substituteInPlace src/ldmtool.c \
-            --replace-fail 'ldm_new(&err)' 'ldm_new()'
-        '';
-      });
-    })
-  ];
 
   nix.settings = {
     experimental-features = [

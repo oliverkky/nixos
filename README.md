@@ -61,14 +61,12 @@ nix flake check --no-build
 My setup intentionally tracks adventurous inputs now, because I'm irresponsible:
 
 - `nixos-unstable`
-- upstream Hyprland
 - SilentSDDM from GitHub
 
 TODO, when this approach bites me in the ass.
 
-1. Switch Hyprland back to the nixpkgs package once the needed version is there.
-2. Replace or pin SilentSDDM more conservatively.
-3. Move from `nixos-unstable` to a NixOS release.
+1. Replace or pin SilentSDDM more conservatively.
+2. Move from `nixos-unstable` to a NixOS release.
 
 ## Ownership
 
