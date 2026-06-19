@@ -16,9 +16,15 @@ QS.PopupWindow {
     default property alias content: content.data
     signal surfaceOpened()
     signal surfaceClosed()
+    signal closeRequested()
 
     color: "transparent"
     grabFocus: true
+
+    Keys.onEscapePressed: {
+        root.closeRequested();
+        root.visible = false;
+    }
 
     BackgroundEffect.blurRegion: Region {
         item: surface

@@ -2,12 +2,23 @@
 //@ pragma AppId oliver.quickshell
 
 import Quickshell
+import Quickshell.Io
 import "components"
 
 ShellRoot {
     id: root
 
+    signal openSystemMenu()
+
     settings.watchFiles: true
+
+    IpcHandler {
+        target: "systemMenu"
+
+        function open() {
+            root.openSystemMenu();
+        }
+    }
 
     readonly property string primaryMonitor: Quickshell.env("HYPR_PRIMARY_MONITOR") || ""
     readonly property var primaryScreens: {
@@ -28,6 +39,7 @@ ShellRoot {
 
         Bar {
             required property var modelData
+            shellRoot: root
             screen: modelData
         }
     }

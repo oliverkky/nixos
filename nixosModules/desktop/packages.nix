@@ -75,12 +75,14 @@ in
       file-roller
       evince
       gnome-disk-utility
+      snapshot
 
       # Misc
       fastfetch
       obsidian
       brave
       blenderRocm
+      obs-studio
     ];
   };
 }

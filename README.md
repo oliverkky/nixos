@@ -1,52 +1,13 @@
 # My NixOS Configuration
 
-Personal NixOS and Home Manager configuration for `laptop1`... for now.
+Personal NixOS and Home Manager configuration for my machines. Maybe later for every machine.
 
-## Rebuild
+## Philosophy
 
-```sh
-sudo nixos-rebuild switch --flake /etc/nixos#laptop1
-```
+If I am to spend most of my life on a computer, I shall strive to make the experience as good as possible.
 
-More in `docs/rebuild-workflow.md`.
-
-## Workstation Install
-
-Install NixOS with the graphical installer first. After booting the installed
-system, clone this repo to `/etc/nixos`, then replace the workstation hardware
-placeholder with the generated hardware file:
-
-```sh
-sudo cp /etc/nixos/hardware-configuration.nix /etc/nixos/hosts/workstation/hardware-configuration.nix
-```
-
-The `#workstation` host is intentionally not rebuildable with the placeholder
-hardware file, because it does not know the workstation's root filesystem yet.
-
-If the graphical installer generated settings you still need from
-`/etc/nixos/configuration.nix`, copy those into
-`hosts/workstation/configuration.nix` manually. Do not copy laptop-specific
-settings from `hosts/laptop1`.
-
-Before switching, check `hosts/workstation/constants.nix`:
-
-- `primaryMonitor` should match the workstation connector, for example `DP-1`
-  or `HDMI-A-1`.
-- `stateVersion` should match the NixOS release first installed on that
-  machine.
-
-Then switch to the workstation host:
-
-```sh
-sudo nixos-rebuild switch --flake /etc/nixos#workstation
-```
-
-## Format And Check
-
-```sh
-nix fmt
-nix flake check --no-build
-```
+Of course, I'm shooting for a gorgeous, fast, responsive, stable, intuitive system.
+The problem? In which order do I prioritize these traits?
 
 ## Layout
 

@@ -30,6 +30,14 @@ Item {
     property bool brightnessAvailable: false
     property bool idleInhibited: false
     property bool expandedSurfaceReady: false
+    property int powerSelectedIndex: 0
+    readonly property var powerActions: [
+        { icon: "", text: "Lock", command: ["loginctl", "lock-session"] },
+        { icon: "󰍃", text: "Logout", command: ["hyprctl", "dispatch", "exit"] },
+        { icon: "󰤄", text: "Suspend", command: ["systemctl", "suspend"] },
+        { icon: "󰜉", text: "Reboot", command: ["systemctl", "reboot"] },
+        { icon: "", text: "Shutdown", command: ["systemctl", "poweroff"], danger: true },
+    ]
     readonly property string osdctlPath: "/etc/nixos/dotfiles/hypr/scripts/osdctl"
     readonly property string powerProfileDisplayPath: "/etc/nixos/dotfiles/hypr/scripts/set-power-profile-display"
 
@@ -289,95 +297,105 @@ Item {
         onSurfaceOpened: root.expandedSurfaceReady = true
         onSurfaceClosed: root.expandedSurfaceReady = false
 
-        Column {
+        Item {
             anchors.fill: parent
-            spacing: 10
+            focus: root.activePanel === "power"
+            Keys.onPressed: event => {
+                if (root.handlePowerKey(event.key))
+                    event.accepted = true;
+            }
 
-            Row {
+            Column {
                 width: parent.width
-                height: 28
-
-                Text {
-                    width: parent.width - statusHeaderRow.implicitWidth
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.panelTitle()
-                    color: root.ui.text
-                    elide: Text.ElideRight
-                    font.family: "Cantarell"
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                }
+                height: parent.height
+                spacing: 10
 
                 Row {
-                    id: statusHeaderRow
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    width: parent.width
+                    height: 28
 
-                    IconButton {
-                        ui: root.ui
-                        icon: root.bluetoothIcon()
-                        active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                        onClicked: root.togglePanel("bluetooth")
+                    Text {
+                        width: parent.width - statusHeaderRow.implicitWidth
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.panelTitle()
+                        color: root.ui.text
+                        elide: Text.ElideRight
+                        font.family: "Cantarell"
+                        font.pixelSize: 13
+                        font.weight: Font.Bold
                     }
 
-                    IconButton {
-                        ui: root.ui
-                        icon: root.networkIcon()
-                        active: root.networkConnected()
-                        onClicked: root.togglePanel("network")
-                    }
+                    Row {
+                        id: statusHeaderRow
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
 
-                    IconButton {
-                        ui: root.ui
-                        icon: root.volumeIcon()
-                        active: root.sink && root.sink.audio && !root.sink.audio.muted
-                        onClicked: root.togglePanel("audio")
-                    }
+                        IconButton {
+                            ui: root.ui
+                            icon: root.bluetoothIcon()
+                            active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
+                            onClicked: root.togglePanel("bluetooth")
+                        }
 
-                    IconButton {
-                        visible: root.hasBattery()
-                        ui: root.ui
-                        icon: root.batteryIcon()
-                        label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
-                        active: true
-                        warning: root.hasBattery() && root.batteryPercent() < 30
-                        critical: root.hasBattery() && root.batteryPercent() < 15
-                        compact: false
-                        onClicked: root.togglePanel("battery")
-                    }
+                        IconButton {
+                            ui: root.ui
+                            icon: root.networkIcon()
+                            active: root.networkConnected()
+                            onClicked: root.togglePanel("network")
+                        }
 
-                    IconButton {
-                        visible: root.idleInhibited
-                        ui: root.ui
-                        icon: "󰅶"
-                        active: root.idleInhibited
-                        onClicked: root.togglePanel("battery")
-                    }
+                        IconButton {
+                            ui: root.ui
+                            icon: root.volumeIcon()
+                            active: root.sink && root.sink.audio && !root.sink.audio.muted
+                            onClicked: root.togglePanel("audio")
+                        }
 
-                    IconButton {
-                        ui: root.ui
-                        icon: ""
-                        active: true
-                        onClicked: root.togglePanel("power")
+                        IconButton {
+                            visible: root.hasBattery()
+                            ui: root.ui
+                            icon: root.batteryIcon()
+                            label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
+                            active: true
+                            warning: root.hasBattery() && root.batteryPercent() < 30
+                            critical: root.hasBattery() && root.batteryPercent() < 15
+                            compact: false
+                            onClicked: root.togglePanel("battery")
+                        }
+
+                        IconButton {
+                            visible: root.idleInhibited
+                            ui: root.ui
+                            icon: "󰅶"
+                            active: root.idleInhibited
+                            onClicked: root.togglePanel("battery")
+                        }
+
+                        IconButton {
+                            ui: root.ui
+                            icon: ""
+                            active: true
+                            onClicked: root.togglePanel("power")
+                        }
                     }
                 }
-            }
 
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: root.ui.borderSoft
-            }
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: root.ui.borderSoft
+                }
 
-            Loader {
-                width: parent.width
-                height: parent.height - 51
-                clip: true
-                sourceComponent: root.activePanel === "power" ? powerPanel
-                    : root.activePanel === "network" ? networkPanel
-                    : root.activePanel === "bluetooth" ? bluetoothPanel
-                    : root.activePanel === "audio" ? audioPanel
-                    : batteryPanel
+                Loader {
+                    width: parent.width
+                    height: parent.height - 51
+                    clip: true
+                    sourceComponent: root.activePanel === "power" ? powerPanel
+                        : root.activePanel === "network" ? networkPanel
+                        : root.activePanel === "bluetooth" ? bluetoothPanel
+                        : root.activePanel === "audio" ? audioPanel
+                        : batteryPanel
+                }
             }
         }
     }
@@ -388,45 +406,22 @@ Item {
         Column {
             spacing: 6
 
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: ""
-                text: "Lock"
-                onClicked: root.runAndClose(["loginctl", "lock-session"])
-            }
+            Repeater {
+                model: root.powerActions
 
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: "󰍃"
-                text: "Logout"
-                onClicked: root.runAndClose(["hyprctl", "dispatch", "exit"])
-            }
+                PanelAction {
+                    required property int index
+                    required property var modelData
 
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: "󰤄"
-                text: "Suspend"
-                onClicked: root.runAndClose(["systemctl", "suspend"])
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: "󰜉"
-                text: "Reboot"
-                onClicked: root.runAndClose(["systemctl", "reboot"])
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: ""
-                text: "Shutdown"
-                danger: true
-                onClicked: root.runAndClose(["systemctl", "poweroff"])
+                    width: parent.width
+                    ui: root.ui
+                    icon: modelData.icon
+                    text: modelData.text
+                    danger: modelData.danger || false
+                    selected: root.activePanel === "power" && root.powerSelectedIndex === index
+                    onEntered: root.powerSelectedIndex = index
+                    onClicked: root.runPowerAction(index)
+                }
             }
         }
     }
@@ -975,13 +970,55 @@ Item {
             activePanel = name;
         }
 
+        if (activePanel === "power")
+            powerSelectedIndex = 0;
         if (activePanel === "battery")
             refreshBrightness();
+    }
+
+    function openPowerMenu() {
+        expandedSurfaceReady = activePanel.length > 0;
+        activePanel = "power";
+        powerSelectedIndex = 0;
     }
 
     function runAndClose(command) {
         activePanel = "";
         Quickshell.execDetached(command);
+    }
+
+    function runPowerAction(index) {
+        if (index < 0 || index >= powerActions.length)
+            return;
+
+        runAndClose(powerActions[index].command);
+    }
+
+    function movePowerSelection(delta) {
+        if (powerActions.length === 0)
+            return;
+
+        powerSelectedIndex = (powerSelectedIndex + delta + powerActions.length) % powerActions.length;
+    }
+
+    function handlePowerKey(key) {
+        if (activePanel !== "power")
+            return false;
+
+        if (key === Qt.Key_Up || key === Qt.Key_K) {
+            movePowerSelection(-1);
+            return true;
+        }
+        if (key === Qt.Key_Down || key === Qt.Key_J) {
+            movePowerSelection(1);
+            return true;
+        }
+        if (key === Qt.Key_Return || key === Qt.Key_Enter) {
+            runPowerAction(powerSelectedIndex);
+            return true;
+        }
+
+        return false;
     }
 
     function runNativeTool(command) {

@@ -6,6 +6,7 @@ import Quickshell.Wayland
 QS.PanelWindow {
     id: root
 
+    required property var shellRoot
     property int barHeight: 32
 
     anchors {
@@ -40,6 +41,14 @@ QS.PanelWindow {
 
     ColorScheme {
         id: colorScheme
+    }
+
+    Connections {
+        target: root.shellRoot
+
+        function onOpenSystemMenu() {
+            statusArea.openPowerMenu();
+        }
     }
 
     Item {

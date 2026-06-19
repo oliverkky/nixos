@@ -8,6 +8,7 @@ MouseArea {
     property string text: ""
     property string subtext: ""
     property bool active: false
+    property bool selected: false
     property bool warning: false
     property bool danger: false
 
@@ -19,8 +20,8 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: 8
-        color: root.containsMouse || root.active ? root.ui.surfaceHover : "transparent"
-        border.width: root.active ? 1 : 0
+        color: root.containsMouse || root.active || root.selected ? root.ui.surfaceHover : "transparent"
+        border.width: root.active || root.selected ? 1 : 0
         border.color: root.ui.borderSoft
     }
 
