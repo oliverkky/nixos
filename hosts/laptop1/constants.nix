@@ -5,7 +5,7 @@
   primaryUser = "oliver";
   reaper = {
     uiScale = 1.5;
-    pipewireLatency = "128/48000";
+    pipewireLatency = "64/48000";
   };
   stateVersion = "24.11";
 }

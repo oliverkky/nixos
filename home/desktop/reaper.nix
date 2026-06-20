@@ -12,10 +12,15 @@ let
   lv2Path = "${config.home.profileDirectory}/lib/lv2";
   reaper = pkgs.symlinkJoin {
     name = "reaper-pipewire-jack";
-    paths = [ pkgs.reaper ];
+    paths = [
+      pkgs.reaper
+      pkgs.pipewire.jack
+    ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram "$out/bin/reaper" \
+      rm "$out/bin/reaper"
+      makeWrapper "${pkgs.pipewire.jack}/bin/pw-jack" "$out/bin/reaper" \
+        --add-flags "${pkgs.reaper}/bin/reaper" \
         --set PIPEWIRE_LATENCY "${pipewireLatency}" \
         --prefix LV2_PATH : "${lv2Path}"
     '';

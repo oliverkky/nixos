@@ -50,7 +50,10 @@
   console.keyMap = "cz-lat2";
 
   my.nixos = {
-    desktop.enable = true;
+    desktop = {
+      enable = true;
+      audio.production.enable = true;
+    };
     development.enable = true;
     laptop.enable = true;
     networking = {
