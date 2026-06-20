@@ -23,6 +23,28 @@
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
       laptop1 = import ./hosts/laptop1/constants.nix;
       workstation = import ./hosts/workstation/constants.nix;
+      mkHost =
+        name: host:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs host;
+          };
+          modules = [
+            (./hosts + "/${name}/configuration.nix")
+            ./nixosModules
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.${host.primaryUser} = import (./hosts + "/${name}/home.nix");
+              home-manager.extraSpecialArgs = {
+                inherit inputs host;
+              };
+              home-manager.backupFileExtension = "backup";
+            }
+          ];
+        };
     in
     {
       formatter.x86_64-linux = pkgs.writeShellApplication {
@@ -36,50 +58,7 @@
         '';
       };
 
-      nixosConfigurations.laptop1 = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs;
-          host = laptop1;
-        };
-        modules = [
-          ./hosts/laptop1/configuration.nix
-          ./nixosModules
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.${laptop1.primaryUser} = import ./hosts/laptop1/home.nix;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-              host = laptop1;
-            };
-            home-manager.backupFileExtension = "backup";
-          }
-        ];
-      };
-
-      nixosConfigurations.workstation = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs;
-          host = workstation;
-        };
-        modules = [
-          ./hosts/workstation/configuration.nix
-          ./nixosModules
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.${workstation.primaryUser} = import ./hosts/workstation/home.nix;
-            home-manager.extraSpecialArgs = {
-              inherit inputs;
-              host = workstation;
-            };
-            home-manager.backupFileExtension = "backup";
-          }
-        ];
-      };
+      nixosConfigurations.laptop1 = mkHost "laptop1" laptop1;
+      nixosConfigurations.workstation = mkHost "workstation" workstation;
     };
 }
