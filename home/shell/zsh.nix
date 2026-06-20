@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  host,
+  lib,
+  ...
+}:
 
 {
   options.my.home.shell.zsh.enable = lib.mkEnableOption "Zsh user configuration";
@@ -16,7 +21,7 @@
         la = "ls -la";
         ls = "eza --icons";
         tree = "eza --tree --icons";
-        update = "sudo nixos-rebuild switch --flake /etc/nixos#laptop1";
+        update = "sudo nixos-rebuild switch --flake /etc/nixos#${host.hostName}";
         nixcfg = "cd /etc/nixos";
         dotcfg = "cd /etc/nixos/dotfiles";
         nixedit = "cd /etc/nixos && $EDITOR .";

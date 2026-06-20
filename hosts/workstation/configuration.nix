@@ -5,6 +5,20 @@
   ...
 }:
 
+let
+  primaryUserUid = toString host.primaryUid;
+  primaryUserGid = toString host.primaryGid;
+  ntfsMountOptions = name: [
+    "rw"
+    "uid=${primaryUserUid}"
+    "gid=${primaryUserGid}"
+    "umask=0022"
+    "nofail"
+    "x-systemd.device-timeout=5s"
+    "x-gvfs-show"
+    "x-gvfs-name=${name}"
+  ];
+in
 {
   imports = [
     ./graphics.nix
@@ -32,6 +46,8 @@
   users.users.${host.primaryUser} = {
     isNormalUser = true;
     description = "Oliver Klinkovský";
+    uid = host.primaryUid;
+    group = "users";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -41,6 +57,7 @@
     ];
     shell = pkgs.zsh;
   };
+  users.groups.users.gid = host.primaryGid;
 
   # ── Locale & Time ───────────────────────────────────────────────────────────
 
@@ -96,46 +113,19 @@
   fileSystems."/mnt/bigboi" = {
     device = "/dev/disk/by-label/BigBoi";
     fsType = "ntfs3";
-    options = [
-      "rw"
-      "uid=1000"
-      "gid=100"
-      "umask=0022"
-      "nofail"
-      "x-systemd.device-timeout=5s"
-      "x-gvfs-show"
-      "x-gvfs-name=BigBoi"
-    ];
+    options = ntfsMountOptions "BigBoi";
   };
 
   fileSystems."/mnt/hdd" = {
     device = "/dev/disk/by-label/HDD";
     fsType = "ntfs3";
-    options = [
-      "rw"
-      "uid=1000"
-      "gid=100"
-      "umask=0022"
-      "nofail"
-      "x-systemd.device-timeout=5s"
-      "x-gvfs-show"
-      "x-gvfs-name=HDD"
-    ];
+    options = ntfsMountOptions "HDD";
   };
 
   fileSystems."/mnt/ssd" = {
     device = "/dev/disk/by-label/SSD";
     fsType = "ntfs3";
-    options = [
-      "rw"
-      "uid=1000"
-      "gid=100"
-      "umask=0022"
-      "nofail"
-      "x-systemd.device-timeout=5s"
-      "x-gvfs-show"
-      "x-gvfs-name=SSD"
-    ];
+    options = ntfsMountOptions "SSD";
   };
 
   my.nixos = {

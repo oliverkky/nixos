@@ -1,5 +1,11 @@
 {
   hostName = "workstation";
+  cursor = {
+    name = "Bibata-Modern-Classic";
+    size = 24;
+    dpi = 96;
+  };
+  hyprland.drmDevice = "/dev/dri/card1";
   monitors = [
     {
       output = "DP-1";
@@ -16,11 +22,14 @@
   ];
   primaryMonitor = "DP-1";
   primaryUser = "oliver";
+  primaryUid = 1000;
+  primaryGid = 100;
   reaper = {
     uiScale = 1.0;
     pipewireLatency = "128/48000";
   };
   secondaryMonitor = "HDMI-A-1";
   secondaryMonitorWorkspace = 10;
+  zed.audioDevice = "alsa:default";
   stateVersion = "26.05";
 }

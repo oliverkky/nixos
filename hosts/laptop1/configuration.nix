@@ -21,6 +21,8 @@
   users.users.${host.primaryUser} = {
     isNormalUser = true;
     description = "Oliver Klinkovský";
+    uid = host.primaryUid;
+    group = "users";
     extraGroups = [
       "networkmanager"
       "wheel"
@@ -29,6 +31,7 @@
     ];
     shell = pkgs.zsh;
   };
+  users.groups.users.gid = host.primaryGid;
 
   # ── Locale & Time ───────────────────────────────────────────────────────────
 

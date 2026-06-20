@@ -19,15 +19,21 @@ The problem? In which order do I prioritize these traits?
 
 ## Update Posture
 
-My setup intentionally tracks adventurous inputs now, because I'm irresponsible:
+This repo tracks current inputs for hardware and desktop support:
 
 - `nixos-unstable`
 - SilentSDDM from GitHub
 
-TODO, when this approach bites me in the ass.
+That is only acceptable while the lock file is treated as the release boundary.
+Do not update inputs opportunistically during unrelated changes. Input updates
+should be their own change and must follow `docs/rebuild-workflow.md`:
 
-1. Replace or pin SilentSDDM more conservatively.
-2. Move from `nixos-unstable` to a NixOS release.
+1. Update the lock file explicitly.
+2. Run flake evaluation and system builds for every declared host.
+3. Test activation on the target host before switching.
+
+Revisit this posture when either SilentSDDM breaks evaluation/builds or a NixOS
+release has the desktop and hardware support this config needs.
 
 ## Ownership
 

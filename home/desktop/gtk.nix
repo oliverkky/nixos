@@ -1,5 +1,6 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
@@ -20,9 +21,9 @@
         package = pkgs.papirus-icon-theme;
       };
       cursorTheme = {
-        name = "Bibata-Modern-Classic";
+        name = host.cursor.name;
         package = pkgs.bibata-cursors;
-        size = 24;
+        size = host.cursor.size;
       };
       gtk3.extraConfig.gtk-application-prefer-dark-theme = 1;
       gtk4.theme = config.gtk.theme;

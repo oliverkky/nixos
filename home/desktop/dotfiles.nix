@@ -1,4 +1,21 @@
-{ config, lib, ... }:
+{
+  config,
+  host,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  zedSettings = builtins.replaceStrings [ "__ZED_AUDIO_DEVICE__" ] [ host.zed.audioDevice ] (
+    builtins.readFile ../../dotfiles/zed/settings.json
+  );
+  zedConfig = pkgs.runCommandLocal "hm-zed-config" { } ''
+    mkdir -p "$out"
+    cp ${../../dotfiles/zed/keymap.json} "$out/keymap.json"
+    cp ${pkgs.writeText "zed-settings.json" zedSettings} "$out/settings.json"
+  '';
+in
 
 {
   options.my.home.desktop.dotfiles.enable = lib.mkEnableOption "desktop dotfile links";
@@ -14,7 +31,7 @@
         in `/etc/nixos/dotfiles` or the relevant Home Manager module, then rebuild:
 
         ```sh
-        sudo nixos-rebuild switch --flake /etc/nixos#laptop1
+        sudo nixos-rebuild switch --flake /etc/nixos#${host.hostName}
         ```
 
         App-created state that is not declared in Home Manager may still live here.
@@ -23,7 +40,7 @@
       quickshell.source = ../../dotfiles/quickshell;
       rofi.source = ../../dotfiles/rofi;
       mako.source = ../../dotfiles/mako;
-      zed.source = ../../dotfiles/zed;
+      zed.source = zedConfig;
       wal.source = ../../dotfiles/wal;
       waypaper.source = ../../dotfiles/waypaper;
     };

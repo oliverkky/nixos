@@ -13,8 +13,10 @@ local ctx = {
     menu = "rofi -show drun",
     zed = "zeditor",
     main_mod = "SUPER",
+    cursor_size = tonumber(os.getenv("XCURSOR_SIZE") or "") or 24,
     monitors = os.getenv("HYPR_MONITORS") or "",
     primary_monitor = os.getenv("HYPR_PRIMARY_MONITOR") or "",
+    primary_monitor_scale = tonumber(os.getenv("HYPR_PRIMARY_MONITOR_SCALE") or "") or 1,
     secondary_monitor = os.getenv("HYPR_SECONDARY_MONITOR") or "",
     secondary_monitor_workspace = tonumber(os.getenv("HYPR_SECONDARY_MONITOR_WORKSPACE") or ""),
 }

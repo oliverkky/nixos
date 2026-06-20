@@ -1,5 +1,6 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
@@ -10,15 +11,15 @@
 
   config = lib.mkIf config.my.home.desktop.cursor.enable {
     home.pointerCursor = {
-      name = "Bibata-Modern-Classic";
+      name = host.cursor.name;
       package = pkgs.bibata-cursors;
-      size = 24;
+      size = host.cursor.size;
       gtk.enable = true;
     };
 
     xresources.properties = {
-      "Xcursor.size" = 24;
-      "Xft.dpi" = 96; # move to constants, make dependent on host
+      "Xcursor.size" = host.cursor.size;
+      "Xft.dpi" = host.cursor.dpi;
     };
   };
 }

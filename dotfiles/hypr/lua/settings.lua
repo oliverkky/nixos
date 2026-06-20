@@ -19,12 +19,12 @@ return function(ctx)
             output = ctx.primary_monitor,
             mode = "preferred",
             position = "0x0",
-            scale = 1.5,
+            scale = ctx.primary_monitor_scale,
         })
     end
 
-    hl.env("XCURSOR_SIZE", "22")
-    hl.env("HYPRCURSOR_SIZE", "22")
+    hl.env("XCURSOR_SIZE", tostring(ctx.cursor_size))
+    hl.env("HYPRCURSOR_SIZE", tostring(ctx.cursor_size))
 
     hl.config({
         xwayland = {

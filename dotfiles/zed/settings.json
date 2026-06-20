@@ -80,8 +80,8 @@
   },
   "base_keymap": "VSCode",
   "audio": {
-    "experimental.input_audio_device": "alsa:hw:CARD=3,DEV=0",
-    "experimental.output_audio_device": "alsa:hw:CARD=3,DEV=0",
+    "experimental.input_audio_device": "__ZED_AUDIO_DEVICE__",
+    "experimental.output_audio_device": "__ZED_AUDIO_DEVICE__",
   },
   "buffer_line_height": "standard",
   "buffer_font_weight": 400.0,

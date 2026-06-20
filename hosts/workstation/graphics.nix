@@ -1,15 +1,27 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }:
 
 let
+  blenderRocm = pkgs.symlinkJoin {
+    name = "blender-rocm";
+    paths = [ pkgs.pkgsRocm.blender ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm "$out/bin/blender"
+      makeWrapper "${pkgs.pkgsRocm.blender}/bin/blender" "$out/bin/blender" \
+        --set LD_PRELOAD "${pkgs.rocmPackages.llvm.llvm.lib}/lib/libLLVM.so.22.0"
+    '';
+  };
+
   workstationHyprlandEnv = {
     # Aquamarine uses ':' as the AQ_DRM_DEVICES separator, so the PCI by-path
     # symlink is not usable here because it contains ':' characters.
-    AQ_DRM_DEVICES = "/dev/dri/card1";
+    AQ_DRM_DEVICES = host.hyprland.drmDevice;
     AQ_NO_MODIFIERS = "1";
     AQ_TRACE = "1";
     LIBVA_DRIVER_NAME = "radeonsi";
@@ -65,6 +77,7 @@ in
 
   environment.sessionVariables = workstationHyprlandEnv;
   environment.systemPackages = with pkgs; [
+    blenderRocm
     startHyprlandWorkstation
     rocmPackages.hipcc
     rocmPackages.rocminfo

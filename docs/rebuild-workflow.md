@@ -10,6 +10,24 @@ nix flake check --no-build
 
 Checks flake outputs and module evaluation without building the full system.
 
+## Update Inputs
+
+Treat `flake.lock` as the release boundary. Update inputs in a dedicated change,
+not as a side effect of unrelated config work.
+
+```sh
+nix flake update
+```
+
+After updating, run the fast evaluation and build every declared host before
+testing activation:
+
+```sh
+nix flake check --no-build
+nix build .#nixosConfigurations.laptop1.config.system.build.toplevel --no-link
+nix build .#nixosConfigurations.workstation.config.system.build.toplevel --no-link
+```
+
 ## Build The System Closure
 
 ```sh

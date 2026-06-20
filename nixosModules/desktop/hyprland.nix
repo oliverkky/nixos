@@ -45,10 +45,15 @@ in
     environment.sessionVariables = {
       HYPR_MONITORS = hyprMonitors;
       HYPR_PRIMARY_MONITOR = host.primaryMonitor;
+      HYPR_PRIMARY_MONITOR_SCALE = toString (
+        (lib.findFirst (monitor: monitor.output == host.primaryMonitor) { scale = 1; } (
+          host.monitors or [ ]
+        )).scale
+      );
       HYPR_SECONDARY_MONITOR = host.secondaryMonitor or "";
       HYPR_SECONDARY_MONITOR_WORKSPACE = toString (host.secondaryMonitorWorkspace or "");
-      XCURSOR_THEME = "Bibata-Modern-Classic";
-      XCURSOR_SIZE = "24";
+      XCURSOR_THEME = host.cursor.name;
+      XCURSOR_SIZE = toString host.cursor.size;
     };
   };
 }
