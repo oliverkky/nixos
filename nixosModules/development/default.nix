@@ -1,5 +1,6 @@
 {
   config,
+  host,
   lib,
   pkgs,
   inputs,
@@ -11,10 +12,24 @@
     enable = lib.mkEnableOption "system development tools";
 
     codexCli.enable = lib.mkEnableOption "Codex CLI package";
+    podman.enable = lib.mkEnableOption "Podman";
   };
 
   config = lib.mkIf config.my.nixos.development.enable {
     my.nixos.development.codexCli.enable = lib.mkDefault true;
+    my.nixos.development.podman.enable = lib.mkDefault true;
+
+    virtualisation.podman = {
+      enable = config.my.nixos.development.podman.enable;
+      dockerCompat = config.my.nixos.development.podman.enable;
+      defaultNetwork.settings.dns_enabled = config.my.nixos.development.podman.enable;
+    };
+
+    users.users.${host.primaryUser}.extraGroups =
+      lib.optionals config.my.nixos.development.podman.enable
+        [
+          "podman"
+        ];
 
     environment.systemPackages =
       with pkgs;

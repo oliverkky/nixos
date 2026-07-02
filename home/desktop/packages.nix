@@ -22,11 +22,9 @@
       quickshell
       awww
       waypaper
-      mako
       cliphist
       wl-clip-persist
       playerctl
-      polkit_gnome
       brightnessctl
       libnotify
       pavucontrol

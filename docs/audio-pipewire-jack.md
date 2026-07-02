@@ -34,6 +34,8 @@ host.reaper.pipewireLatency = "128/48000";
 
 That value is passed as `PIPEWIRE_LATENCY`, so REAPER asks PipeWire/JACK for a 128-frame buffer at 48 kHz. Use `"64/48000"` for an aggressive test, or `"256/48000"` / `"512/48000"` if a project needs a safer buffer.
 
+VCV Rack is also wrapped with `pw-jack`. Its latency defaults to `host.vcvRack.pipewireLatency`, then `host.reaper.pipewireLatency`, then `"128/48000"`.
+
 Home Manager also writes `~/.config/REAPER/libSwell-user.colortheme`. This makes REAPER's native Linux menus and utility windows use dark SWELL colors without forcing a global GTK theme.
 
 ## REAPER
@@ -49,6 +51,16 @@ When REAPER is running, open `qpwgraph` and connect:
 - hardware capture ports to REAPER inputs
 - REAPER outputs to hardware playback ports
 - Discord/desktop app streams only where needed
+
+## VCV Rack
+
+In VCV Rack, use:
+
+- audio driver: `JACK`
+- device: usually `system` / PipeWire JACK ports
+- sample rate: usually `48000`
+
+When Rack is running, use `qpwgraph` to connect Rack's audio and MIDI ports to hardware or other JACK/PipeWire applications.
 
 ## Discord and desktop apps
 

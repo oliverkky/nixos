@@ -1,12 +1,14 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }:
 
 let
-  vcvRack = pkgs.vcv-rack.overrideAttrs (_old: {
+  pipewireLatency = host.vcvRack.pipewireLatency or (host.reaper.pipewireLatency or "128/48000");
+  vcvRackPackage = pkgs.vcv-rack.overrideAttrs (_old: {
     # nixpkgs fetches a deleted upstream PR patch on Linux.
     # Drop this once pkgs.vcv-rack no longer references PR 1944.
     patches = [
@@ -84,6 +86,26 @@ let
         "$out/share/vcv-rack/Fundamental-2.6.4-lin-x64.vcvplugin"
     '';
   });
+  vcvRack = pkgs.symlinkJoin {
+    name = "vcv-rack-pipewire-jack";
+    paths = [
+      vcvRackPackage
+      pkgs.pipewire.jack
+    ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm "$out/bin/Rack"
+      makeWrapper "${pkgs.pipewire.jack}/bin/pw-jack" "$out/bin/Rack" \
+        --add-flags "${vcvRackPackage}/bin/Rack" \
+        --set GLFW_PLATFORM x11 \
+        --set PIPEWIRE_LATENCY "${pipewireLatency}"
+
+      rm "$out/share/applications/vcv-rack.desktop"
+      cp "${vcvRackPackage}/share/applications/vcv-rack.desktop" "$out/share/applications/vcv-rack.desktop"
+      substituteInPlace "$out/share/applications/vcv-rack.desktop" \
+        --replace-fail 'Exec=Rack' "Exec=$out/bin/Rack"
+    '';
+  };
 in
 {
   options.my.home.desktop.vcv-rack.enable = lib.mkEnableOption "VCV Rack";

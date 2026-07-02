@@ -20,6 +20,9 @@ in
   options.my.home.desktop.services.enable = lib.mkEnableOption "desktop user services";
 
   config = lib.mkIf config.my.home.desktop.services.enable {
+    xdg.configFile."systemd/user/app-polkit\\x2dgnome\\x2dauthentication\\x2dagent\\x2d1@autostart.service".source =
+      config.lib.file.mkOutOfStoreSymlink "/dev/null";
+
     systemd.user.services = {
       polkit-gnome-authentication-agent-1 = {
         Unit = {
@@ -29,19 +32,6 @@ in
         };
         Service = {
           ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-          Restart = "on-failure";
-        };
-        Install.WantedBy = [ "graphical-session.target" ];
-      };
-
-      mako = {
-        Unit = {
-          Description = "Wayland notification daemon";
-          PartOf = [ "graphical-session.target" ];
-          After = [ "graphical-session.target" ];
-        };
-        Service = {
-          ExecStart = "${pkgs.mako}/bin/mako";
           Restart = "on-failure";
         };
         Install.WantedBy = [ "graphical-session.target" ];

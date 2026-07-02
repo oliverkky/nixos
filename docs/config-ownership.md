@@ -22,7 +22,6 @@ Applications read configuration from paths under `~/.config`, for example:
 - `~/.config/hypr`
 - `~/.config/quickshell`
 - `~/.config/rofi`
-- `~/.config/mako`
 
 For managed files, treat `~/.config` as generated output. Do not edit those
 files directly; the next Home Manager activation can replace them.

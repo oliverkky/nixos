@@ -2,7 +2,11 @@
 
 set -euo pipefail
 
-cache_file="/tmp/rofi-menu-apps.tsv"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/rofi"
+cache_file="$cache_dir/menu-apps.tsv"
+cache_key_file="$cache_dir/menu-apps.key"
+cache_max_age_seconds=$((12 * 60 * 60))
+cache_version=2
 
 browser_cmd=()
 if [ -n "${BROWSER:-}" ] && command -v "${BROWSER%% *}" >/dev/null 2>&1; then
@@ -87,7 +91,7 @@ open_in_browser() {
 }
 
 build_cache() {
-    mkdir -p "$(dirname "$cache_file")"
+    mkdir -p "$cache_dir"
     python3 - <<'PY' > "$cache_file"
 import os
 from pathlib import Path
@@ -182,10 +186,65 @@ for entry in sorted(entries, key=lambda item: item[0].lower()):
     seen.add(entry[1])
     print("\t".join(entry))
 PY
+    cache_key > "$cache_key_file"
+}
+
+application_roots() {
+    local home_dir=${HOME}
+
+    printf '%s\n' "${XDG_DATA_HOME:-$home_dir/.local/share}/applications"
+
+    if [ -n "${XDG_DATA_DIRS:-}" ]; then
+        local entry
+        while IFS= read -r entry; do
+            [ -n "$entry" ] && printf '%s\n' "$entry/applications"
+        done < <(printf '%s\n' "$XDG_DATA_DIRS" | tr ':' '\n')
+    else
+        printf '%s\n' /usr/local/share/applications
+        printf '%s\n' /usr/share/applications
+    fi
+
+    printf '%s\n' /var/lib/flatpak/exports/share/applications
+    printf '%s\n' "$home_dir/.local/share/flatpak/exports/share/applications"
+    printf '%s\n' "$home_dir/.nix-profile/share/applications"
+    printf '%s\n' "/etc/profiles/per-user/$(id -un)/share/applications"
+    printf '%s\n' /run/current-system/sw/share/applications
+    printf '%s\n' /nix/var/nix/profiles/default/share/applications
+}
+
+cache_key() {
+    printf 'version\t%s\n' "$cache_version"
+    application_roots | awk '!seen[$0]++' | while IFS= read -r root; do
+        [ -e "$root" ] || continue
+        printf '%s\t%s\n' "$root" "$(readlink -f "$root" 2>/dev/null || printf '%s' "$root")"
+    done
+}
+
+cache_is_stale() {
+    if [ "${ROFI_MENU_REBUILD:-0}" = "1" ]; then
+        return 0
+    fi
+
+    if [ ! -s "$cache_file" ]; then
+        return 0
+    fi
+
+    if [ ! -s "$cache_key_file" ] || [ "$(cat "$cache_key_file")" != "$(cache_key)" ]; then
+        return 0
+    fi
+
+    local now cache_mtime age
+    now=$(date +%s)
+    cache_mtime=$(stat -c %Y "$cache_file" 2>/dev/null || printf 0)
+    age=$((now - cache_mtime))
+
+    [ "$age" -gt "$cache_max_age_seconds" ]
 }
 
 list_entries() {
-    build_cache
+    if cache_is_stale; then
+        build_cache
+    fi
 
     printf '\0prompt\x1fSearch\n'
     printf '\0message\x1fType app name, <b>cats</b> for Brave search, or bangs like <b>!g cats</b>, <b>!yt cats</b>, <b>!gh repo</b>\n'
@@ -200,18 +259,59 @@ list_entries() {
 }
 
 launch_app() {
-    local desktop_id=$1
+    local _desktop_id=$1
     local desktop_file=$2
 
-    if command -v gio >/dev/null 2>&1; then
-        gio launch "$desktop_file" >/dev/null 2>&1 &
-    elif command -v gtk-launch >/dev/null 2>&1; then
-        gtk-launch "$desktop_id" >/dev/null 2>&1 &
-    elif command -v dex >/dev/null 2>&1; then
-        dex "$desktop_file" >/dev/null 2>&1 &
-    else
-        return 1
-    fi
+    python3 - "$desktop_file" >/dev/null 2>&1 <<'PY' &
+import os
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = {}
+in_desktop_entry = False
+
+for raw_line in path.read_text(errors="ignore").splitlines():
+    line = raw_line.strip()
+    if not line or line.startswith("#"):
+        continue
+    if line.startswith("["):
+        in_desktop_entry = line == "[Desktop Entry]"
+        continue
+    if not in_desktop_entry or "=" not in line:
+        continue
+    key, value = line.split("=", 1)
+    data.setdefault(key, value)
+
+if data.get("Type", "Application") == "Link":
+    url = data.get("URL")
+    if not url:
+        raise SystemExit(1)
+    argv = ["xdg-open", url]
+else:
+    exec_line = data.get("Exec")
+    if not exec_line:
+        raise SystemExit(1)
+    argv = shlex.split(exec_line)
+
+field_codes = {
+    "%f", "%F", "%u", "%U", "%d", "%D",
+    "%n", "%N", "%i", "%c", "%k", "%v", "%m",
+}
+argv = [arg.replace("%%", "%") for arg in argv if arg not in field_codes]
+if not argv:
+    raise SystemExit(1)
+
+subprocess.Popen(
+    argv,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+    env=os.environ.copy(),
+)
+PY
     disown || true
 }
 

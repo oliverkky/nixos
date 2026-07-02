@@ -24,10 +24,16 @@ Item {
     property var devices: Networking.devices.values
     property var bluetoothAdapter: Bluetooth.defaultAdapter
     property var bluetoothDevices: Bluetooth.devices.values
+    property var powerDevices: UPower.devices ? UPower.devices.values : []
     property var sink: Pipewire.defaultAudioSink
     property var source: Pipewire.defaultAudioSource
     property var battery: UPower.displayDevice
     property var trayItems: SystemTray.items.values
+    property var activeTrayItem: null
+    property real trayMenuOriginX: 0
+    property real trayMenuOriginY: 0
+    property real trayMenuOriginWidth: 26
+    property real trayMenuOriginHeight: 24
     property real brightnessPercent: 0
     property bool brightnessAvailable: false
     property bool idleInhibited: false
@@ -35,11 +41,32 @@ Item {
     property int powerSelectedIndex: 0
     readonly property bool powerProfilesAvailable: root.hasBattery()
     readonly property var powerActions: [
-        { icon: "", text: "Lock", command: ["loginctl", "lock-session"] },
-        { icon: "󰍃", text: "Logout", command: ["hyprctl", "dispatch", "exit"] },
-        { icon: "󰤄", text: "Suspend", command: ["systemctl", "suspend"] },
-        { icon: "󰜉", text: "Reboot", command: ["systemctl", "reboot"] },
-        { icon: "", text: "Shutdown", command: ["systemctl", "poweroff"], danger: true },
+        {
+            icon: "",
+            text: "Lock",
+            command: ["loginctl", "lock-session"]
+        },
+        {
+            icon: "󰍃",
+            text: "Logout",
+            command: ["hyprctl", "dispatch", "exit"]
+        },
+        {
+            icon: "󰤄",
+            text: "Suspend",
+            command: ["systemctl", "suspend"]
+        },
+        {
+            icon: "󰜉",
+            text: "Reboot",
+            command: ["systemctl", "reboot"]
+        },
+        {
+            icon: "",
+            text: "Shutdown",
+            command: ["systemctl", "poweroff"],
+            danger: true
+        },
     ]
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
     readonly property string powerProfileDisplayPath: `${configHome}/hypr/scripts/set-power-profile-display`
@@ -65,7 +92,7 @@ Item {
             onStreamFinished: root.loadBrightness(this.text)
         }
 
-        onExited: (exitCode) => {
+        onExited: exitCode => {
             if (exitCode !== 0)
                 root.brightnessAvailable = false;
         }
@@ -112,9 +139,8 @@ Item {
                     model: root.trayItems
 
                     MouseArea {
-                        required property var modelData
-
                         id: trayButton
+                        required property var modelData
 
                         implicitWidth: 26
                         implicitHeight: 24
@@ -158,11 +184,12 @@ Item {
                                 return;
 
                             if (mouse.button === Qt.RightButton) {
+                                if (trayButton.modelData.hasMenu)
+                                    trayButton.openMenu();
+                            } else if (mouse.button === Qt.LeftButton && trayButton.modelData.hasMenu) {
                                 trayButton.openMenu();
                             } else if (mouse.button === Qt.MiddleButton) {
                                 trayButton.modelData.secondaryActivate();
-                            } else if (trayButton.modelData.onlyMenu && trayButton.modelData.hasMenu) {
-                                trayButton.openMenu();
                             } else {
                                 trayButton.modelData.activate();
                             }
@@ -182,8 +209,12 @@ Item {
                             if (!trayButton.modelData || !trayButton.modelData.hasMenu)
                                 return;
 
-                            const point = trayButton.mapToItem(null, trayButton.width / 2, trayButton.height);
-                            trayButton.modelData.display(root.parentWindow, point.x, point.y);
+                            const localPoint = trayButton.mapToItem(root, 0, 0);
+                            if (root.openTrayMenu(trayButton.modelData, localPoint.x, localPoint.y, trayButton.width, trayButton.height))
+                                return;
+
+                            const nativePoint = trayButton.mapToItem(null, trayButton.width / 2, trayButton.height);
+                            trayButton.modelData.display(root.parentWindow, nativePoint.x, nativePoint.y);
                         }
                     }
                 }
@@ -403,13 +434,210 @@ Item {
                     width: parent.width
                     height: parent.height - 51
                     clip: true
-                    sourceComponent: root.visiblePanel === "power" ? powerPanel
-                        : root.visiblePanel === "network" ? networkPanel
-                        : root.visiblePanel === "bluetooth" ? bluetoothPanel
-                        : root.visiblePanel === "audio" ? audioPanel
-                        : root.visiblePanel === "battery" ? batteryPanel
-                        : null
+                    sourceComponent: root.visiblePanel === "power" ? powerPanel : root.visiblePanel === "network" ? networkPanel : root.visiblePanel === "bluetooth" ? bluetoothPanel : root.visiblePanel === "audio" ? audioPanel : root.visiblePanel === "battery" ? batteryPanel : null
                 }
+            }
+        }
+    }
+
+    Components.PopoverSurface {
+        id: trayMenuPanel
+
+        ui: root.ui
+        anchor.window: root.parentWindow
+        anchor.rect.x: root.trayPanelAnchorX()
+        anchor.rect.y: root.y
+        implicitWidth: 286
+        implicitHeight: root.trayPanelHeight()
+        originX: root.trayPanelOriginX(implicitWidth)
+        originY: root.trayMenuOriginY
+        originWidth: root.trayMenuOriginWidth
+        originHeight: root.trayMenuOriginHeight
+        expanded: root.activeTrayItem !== null
+        closeKey: root.activeTrayItem ? "tray" : ""
+
+        onCloseRequested: root.closeTrayMenu()
+        onSurfaceClosed: {
+            if (root.activeTrayItem) {
+                const menu = root.activeTrayRootMenu();
+                if (menu)
+                    menu.sendClosed();
+                root.activeTrayItem = null;
+            }
+        }
+
+        Column {
+            width: parent.width
+            height: parent.height
+            spacing: 10
+
+            Row {
+                width: parent.width
+                height: 28
+                spacing: 10
+
+                IconImage {
+                    visible: root.activeTrayItem && root.activeTrayItem.icon && root.activeTrayItem.icon.length > 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 16
+                    height: 16
+                    source: root.activeTrayItem ? root.activeTrayItem.icon : ""
+                    asynchronous: true
+                    mipmap: true
+                }
+
+                Text {
+                    width: parent.width - (root.activeTrayItem && root.activeTrayItem.icon && root.activeTrayItem.icon.length > 0 ? 26 : 0)
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.trayPanelTitle()
+                    color: root.ui.text
+                    elide: Text.ElideRight
+                    font.family: "Cantarell"
+                    font.pixelSize: 13
+                    font.weight: Font.Bold
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.ui.borderSoft
+            }
+
+            Flickable {
+                width: parent.width
+                height: Math.max(0, parent.height - 49)
+                clip: true
+                contentWidth: width
+                contentHeight: trayMenuList.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+
+                Column {
+                    id: trayMenuList
+
+                    width: parent.width
+                    spacing: 4
+
+                    Repeater {
+                        model: trayMenuOpener.children.values
+
+                        Loader {
+                            required property var modelData
+                            property var entry: modelData
+
+                            width: parent.width
+                            sourceComponent: modelData && modelData.isSeparator ? trayMenuSeparator : trayMenuAction
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    QsMenuOpener {
+        id: trayMenuOpener
+
+        menu: root.activeTrayRootMenu()
+    }
+
+    Component {
+        id: trayMenuSeparator
+
+        Rectangle {
+            width: parent.width
+            height: 9
+            color: "transparent"
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: 1
+                color: root.ui.borderSoft
+            }
+        }
+    }
+
+    Component {
+        id: trayMenuAction
+
+        MouseArea {
+            id: trayMenuButton
+
+            property var modelData: parent ? parent.entry : null
+            readonly property bool checked: modelData && modelData.checkState === Qt.Checked
+
+            width: parent.width
+            height: 32
+            hoverEnabled: true
+            enabled: modelData && modelData.enabled
+            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 8
+                color: trayMenuButton.containsMouse && trayMenuButton.enabled ? root.ui.surfaceHover : "transparent"
+            }
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 10
+
+                Item {
+                    width: 18
+                    height: parent.height
+
+                    Text {
+                        visible: trayMenuButton.modelData && trayMenuButton.modelData.buttonType !== QsMenuButtonType.None
+                        anchors.centerIn: parent
+                        text: trayMenuButton.modelData && trayMenuButton.modelData.buttonType === QsMenuButtonType.RadioButton ? (trayMenuButton.checked ? "●" : "") : (trayMenuButton.checked ? "✓" : "")
+                        color: root.ui.text
+                        font.family: "Cantarell"
+                        font.pixelSize: 12
+                        font.weight: Font.Bold
+                    }
+                }
+
+                Text {
+                    width: parent.width - 46 - submenuArrow.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: trayMenuButton.modelData ? trayMenuButton.modelData.text : ""
+                    color: trayMenuButton.enabled ? root.ui.text : root.ui.textMuted
+                    elide: Text.ElideRight
+                    font.family: "Cantarell"
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
+                    opacity: trayMenuButton.enabled ? 1 : 0.55
+                }
+
+                Text {
+                    id: submenuArrow
+
+                    width: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: trayMenuButton.modelData && trayMenuButton.modelData.hasChildren
+                    text: "›"
+                    color: root.ui.textMuted
+                    font.family: "Cantarell"
+                    font.pixelSize: 16
+                    font.weight: Font.Bold
+                }
+            }
+
+            onClicked: {
+                if (!trayMenuButton.modelData || !trayMenuButton.modelData.enabled)
+                    return;
+
+                if (trayMenuButton.modelData.hasChildren) {
+                    const point = trayMenuButton.mapToItem(null, trayMenuButton.width, 0);
+                    trayMenuButton.modelData.display(root.parentWindow, point.x, point.y);
+                    return;
+                }
+
+                trayMenuButton.modelData.sendTriggered();
+                root.closeTrayMenu();
             }
         }
     }
@@ -488,12 +716,7 @@ Item {
                 id: wifiScroller
 
                 width: parent.width
-                height: Math.max(102, parent.height
-                    - networkHeader.height
-                    - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0)
-                    - networkFallback.height
-                    - networkDisconnect.height
-                    - 32)
+                height: Math.max(102, parent.height - networkHeader.height - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0) - networkFallback.height - networkDisconnect.height - 32)
                 clip: true
                 contentWidth: width
                 contentHeight: wifiList.implicitHeight
@@ -667,14 +890,16 @@ Item {
                     label: root.bluetoothAdapter && root.bluetoothAdapter.enabled ? "On" : "Off"
                     active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
                     compact: false
-                    onClicked: if (root.bluetoothAdapter) root.bluetoothAdapter.enabled = !root.bluetoothAdapter.enabled
+                    onClicked: if (root.bluetoothAdapter)
+                        root.bluetoothAdapter.enabled = !root.bluetoothAdapter.enabled
                 }
 
                 IconButton {
                     ui: root.ui
                     icon: "󰑓"
                     active: root.bluetoothAdapter && root.bluetoothAdapter.discovering
-                    onClicked: if (root.bluetoothAdapter) root.bluetoothAdapter.discovering = !root.bluetoothAdapter.discovering
+                    onClicked: if (root.bluetoothAdapter)
+                        root.bluetoothAdapter.discovering = !root.bluetoothAdapter.discovering
                 }
             }
 
@@ -722,11 +947,7 @@ Item {
                 id: bluetoothScroller
 
                 width: parent.width
-                height: Math.max(102, parent.height
-                    - bluetoothHeader.height
-                    - (bluetoothScanning.visible ? bluetoothScanning.height + 8 : 0)
-                    - bluetoothFallback.height
-                    - 24)
+                height: Math.max(102, parent.height - bluetoothHeader.height - (bluetoothScanning.visible ? bluetoothScanning.height + 8 : 0) - bluetoothFallback.height - 24)
                 clip: true
                 contentWidth: width
                 contentHeight: bluetoothList.implicitHeight
@@ -751,6 +972,10 @@ Item {
                             icon: modelData.connected ? "󰂱" : "󰂯"
                             text: modelData.name || modelData.deviceName || modelData.address
                             subtext: modelData.connected ? root.bluetoothBatteryLabel(modelData) : BluetoothDeviceState.toString(modelData.state)
+                            trailingIcon: modelData.connected && root.bluetoothBatteryAvailable(modelData) ? root.bluetoothBatteryIcon(modelData) : ""
+                            trailingText: modelData.connected && root.bluetoothBatteryAvailable(modelData) ? root.bluetoothBatteryPercentLabel(modelData) : ""
+                            trailingWarning: modelData.connected && root.bluetoothBatteryAvailable(modelData) && root.bluetoothBatteryPercent(modelData) < 30
+                            trailingCritical: modelData.connected && root.bluetoothBatteryAvailable(modelData) && root.bluetoothBatteryPercent(modelData) < 15
                             active: modelData.connected
                             onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
                         }
@@ -793,7 +1018,8 @@ Item {
                 ui: root.ui
                 icon: root.volumeIcon()
                 text: root.sink && root.sink.audio && root.sink.audio.muted ? "Unmute output" : "Mute output"
-                onClicked: if (root.sink && root.sink.audio) root.sink.audio.muted = !root.sink.audio.muted
+                onClicked: if (root.sink && root.sink.audio)
+                    root.sink.audio.muted = !root.sink.audio.muted
             }
 
             PanelAction {
@@ -801,7 +1027,8 @@ Item {
                 ui: root.ui
                 icon: root.source && root.source.audio && root.source.audio.muted ? "󰍭" : "󰍬"
                 text: root.source && root.source.audio && root.source.audio.muted ? "Unmute microphone" : "Mute microphone"
-                onClicked: if (root.source && root.source.audio) root.source.audio.muted = !root.source.audio.muted
+                onClicked: if (root.source && root.source.audio)
+                    root.source.audio.muted = !root.source.audio.muted
             }
 
             Rectangle {
@@ -978,6 +1205,8 @@ Item {
     property string passwordError: ""
 
     function togglePanel(name) {
+        closeTrayMenu();
+
         if (activePanel === name) {
             activePanel = "";
         } else {
@@ -992,12 +1221,14 @@ Item {
     }
 
     function openPowerMenu() {
+        closeTrayMenu();
         expandedSurfaceReady = activePanel.length > 0;
         activePanel = "power";
         powerSelectedIndex = 0;
     }
 
     function runAndClose(command) {
+        closeTrayMenu();
         activePanel = "";
         Quickshell.execDetached(command);
     }
@@ -1037,6 +1268,7 @@ Item {
     }
 
     function runNativeTool(command) {
+        closeTrayMenu();
         activePanel = "";
         Quickshell.execDetached(command);
     }
@@ -1067,6 +1299,76 @@ Item {
         if (panelName === "battery")
             return "Power";
         return "";
+    }
+
+    function trayRootMenuFor(item) {
+        if (!item || !item.menu)
+            return null;
+
+        return item.menu.menu || null;
+    }
+
+    function activeTrayRootMenu() {
+        return trayRootMenuFor(activeTrayItem);
+    }
+
+    function openTrayMenu(item, x, y, width, height) {
+        const menu = trayRootMenuFor(item);
+        if (!menu)
+            return false;
+
+        if (activeTrayItem === item) {
+            closeTrayMenu();
+            return true;
+        }
+
+        const previousMenu = activeTrayRootMenu();
+        if (previousMenu)
+            previousMenu.sendClosed();
+
+        trayMenuOriginX = x;
+        trayMenuOriginY = y;
+        trayMenuOriginWidth = width;
+        trayMenuOriginHeight = height;
+        activePanel = "";
+        expandedSurfaceReady = false;
+        activeTrayItem = item;
+
+        menu.updateLayout();
+        menu.sendOpened();
+        return true;
+    }
+
+    function closeTrayMenu() {
+        const menu = activeTrayRootMenu();
+        if (menu)
+            menu.sendClosed();
+
+        activeTrayItem = null;
+    }
+
+    function trayPanelHeight() {
+        const entries = trayMenuOpener.children ? trayMenuOpener.children.values.length : 0;
+        return Math.min(432, Math.max(108, 63 + (entries * 36)));
+    }
+
+    function trayPanelTitle() {
+        if (!activeTrayItem)
+            return "Menu";
+
+        return activeTrayItem.tooltipTitle || activeTrayItem.title || activeTrayItem.id || "Menu";
+    }
+
+    function trayPanelAnchorX() {
+        const target = root.x + trayMenuOriginX + trayMenuOriginWidth - trayMenuPanel.implicitWidth;
+        const maxX = root.parentWindow && root.parentWindow.width ? root.parentWindow.width - trayMenuPanel.implicitWidth - 12 : target;
+
+        return Math.max(12, Math.min(Math.max(12, maxX), target));
+    }
+
+    function trayPanelOriginX(panelWidth) {
+        const anchorX = trayPanelAnchorX() - root.x;
+        return Math.max(0, Math.min(panelWidth - trayMenuOriginWidth, trayMenuOriginX - anchorX));
     }
 
     function wifiDevice() {
@@ -1180,9 +1482,67 @@ Item {
     }
 
     function bluetoothBatteryLabel(device) {
-        if (device.batteryAvailable)
-            return `Connected, ${Math.round(device.battery * 100)}%`;
         return "Connected";
+    }
+
+    function bluetoothBatteryAvailable(device) {
+        return (device && device.batteryAvailable) || root.bluetoothUPowerDevice(device) !== null;
+    }
+
+    function bluetoothBatteryPercent(device) {
+        if (!device)
+            return 0;
+
+        const source = device.batteryAvailable ? device : root.bluetoothUPowerDevice(device);
+        if (!source)
+            return 0;
+
+        const value = Number(source.percentage !== undefined ? source.percentage : source.battery || 0);
+        return value <= 1 ? value * 100 : value;
+    }
+
+    function bluetoothBatteryPercentLabel(device) {
+        return `${Math.round(bluetoothBatteryPercent(device))}%`;
+    }
+
+    function bluetoothBatteryIcon(device) {
+        const percentage = bluetoothBatteryPercent(device);
+        if (percentage >= 90)
+            return "󰁹";
+        if (percentage >= 60)
+            return "󰂀";
+        if (percentage >= 30)
+            return "󰁾";
+        if (percentage >= 15)
+            return "󰁻";
+        return "󰁺";
+    }
+
+    function bluetoothUPowerDevice(device) {
+        if (!device)
+            return null;
+
+        const address = root.normalizedDeviceKey(device.address || "");
+        const deviceName = root.normalizedDeviceKey(device.name || device.deviceName || "");
+
+        for (let i = 0; i < powerDevices.length; i++) {
+            const powerDevice = powerDevices[i];
+            if (!powerDevice || !powerDevice.ready || powerDevice.isLaptopBattery || powerDevice.percentage <= 0)
+                continue;
+
+            const nativePath = root.normalizedDeviceKey(powerDevice.nativePath || "");
+            const model = root.normalizedDeviceKey(powerDevice.model || "");
+            if (address.length > 0 && nativePath.includes(address))
+                return powerDevice;
+            if (deviceName.length > 0 && model.length > 0 && (model.includes(deviceName) || deviceName.includes(model)))
+                return powerDevice;
+        }
+
+        return null;
+    }
+
+    function normalizedDeviceKey(value) {
+        return String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
     }
 
     function sortedBluetoothDevices() {

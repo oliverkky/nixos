@@ -11,6 +11,11 @@ MouseArea {
     property bool selected: false
     property bool warning: false
     property bool danger: false
+    property string trailingIcon: ""
+    property string trailingText: ""
+    property bool trailingWarning: false
+    property bool trailingCritical: false
+    readonly property bool hasTrailing: trailingIcon.length > 0 || trailingText.length > 0
 
     implicitHeight: 34
     height: implicitHeight
@@ -44,7 +49,10 @@ MouseArea {
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 38
+            width: Math.max(0, parent.width
+                - 18
+                - (trailingValue.visible ? trailingValue.implicitWidth : 0)
+                - (trailingValue.visible ? 20 : 10))
             spacing: 1
 
             Text {
@@ -65,6 +73,32 @@ MouseArea {
                 elide: Text.ElideRight
                 font.family: "Cantarell"
                 font.pixelSize: 11
+            }
+        }
+
+        Row {
+            id: trailingValue
+
+            visible: root.hasTrailing
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+
+            Text {
+                visible: root.trailingIcon.length > 0
+                text: root.trailingIcon
+                color: root.trailingCritical ? root.ui.critical : root.trailingWarning ? root.ui.warning : root.ui.textMuted
+                font.family: "Symbols Nerd Font"
+                font.pixelSize: 13
+                font.weight: Font.Bold
+            }
+
+            Text {
+                visible: root.trailingText.length > 0
+                text: root.trailingText
+                color: root.trailingCritical ? root.ui.critical : root.trailingWarning ? root.ui.warning : root.ui.textMuted
+                font.family: "Cantarell"
+                font.pixelSize: 11
+                font.weight: Font.Bold
             }
         }
     }

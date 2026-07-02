@@ -23,7 +23,6 @@ let
     # symlink is not usable here because it contains ':' characters.
     AQ_DRM_DEVICES = host.hyprland.drmDevice;
     AQ_NO_MODIFIERS = "1";
-    AQ_TRACE = "1";
     LIBVA_DRIVER_NAME = "radeonsi";
     VDPAU_DRIVER = "radeonsi";
   };

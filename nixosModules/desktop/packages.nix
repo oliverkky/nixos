@@ -30,6 +30,8 @@
     # Hyprland, where no full GNOME/KDE session starts a keyring for us.
 
     services.gnome.gnome-keyring.enable = true;
+    services.gnome.localsearch.enable = true;
+    services.gnome.tinysparql.enable = true;
     services.gvfs.enable = true;
     services.udisks2.enable = true;
     programs.seahorse.enable = true;
@@ -38,7 +40,15 @@
 
     # ── Printing ──────────────────────────────────────────────────────────────
 
-    services.printing.enable = true;
+    services.printing = {
+      enable = true;
+      browsed.enable = true;
+    };
+    services.avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
 
     # Plain gsettings only searches $XDG_DATA_DIRS/glib-2.0/schemas. Nix stores
     # schemas under share/gsettings-schemas/<package>, so expose that root too.
@@ -64,12 +74,16 @@
       evince
       gnome-disk-utility
       snapshot
+      wsdd
 
       # Misc
+      system-config-printer
       fastfetch
       obsidian
       brave
+      libreoffice
       obs-studio
+      thunderbird
     ];
   };
 }

@@ -1,5 +1,6 @@
 //@ pragma ShellId oliver-shell
 //@ pragma AppId oliver.quickshell
+//@ pragma UseQApplication
 
 import Quickshell
 import Quickshell.Io
@@ -8,7 +9,7 @@ import "components"
 ShellRoot {
     id: root
 
-    signal openSystemMenu()
+    signal openSystemMenu
 
     settings.watchFiles: true
 
@@ -33,6 +34,7 @@ ShellRoot {
 
         return screens.length > 0 ? screens : Quickshell.screens;
     }
+    readonly property var mainScreens: root.primaryScreens.length > 0 ? [root.primaryScreens[0]] : []
 
     Variants {
         model: root.primaryScreens
@@ -57,6 +59,15 @@ ShellRoot {
         model: root.primaryScreens
 
         Splash {
+            required property var modelData
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: root.mainScreens
+
+        Notifications {
             required property var modelData
             screen: modelData
         }

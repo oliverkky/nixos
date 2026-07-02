@@ -20,7 +20,7 @@ QS.PanelWindow {
     }
 
     implicitWidth: Math.min(900, Math.max(280, root.screenWidth() - 48))
-    implicitHeight: 64
+    implicitHeight: 88
     exclusiveZone: 0
     aboveWindows: false
     focusable: false
@@ -49,6 +49,8 @@ QS.PanelWindow {
         opacity: 0.92
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
+        wrapMode: Text.WordWrap
+        maximumLineCount: 3
         elide: Text.ElideRight
         font.family: "Cantarell"
         font.pixelSize: 18
@@ -67,11 +69,15 @@ QS.PanelWindow {
                 .filter(line => line.length > 0 && !line.startsWith("#"));
 
             root.message = lines.length > 0
-                ? lines[Math.floor(Math.random() * lines.length)]
+                ? root.formatMessage(lines[Math.floor(Math.random() * lines.length)])
                 : "Hello World!";
         } catch (error) {
             root.message = "Hello World!";
         }
+    }
+
+    function formatMessage(message) {
+        return message.replace(/\s+-\s+/, "\n- ");
     }
 
     function screenWidth() {
