@@ -3,10 +3,12 @@
 set -euo pipefail
 
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-source "$config_root/rofi/scripts/control-lib"
+script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
+hypr_script_dir="${HYPR_SCRIPT_DIR:-$config_root/hypr/scripts}"
+source "$script_dir/control-lib"
 
 current=$(brightnessctl -m 2>/dev/null | awk -F, 'NR==1 {print $4}')
-apply_profile_display="$config_root/hypr/scripts/apply-power-profile-display"
+apply_profile_display="$hypr_script_dir/apply-power-profile-display"
 profile=""
 if command -v powerprofilesctl >/dev/null 2>&1; then
     profile=$(powerprofilesctl get 2>/dev/null || true)

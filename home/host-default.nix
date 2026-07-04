@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ../../home
+    ./default.nix
   ];
 
   home.username = host.primaryUser;

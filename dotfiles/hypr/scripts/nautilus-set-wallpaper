@@ -6,4 +6,7 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
-exec "$HOME/.config/hypr/scripts/set-wallpaper" "$1"
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+script_dir="${HYPR_SCRIPT_DIR:-$config_root/hypr/scripts}"
+
+exec "$script_dir/set-wallpaper" "$1"

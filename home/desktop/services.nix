@@ -6,6 +6,7 @@
 }:
 
 let
+  hyprScripts = config.my.home.desktop.scripts.hyprPackage;
   quickshellRuntimeInit = pkgs.writeShellScript "quickshell-runtime-init" ''
     runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
     osd_dir="$runtime_dir/quickshell-osd"
@@ -102,7 +103,7 @@ in
         };
         Service = {
           Type = "oneshot";
-          ExecStart = "%h/.config/hypr/scripts/restore-wallpaper";
+          ExecStart = "${hyprScripts}/bin/restore-wallpaper";
         };
         Install.WantedBy = [ "graphical-session.target" ];
       };
@@ -114,7 +115,7 @@ in
           After = [ "graphical-session.target" ];
         };
         Service = {
-          ExecStart = "%h/.config/hypr/scripts/watch-power-profile-display";
+          ExecStart = "${hyprScripts}/bin/watch-power-profile-display";
           Restart = "on-failure";
         };
         Install.WantedBy = [ "graphical-session.target" ];
@@ -127,7 +128,7 @@ in
           After = [ "graphical-session.target" ];
         };
         Service = {
-          ExecStart = "%h/.config/hypr/scripts/watch-battery-profile";
+          ExecStart = "${hyprScripts}/bin/watch-battery-profile";
           Restart = "on-failure";
         };
         Install.WantedBy = [ "graphical-session.target" ];
@@ -137,7 +138,7 @@ in
         Unit.Description = "Power off idle Bluetooth while on battery";
         Service = {
           Type = "oneshot";
-          ExecStart = "%h/.config/hypr/scripts/bluetooth-auto-power-save";
+          ExecStart = "${hyprScripts}/bin/bluetooth-auto-power-save";
         };
       };
 

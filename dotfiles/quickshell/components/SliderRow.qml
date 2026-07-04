@@ -32,7 +32,7 @@ Row {
         color: root.ui.surface
 
         Rectangle {
-            width: Math.max(8, Math.min(parent.width, parent.width * (root.value / root.maximum)))
+            width: parent.width * root.normalizedValue()
             height: parent.height
             radius: parent.radius
             color: root.ui.surfaceStrong
@@ -48,5 +48,11 @@ Row {
                     root.moved(Math.max(0, Math.min(root.maximum, root.maximum * mouse.x / track.width)));
             }
         }
+    }
+
+    function normalizedValue() {
+        if (root.maximum <= 0)
+            return 0;
+        return Math.max(0, Math.min(1, root.value / root.maximum));
     }
 }

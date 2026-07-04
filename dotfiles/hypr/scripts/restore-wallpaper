@@ -4,6 +4,7 @@ set -eu
 
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+script_dir="${HYPR_SCRIPT_DIR:-$config_root/hypr/scripts}"
 last_wallpaper="$state_root/hypr/last-wallpaper"
 
 wait_for_awww() {
@@ -30,7 +31,7 @@ if [ -s "$last_wallpaper" ]; then
             --transition-duration 1 \
             --transition-fps 60 \
             "$wallpaper"
-        "$config_root/hypr/scripts/apply-wal" "$wallpaper" >/dev/null 2>&1 || true
+        "$script_dir/apply-wal" "$wallpaper" >/dev/null 2>&1 || true
         exit 0
     fi
 fi

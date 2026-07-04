@@ -102,7 +102,7 @@ QS.PanelWindow {
                     color: colorScheme.surface
 
                     Rectangle {
-                        width: Math.max(parent.height, Math.min(parent.width, parent.width * root.normalizedLevel()))
+                        width: parent.width * root.normalizedLevel()
                         height: parent.height
                         radius: parent.radius
                         color: colorScheme.surfaceStrong

@@ -101,12 +101,13 @@ return function(ctx)
 
     for _, device_name in ipairs({
         "razer-deathadder-v4-pro",
+        "razer-deathadder-v4-pro-1",
         "razer-deathadder-v4-pro-keyboard-1",
         "razer-deathadder-v4-pro-mouse",
     }) do
         hl.device({
             name = device_name,
-            sensitivity = -0.75,
+            sensitivity = -0.65,
         })
     end
 end

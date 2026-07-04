@@ -3,7 +3,8 @@
 set -euo pipefail
 
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-source "$config_root/rofi/scripts/control-lib"
+script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
+source "$script_dir/control-lib"
 
 if ! command -v cliphist >/dev/null 2>&1; then
     notify_user "Clipboard" "cliphist is not installed"

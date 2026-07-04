@@ -1,6 +1,7 @@
 return function(ctx)
     local main_mod = ctx.main_mod
-    local config_root = ctx.config_root
+    local hypr_script_dir = ctx.hypr_script_dir
+    local rofi_script_dir = ctx.rofi_script_dir
 
     local function bind(keys, dispatcher, opts)
         hl.bind(keys, dispatcher, opts or {})
@@ -13,7 +14,7 @@ return function(ctx)
     bind(main_mod .. " + V", hl.dsp.window.float({ action = "toggle" }))
     bind(main_mod .. " + F", hl.dsp.window.fullscreen({ action = "toggle" }))
     bind(main_mod .. " + SPACE", hl.dsp.exec_cmd(ctx.menu))
-    bind(main_mod .. " + SHIFT + V", hl.dsp.exec_cmd(config_root .. "/rofi/scripts/control-clipboard"))
+    bind(main_mod .. " + SHIFT + V", hl.dsp.exec_cmd(rofi_script_dir .. "/control-clipboard"))
     bind(main_mod .. " + P", hl.dsp.window.pseudo())
     bind(main_mod .. " + Z", hl.dsp.exec_cmd(ctx.zed))
     bind(main_mod .. " + O", hl.dsp.exec_cmd("obsidian"))
@@ -21,7 +22,7 @@ return function(ctx)
     bind(main_mod .. " + W", hl.dsp.exec_cmd("systemctl --user restart quickshell.service"))
     bind(main_mod .. " + ESCAPE", hl.dsp.exec_cmd("qs ipc call systemMenu open"))
     bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd("waypaper"))
-    bind(main_mod .. " + SHIFT + s", hl.dsp.exec_cmd(config_root .. "/rofi/scripts/control-screenshot"))
+    bind(main_mod .. " + SHIFT + s", hl.dsp.exec_cmd(rofi_script_dir .. "/control-screenshot"))
     bind("CTRL + SHIFT + ESCAPE", hl.dsp.exec_cmd("missioncenter"))
 
     bind(main_mod .. " + h", hl.dsp.focus({ direction = "left" }))
@@ -57,17 +58,17 @@ return function(ctx)
     bind(main_mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
     bind(main_mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
-    bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl volume-up"),
+    bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl volume-up"),
         { locked = true, repeating = true })
-    bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl volume-down"),
+    bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl volume-down"),
         { locked = true, repeating = true })
-    bind("XF86AudioMute", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl volume-mute"),
+    bind("XF86AudioMute", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl volume-mute"),
         { locked = true, repeating = true })
-    bind("XF86AudioMicMute", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl mic-mute"),
+    bind("XF86AudioMicMute", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl mic-mute"),
         { locked = true, repeating = true })
-    bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl brightness-up"),
+    bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl brightness-up"),
         { locked = true, repeating = true })
-    bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(config_root .. "/hypr/scripts/osdctl brightness-down"),
+    bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(hypr_script_dir .. "/osdctl brightness-down"),
         { locked = true, repeating = true })
 
     bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })

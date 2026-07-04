@@ -20,12 +20,57 @@
       ...
     }@inputs:
     let
+      lib = nixpkgs.lib;
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      laptop1 = import ./hosts/laptop1/constants.nix;
-      workstation = import ./hosts/workstation/constants.nix;
+      validateHost =
+        name: host:
+        let
+          requiredPaths = [
+            [ "hostName" ]
+            [ "primaryMonitor" ]
+            [ "primaryUser" ]
+            [ "primaryUid" ]
+            [ "primaryGid" ]
+            [ "stateVersion" ]
+            [
+              "cursor"
+              "name"
+            ]
+            [
+              "cursor"
+              "size"
+            ]
+            [
+              "cursor"
+              "dpi"
+            ]
+            [ "monitors" ]
+            [
+              "reaper"
+              "uiScale"
+            ]
+            [
+              "reaper"
+              "pipewireLatency"
+            ]
+            [
+              "zed"
+              "audioDevice"
+            ]
+          ];
+          missingPaths = lib.filter (path: !(lib.hasAttrByPath path host)) requiredPaths;
+          missing = lib.concatMapStringsSep ", " (lib.concatStringsSep ".") missingPaths;
+        in
+        assert lib.assertMsg (
+          host.hostName == name
+        ) "Host constants for ${name} set hostName to ${host.hostName}.";
+        assert lib.assertMsg (missingPaths == [ ]) "Host ${name} is missing constants: ${missing}.";
+        host;
+      laptop1 = validateHost "laptop1" (import ./hosts/laptop1/constants.nix);
+      workstation = validateHost "workstation" (import ./hosts/workstation/constants.nix);
       mkHost =
         name: host:
-        nixpkgs.lib.nixosSystem {
+        lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs host;
@@ -37,7 +82,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.${host.primaryUser} = import (./hosts + "/${name}/home.nix");
+              home-manager.users.${host.primaryUser} = import ./home/host-default.nix;
               home-manager.extraSpecialArgs = {
                 inherit inputs host;
               };

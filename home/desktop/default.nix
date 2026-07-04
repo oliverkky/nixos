@@ -7,6 +7,7 @@
     ./gtk.nix
     ./packages.nix
     ./reaper.nix
+    ./scripts.nix
     ./services.nix
     ./vcv-rack.nix
     ./xdg.nix
@@ -21,6 +22,7 @@
       gtk.enable = lib.mkDefault true;
       packages.enable = lib.mkDefault true;
       reaper.enable = lib.mkDefault true;
+      scripts.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
       vcv-rack.enable = lib.mkDefault true;
       xdg.enable = lib.mkDefault true;

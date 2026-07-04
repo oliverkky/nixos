@@ -3,8 +3,9 @@
 set -euo pipefail
 
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
 
 rofi \
     -show appsearch \
-    -modes "appsearch:$config_root/rofi/scripts/menu" \
+    -modes "appsearch:$script_dir/menu" \
     -show-icons

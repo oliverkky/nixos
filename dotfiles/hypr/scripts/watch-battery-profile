@@ -5,7 +5,8 @@ set -euo pipefail
 threshold=15
 interval=60
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-apply_display="$config_root/hypr/scripts/apply-power-profile-display"
+script_dir="${HYPR_SCRIPT_DIR:-$config_root/hypr/scripts}"
+apply_display="$script_dir/apply-power-profile-display"
 
 find_battery() {
     local supply

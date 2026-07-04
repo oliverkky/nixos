@@ -9,7 +9,7 @@ Row {
     spacing: 8
     height: 16
 
-    property var workspaceList: Hyprland.workspaces.values
+    property var workspaceList: modelValues(Hyprland.workspaces)
     property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1
     property var workspaceIds: buildWorkspaceIds()
 
@@ -32,7 +32,7 @@ Row {
             property bool present: root.containsId(root.workspaceIds, workspaceId)
             property bool ready: false
             property bool active: root.focusedId === workspaceId
-            property bool occupied: workspace && workspace.toplevels.values.length > 0
+            property bool occupied: workspace && root.modelValues(workspace.toplevels).length > 0
             property int indicatorWidth: active ? 36 : 20
 
             width: indicatorWidth
@@ -187,7 +187,7 @@ Row {
 
         for (let i = 0; i < workspaceList.length; i++) {
             const workspace = workspaceList[i];
-            if (workspace.id > highest && workspace.id < 10 && workspace.toplevels.values.length > 0)
+            if (workspace.id > highest && workspace.id < 10 && root.modelValues(workspace.toplevels).length > 0)
                 highest = workspace.id;
         }
 
@@ -199,5 +199,13 @@ Row {
             ids.push(10);
 
         return ids;
+    }
+
+    function modelValues(model) {
+        if (!model)
+            return [];
+        if (model.values)
+            return model.values;
+        return [];
     }
 }

@@ -244,10 +244,10 @@ QS.PanelWindow {
                             Row {
                                 width: parent.width
                                 spacing: 6
-                                visible: toast.notification && toast.notification.actions.length > 0
+                                visible: root.notificationActions(toast.notification).length > 0
 
                                 Repeater {
-                                    model: toast.notification ? toast.notification.actions : []
+                                    model: root.notificationActions(toast.notification)
 
                                     MouseArea {
                                         id: actionButton
@@ -368,16 +368,27 @@ QS.PanelWindow {
         if (!notification)
             return "";
 
-        return notification.appIcon || notification.desktopEntry || "";
+        const icon = String(notification.appIcon || notification.desktopEntry || "");
+        if (icon.startsWith("/"))
+            return `file://${icon}`;
+        if (icon.includes(":"))
+            return icon;
+
+        return "";
+    }
+
+    function notificationActions(notification) {
+        if (!notification || !notification.actions)
+            return [];
+
+        return notification.actions;
     }
 
     function defaultAction(notification) {
-        if (!notification || !notification.actions)
-            return null;
-
-        for (let i = 0; i < notification.actions.length; i++) {
-            if (notification.actions[i].identifier === "default")
-                return notification.actions[i];
+        const actions = notificationActions(notification);
+        for (let i = 0; i < actions.length; i++) {
+            if (actions[i].identifier === "default")
+                return actions[i];
         }
 
         return null;

@@ -3,7 +3,8 @@
 set -euo pipefail
 
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-source "$config_root/rofi/scripts/control-lib"
+script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
+source "$script_dir/control-lib"
 
 choice=$(
     {
@@ -17,10 +18,10 @@ choice=$(
 )
 
 case "$choice" in
-    *Network) "$config_root/rofi/scripts/control-network" ;;
-    *Bluetooth) "$config_root/rofi/scripts/control-bluetooth" ;;
-    *Audio) "$config_root/rofi/scripts/control-audio" ;;
-    *Brightness) "$config_root/rofi/scripts/control-brightness" ;;
-    *Screenshot) "$config_root/rofi/scripts/control-screenshot" ;;
-    *Power) "$config_root/rofi/scripts/control-session" ;;
+    *Network) "$script_dir/control-network" ;;
+    *Bluetooth) "$script_dir/control-bluetooth" ;;
+    *Audio) "$script_dir/control-audio" ;;
+    *Brightness) "$script_dir/control-brightness" ;;
+    *Screenshot) "$script_dir/control-screenshot" ;;
+    *Power) "$script_dir/control-session" ;;
 esac

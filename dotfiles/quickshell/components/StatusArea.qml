@@ -21,14 +21,14 @@ Item {
     property string activePanel: ""
     property string visiblePanel: ""
     property bool panelVisible: false
-    property var devices: Networking.devices.values
+    property var devices: root.modelValues(Networking.devices)
     property var bluetoothAdapter: Bluetooth.defaultAdapter
-    property var bluetoothDevices: Bluetooth.devices.values
-    property var powerDevices: UPower.devices ? UPower.devices.values : []
+    property var bluetoothDevices: root.modelValues(Bluetooth.devices)
+    property var powerDevices: root.modelValues(UPower.devices)
     property var sink: Pipewire.defaultAudioSink
     property var source: Pipewire.defaultAudioSource
     property var battery: UPower.displayDevice
-    property var trayItems: SystemTray.items.values
+    property var trayItems: root.modelValues(SystemTray.items)
     property var activeTrayItem: null
     property real trayMenuOriginX: 0
     property real trayMenuOriginY: 0
@@ -69,7 +69,7 @@ Item {
         },
     ]
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
-    readonly property string powerProfileDisplayPath: `${configHome}/hypr/scripts/set-power-profile-display`
+    readonly property string powerProfileDisplayPath: Quickshell.env("HYPR_SET_POWER_PROFILE_DISPLAY") || `${configHome}/hypr/scripts/set-power-profile-display`
 
     implicitWidth: capsuleRow.implicitWidth
     implicitHeight: 28
@@ -162,7 +162,7 @@ Item {
                             anchors.centerIn: parent
                             width: 16
                             height: 16
-                            source: trayButton.modelData ? trayButton.modelData.icon : ""
+                            source: root.trayIconSource(trayButton.modelData)
                             asynchronous: true
                             mipmap: true
                             opacity: trayButton.modelData && trayButton.modelData.status === Status.Passive ? 0.55 : 1
@@ -170,8 +170,8 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            visible: !trayButton.modelData || trayButton.modelData.icon.length === 0 || trayIcon.status === Image.Error
-                            text: "•"
+                            visible: !trayButton.modelData || trayIcon.source.toString().length === 0 || trayIcon.status === Image.Error
+                            text: root.trayFallbackIcon(trayButton.modelData)
                             color: root.ui.textMuted
                             font.family: "Cantarell"
                             font.pixelSize: 16
@@ -477,17 +477,17 @@ Item {
                 spacing: 10
 
                 IconImage {
-                    visible: root.activeTrayItem && root.activeTrayItem.icon && root.activeTrayItem.icon.length > 0
+                    visible: root.activeTrayItem && root.trayIconSource(root.activeTrayItem).length > 0
                     anchors.verticalCenter: parent.verticalCenter
                     width: 16
                     height: 16
-                    source: root.activeTrayItem ? root.activeTrayItem.icon : ""
+                    source: root.trayIconSource(root.activeTrayItem)
                     asynchronous: true
                     mipmap: true
                 }
 
                 Text {
-                    width: parent.width - (root.activeTrayItem && root.activeTrayItem.icon && root.activeTrayItem.icon.length > 0 ? 26 : 0)
+                    width: parent.width - (root.activeTrayItem && root.trayIconSource(root.activeTrayItem).length > 0 ? 26 : 0)
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.trayPanelTitle()
                     color: root.ui.text
@@ -519,7 +519,7 @@ Item {
                     spacing: 4
 
                     Repeater {
-                        model: trayMenuOpener.children.values
+                        model: root.modelValues(trayMenuOpener.children)
 
                         Loader {
                             required property var modelData
@@ -632,7 +632,7 @@ Item {
 
                 if (trayMenuButton.modelData.hasChildren) {
                     const point = trayMenuButton.mapToItem(null, trayMenuButton.width, 0);
-                    trayMenuButton.modelData.display(root.parentWindow, point.x, point.y);
+                    trayMenuButton.modelData.display(trayMenuPanel, point.x, point.y);
                     return;
                 }
 
@@ -645,217 +645,42 @@ Item {
     Component {
         id: powerPanel
 
-        Column {
-            spacing: 6
-
-            Repeater {
-                model: root.powerActions
-
-                PanelAction {
-                    required property int index
-                    required property var modelData
-
-                    width: parent.width
-                    ui: root.ui
-                    icon: modelData.icon
-                    text: modelData.text
-                    danger: modelData.danger || false
-                    selected: root.activePanel === "power" && root.powerSelectedIndex === index
-                    onEntered: root.powerSelectedIndex = index
-                    onClicked: root.runPowerAction(index)
-                }
-            }
+        PowerPanel {
+            ui: root.ui
+            actions: root.powerActions
+            selectedIndex: root.powerSelectedIndex
+            onEntered: index => root.powerSelectedIndex = index
+            onRunAction: index => root.runPowerAction(index)
         }
     }
 
     Component {
         id: networkPanel
 
-        Column {
-            width: parent.width
-            height: parent.height
-            spacing: 8
-
-            Row {
-                id: networkHeader
-                width: parent.width
-                height: 30
-
-                Text {
-                    width: parent.width - 90
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.networkLabel()
-                    color: root.ui.text
-                    elide: Text.ElideRight
-                    font.family: "Cantarell"
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                }
-
-                IconButton {
-                    ui: root.ui
-                    icon: Networking.wifiEnabled ? "󰖩" : "󰖪"
-                    label: Networking.wifiEnabled ? "On" : "Off"
-                    active: Networking.wifiEnabled
-                    compact: false
-                    onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
-                }
-
-                IconButton {
-                    ui: root.ui
-                    icon: "󰑓"
-                    onClicked: {
-                        const wifi = root.wifiDevice();
-                        if (wifi)
-                            wifi.scannerEnabled = true;
-                    }
-                }
+        NetworkPanel {
+            ui: root.ui
+            networks: root.wifiDevice() ? root.modelValues(root.wifiDevice().networks) : []
+            iconForNetwork: root.wifiNetworkIcon
+            securityLabel: root.securityLabel
+            wifiEnabled: Networking.wifiEnabled
+            label: root.networkLabel()
+            connected: root.networkConnected()
+            passwordTarget: root.passwordTarget
+            passwordError: root.passwordError
+            onToggleWifi: Networking.wifiEnabled = !Networking.wifiEnabled
+            onRescan: {
+                const wifi = root.wifiDevice();
+                if (wifi)
+                    wifi.scannerEnabled = true;
             }
-
-            Flickable {
-                id: wifiScroller
-
-                width: parent.width
-                height: Math.max(102, parent.height - networkHeader.height - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0) - networkFallback.height - networkDisconnect.height - 32)
-                clip: true
-                contentWidth: width
-                contentHeight: wifiList.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-
-                Column {
-                    id: wifiList
-
-                    width: wifiScroller.width
-                    spacing: 8
-
-                    Repeater {
-                        model: root.wifiDevice() ? root.wifiDevice().networks : null
-
-                        PanelAction {
-                            required property var modelData
-
-                            width: parent.width
-                            ui: root.ui
-                            icon: root.wifiNetworkIcon(modelData)
-                            text: modelData.name || "Hidden network"
-                            subtext: modelData.connected ? "Connected" : modelData.known ? "Known" : root.securityLabel(modelData)
-                            active: modelData.connected
-                            onClicked: {
-                                if (modelData.known || modelData.security === WifiSecurityType.Open)
-                                    modelData.connect();
-                                else
-                                    root.promptForNetwork(modelData);
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                id: passwordPrompt
-                visible: root.passwordTarget !== null
-                width: parent.width
-                height: root.passwordError.length > 0 ? 104 : 86
-                radius: 8
-                color: root.ui.surface
-                border.width: 1
-                border.color: root.ui.borderSoft
-                onVisibleChanged: {
-                    if (visible) {
-                        passwordInput.text = "";
-                        passwordInput.forceActiveFocus();
-                    }
-                }
-
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: 10
-                    spacing: 6
-
-                    Text {
-                        width: parent.width
-                        text: root.passwordTarget ? `Password for ${root.passwordTarget.name || "hidden network"}` : "Wi-Fi password"
-                        color: root.ui.textMuted
-                        elide: Text.ElideRight
-                        font.family: "Cantarell"
-                        font.pixelSize: 11
-                        font.weight: Font.Bold
-                    }
-
-                    TextInput {
-                        id: passwordInput
-                        width: parent.width
-                        height: 24
-                        color: root.ui.text
-                        selectionColor: root.ui.surfaceStrong
-                        selectedTextColor: root.ui.background
-                        echoMode: TextInput.Password
-                        font.family: "Cantarell"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                        focus: root.passwordTarget !== null
-                        clip: true
-                        Keys.onReturnPressed: root.submitPassword(passwordInput.text)
-                        Keys.onEnterPressed: root.submitPassword(passwordInput.text)
-                        Keys.onEscapePressed: root.cancelPasswordPrompt(passwordInput)
-                    }
-
-                    Row {
-                        spacing: 8
-
-                        PanelAction {
-                            width: 92
-                            ui: root.ui
-                            icon: "󰌑"
-                            text: "Connect"
-                            onClicked: root.submitPassword(passwordInput.text)
-                        }
-
-                        PanelAction {
-                            width: 82
-                            ui: root.ui
-                            icon: "󰅖"
-                            text: "Cancel"
-                            onClicked: root.cancelPasswordPrompt(passwordInput)
-                        }
-                    }
-
-                    Text {
-                        visible: root.passwordError.length > 0
-                        width: parent.width
-                        text: root.passwordError
-                        color: root.ui.warning
-                        elide: Text.ElideRight
-                        font.family: "Cantarell"
-                        font.pixelSize: 11
-                        font.weight: Font.Bold
-                    }
-                }
-            }
-
-            PanelAction {
-                id: networkFallback
-                width: parent.width
-                ui: root.ui
-                icon: ""
-                text: "Open nmtui"
-                subtext: "Native NetworkManager fallback"
-                onClicked: root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"])
-            }
-
-            PanelAction {
-                id: networkDisconnect
-                width: parent.width
-                ui: root.ui
-                icon: "󰤭"
-                text: "Disconnect"
-                subtext: root.networkConnected() ? root.networkLabel() : ""
-                active: false
-                onClicked: {
-                    const wifi = root.wifiDevice();
-                    if (wifi)
-                        wifi.disconnect();
-                }
+            onConnectNetwork: network => root.promptForNetwork(network)
+            onSubmitPassword: password => root.submitPassword(password)
+            onCancelPassword: input => root.cancelPasswordPrompt(input)
+            onOpenFallback: root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"])
+            onDisconnectWifi: {
+                const wifi = root.wifiDevice();
+                if (wifi)
+                    wifi.disconnect();
             }
         }
     }
@@ -863,341 +688,56 @@ Item {
     Component {
         id: bluetoothPanel
 
-        Column {
-            width: parent.width
-            height: parent.height
-            spacing: 8
-
-            Row {
-                id: bluetoothHeader
-                width: parent.width
-                height: 30
-
-                Text {
-                    width: parent.width - 110
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.bluetoothAdapter ? root.bluetoothAdapter.name : "Bluetooth"
-                    color: root.ui.text
-                    elide: Text.ElideRight
-                    font.family: "Cantarell"
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                }
-
-                IconButton {
-                    ui: root.ui
-                    icon: root.bluetoothAdapter && root.bluetoothAdapter.enabled ? "󰂯" : "󰂲"
-                    label: root.bluetoothAdapter && root.bluetoothAdapter.enabled ? "On" : "Off"
-                    active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                    compact: false
-                    onClicked: if (root.bluetoothAdapter)
-                        root.bluetoothAdapter.enabled = !root.bluetoothAdapter.enabled
-                }
-
-                IconButton {
-                    ui: root.ui
-                    icon: "󰑓"
-                    active: root.bluetoothAdapter && root.bluetoothAdapter.discovering
-                    onClicked: if (root.bluetoothAdapter)
-                        root.bluetoothAdapter.discovering = !root.bluetoothAdapter.discovering
-                }
-            }
-
-            Rectangle {
-                id: bluetoothScanning
-                visible: root.bluetoothAdapter && root.bluetoothAdapter.discovering
-                width: parent.width
-                height: 28
-                radius: 8
-                color: root.ui.surface
-                border.width: 1
-                border.color: root.ui.borderSoft
-
-                Row {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 10
-
-                    Text {
-                        width: 18
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "󰑓"
-                        color: root.ui.text
-                        font.family: "Symbols Nerd Font"
-                        font.pixelSize: 14
-                        font.weight: Font.Bold
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    Text {
-                        width: parent.width - 28
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Scanning for devices"
-                        color: root.ui.textMuted
-                        elide: Text.ElideRight
-                        font.family: "Cantarell"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                    }
-                }
-            }
-
-            Flickable {
-                id: bluetoothScroller
-
-                width: parent.width
-                height: Math.max(102, parent.height - bluetoothHeader.height - (bluetoothScanning.visible ? bluetoothScanning.height + 8 : 0) - bluetoothFallback.height - 24)
-                clip: true
-                contentWidth: width
-                contentHeight: bluetoothList.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-
-                Column {
-                    id: bluetoothList
-
-                    width: bluetoothScroller.width
-                    spacing: 8
-
-                    Repeater {
-                        model: ScriptModel {
-                            values: root.sortedBluetoothDevices()
-                        }
-
-                        PanelAction {
-                            required property var modelData
-
-                            width: parent.width
-                            ui: root.ui
-                            icon: modelData.connected ? "󰂱" : "󰂯"
-                            text: modelData.name || modelData.deviceName || modelData.address
-                            subtext: modelData.connected ? root.bluetoothBatteryLabel(modelData) : BluetoothDeviceState.toString(modelData.state)
-                            trailingIcon: modelData.connected && root.bluetoothBatteryAvailable(modelData) ? root.bluetoothBatteryIcon(modelData) : ""
-                            trailingText: modelData.connected && root.bluetoothBatteryAvailable(modelData) ? root.bluetoothBatteryPercentLabel(modelData) : ""
-                            trailingWarning: modelData.connected && root.bluetoothBatteryAvailable(modelData) && root.bluetoothBatteryPercent(modelData) < 30
-                            trailingCritical: modelData.connected && root.bluetoothBatteryAvailable(modelData) && root.bluetoothBatteryPercent(modelData) < 15
-                            active: modelData.connected
-                            onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
-                        }
-                    }
-                }
-            }
-
-            PanelAction {
-                id: bluetoothFallback
-                width: parent.width
-                ui: root.ui
-                icon: "󰂯"
-                text: "Open Bluetooth manager"
-                subtext: "Native BlueZ fallback"
-                onClicked: root.runNativeTool(["blueman-manager"])
-            }
+        BluetoothPanel {
+            ui: root.ui
+            adapter: root.bluetoothAdapter
+            devices: root.sortedBluetoothDevices()
+            batteryLabel: root.bluetoothBatteryLabel
+            batteryAvailable: root.bluetoothBatteryAvailable
+            batteryIcon: root.bluetoothBatteryIcon
+            batteryPercent: root.bluetoothBatteryPercent
+            batteryPercentLabel: root.bluetoothBatteryPercentLabel
+            onOpenFallback: root.runNativeTool(["blueman-manager"])
         }
     }
 
     Component {
         id: audioPanel
 
-        Column {
-            spacing: 10
-
-            SliderRow {
-                width: parent.width
-                ui: root.ui
-                icon: root.volumeIcon()
-                value: root.sink && root.sink.audio ? root.sink.audio.volume : 0
-                maximum: 1.2
-                onMoved: value => {
-                    if (root.sink && root.sink.audio)
-                        root.sink.audio.volume = value;
-                }
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: root.volumeIcon()
-                text: root.sink && root.sink.audio && root.sink.audio.muted ? "Unmute output" : "Mute output"
-                onClicked: if (root.sink && root.sink.audio)
-                    root.sink.audio.muted = !root.sink.audio.muted
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: root.source && root.source.audio && root.source.audio.muted ? "󰍭" : "󰍬"
-                text: root.source && root.source.audio && root.source.audio.muted ? "Unmute microphone" : "Mute microphone"
-                onClicked: if (root.source && root.source.audio)
-                    root.source.audio.muted = !root.source.audio.muted
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: root.ui.borderSoft
-            }
-
-            Text {
-                width: parent.width
-                text: "Output"
-                color: root.ui.textMuted
-                elide: Text.ElideRight
-                font.family: "Cantarell"
-                font.pixelSize: 11
-                font.weight: Font.Bold
-            }
-
-            Repeater {
-                model: ScriptModel {
-                    values: root.audioOutputDevices()
-                }
-
-                PanelAction {
-                    required property var modelData
-
-                    width: parent.width
-                    ui: root.ui
-                    icon: root.audioNodeIcon(modelData)
-                    text: root.audioNodeLabel(modelData)
-                    subtext: modelData === root.sink ? "Default output" : "Set as default output"
-                    active: modelData === root.sink
-                    onClicked: Pipewire.preferredDefaultAudioSink = modelData
-                }
-            }
-
-            Text {
-                visible: root.audioInputDevices().length > 0
-                width: parent.width
-                text: "Input"
-                color: root.ui.textMuted
-                elide: Text.ElideRight
-                font.family: "Cantarell"
-                font.pixelSize: 11
-                font.weight: Font.Bold
-            }
-
-            Repeater {
-                model: ScriptModel {
-                    values: root.audioInputDevices()
-                }
-
-                PanelAction {
-                    required property var modelData
-
-                    width: parent.width
-                    ui: root.ui
-                    icon: "󰍬"
-                    text: root.audioNodeLabel(modelData)
-                    subtext: modelData === root.source ? "Default input" : "Set as default input"
-                    active: modelData === root.source
-                    onClicked: Pipewire.preferredDefaultAudioSource = modelData
-                }
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: "󰓃"
-                text: "Open pavucontrol"
-                subtext: "Native PipeWire/Pulse fallback"
-                onClicked: root.runNativeTool(["pavucontrol"])
-            }
+        AudioPanel {
+            ui: root.ui
+            sink: root.sink
+            source: root.source
+            outputDevices: root.audioOutputDevices()
+            inputDevices: root.audioInputDevices()
+            volumeIcon: root.volumeIcon
+            audioNodeIcon: root.audioNodeIcon
+            audioNodeLabel: root.audioNodeLabel
+            onOpenFallback: root.runNativeTool(["pavucontrol"])
         }
     }
 
     Component {
         id: batteryPanel
 
-        Column {
-            spacing: 8
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: root.batteryIcon()
-                text: root.hasBattery() ? `${Math.round(root.batteryPercent())}% ${UPowerDeviceState.toString(root.battery.state)}` : "Battery"
-                subtext: root.batteryDetail()
-                warning: root.hasBattery() && root.batteryPercent() < 30
-            }
-
-            Column {
-                visible: root.brightnessAvailable
-                width: parent.width
-                spacing: 2
-
-                Row {
-                    width: parent.width
-                    height: 18
-
-                    Text {
-                        width: parent.width - 48
-                        text: "Brightness"
-                        color: root.ui.text
-                        elide: Text.ElideRight
-                        font.family: "Cantarell"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                    }
-
-                    Text {
-                        width: 48
-                        text: `${Math.round(root.brightnessPercent)}%`
-                        color: root.ui.textMuted
-                        horizontalAlignment: Text.AlignRight
-                        font.family: "Cantarell"
-                        font.pixelSize: 11
-                    }
-                }
-
-                SliderRow {
-                    width: parent.width
-                    ui: root.ui
-                    icon: "󰃠"
-                    value: root.brightnessPercent
-                    maximum: 100
-                    onMoved: value => root.setBrightness(value)
-                }
-            }
-
-            PanelAction {
-                width: parent.width
-                ui: root.ui
-                icon: root.idleInhibited ? "󰅶" : "󰾪"
-                text: root.idleInhibited ? "Idle inhibited" : "Idle allowed"
-                subtext: root.idleInhibited ? "Lock and sleep timers are paused" : "Hypridle timers are active"
-                active: root.idleInhibited
-                onClicked: root.idleInhibited = !root.idleInhibited
-            }
-
-            PanelAction {
-                visible: root.powerProfilesAvailable
-                width: parent.width
-                ui: root.ui
-                icon: "󰌪"
-                text: "Power saver"
-                active: root.powerProfileActive(PowerProfile.PowerSaver)
-                onClicked: root.setPowerProfile("power-saver")
-            }
-
-            PanelAction {
-                visible: root.powerProfilesAvailable
-                width: parent.width
-                ui: root.ui
-                icon: ""
-                text: "Balanced"
-                active: root.powerProfileActive(PowerProfile.Balanced)
-                onClicked: root.setPowerProfile("balanced")
-            }
-
-            PanelAction {
-                visible: root.powerProfilesAvailable && PowerProfiles.hasPerformanceProfile
-                width: parent.width
-                ui: root.ui
-                icon: ""
-                text: "Performance"
-                active: root.powerProfileActive(PowerProfile.Performance)
-                onClicked: root.setPowerProfile("performance")
-            }
+        BatteryPanel {
+            ui: root.ui
+            battery: root.battery
+            hasBattery: root.hasBattery()
+            batteryPercent: root.batteryPercent()
+            batteryDetail: root.batteryDetail()
+            batteryIcon: root.batteryIcon()
+            brightnessAvailable: root.brightnessAvailable
+            brightnessPercent: root.brightnessPercent
+            idleInhibited: root.idleInhibited
+            powerProfilesAvailable: root.powerProfilesAvailable
+            powerSaverActive: root.powerProfileActive(PowerProfile.PowerSaver)
+            balancedActive: root.powerProfileActive(PowerProfile.Balanced)
+            performanceActive: root.powerProfileActive(PowerProfile.Performance)
+            hasPerformanceProfile: PowerProfiles.hasPerformanceProfile
+            onSetBrightness: value => root.setBrightness(value)
+            onToggleIdleInhibited: root.idleInhibited = !root.idleInhibited
+            onSetPowerProfile: profile => root.setPowerProfile(profile)
         }
     }
 
@@ -1301,6 +841,14 @@ Item {
         return "";
     }
 
+    function modelValues(model) {
+        if (!model)
+            return [];
+        if (model.values)
+            return model.values;
+        return [];
+    }
+
     function trayRootMenuFor(item) {
         if (!item || !item.menu)
             return null;
@@ -1348,7 +896,7 @@ Item {
     }
 
     function trayPanelHeight() {
-        const entries = trayMenuOpener.children ? trayMenuOpener.children.values.length : 0;
+        const entries = root.modelValues(trayMenuOpener.children).length;
         return Math.min(432, Math.max(108, 63 + (entries * 36)));
     }
 
@@ -1357,6 +905,32 @@ Item {
             return "Menu";
 
         return activeTrayItem.tooltipTitle || activeTrayItem.title || activeTrayItem.id || "Menu";
+    }
+
+    function trayIconSource(item) {
+        if (!item || !item.icon)
+            return "";
+
+        const icon = String(item.icon);
+        if (icon.startsWith("/"))
+            return `file://${icon}`;
+        if (icon.includes(":"))
+            return icon;
+
+        return "";
+    }
+
+    function trayFallbackIcon(item) {
+        const label = String(item ? item.icon || item.title || item.id || item.tooltipTitle || "" : "").toLowerCase();
+        if (label.includes("audio") || label.includes("volume") || label.includes("headset"))
+            return "󰕾";
+        if (label.includes("battery") || label.includes("power"))
+            return "󰁹";
+        if (label.includes("bluetooth"))
+            return "󰂯";
+        if (label.includes("network") || label.includes("wifi") || label.includes("wireless"))
+            return "󰤨";
+        return "•";
     }
 
     function trayPanelAnchorX() {
@@ -1390,9 +964,10 @@ Item {
     function connectedNetwork(device) {
         if (!device)
             return null;
-        for (let i = 0; i < device.networks.values.length; i++) {
-            if (device.networks.values[i].connected)
-                return device.networks.values[i];
+        const networks = root.modelValues(device.networks);
+        for (let i = 0; i < networks.length; i++) {
+            if (networks[i].connected)
+                return networks[i];
         }
         return null;
     }
@@ -1549,7 +1124,7 @@ Item {
         if (!bluetoothAdapter)
             return [];
 
-        return [...bluetoothAdapter.devices.values].sort((left, right) => {
+        return [...root.modelValues(bluetoothAdapter.devices)].sort((left, right) => {
             if (left.connected !== right.connected)
                 return left.connected ? -1 : 1;
             if (left.paired !== right.paired)
@@ -1574,11 +1149,11 @@ Item {
     }
 
     function audioOutputDevices() {
-        return Pipewire.nodes.values.filter(node => node.audio && node.isSink && !node.isStream).sort(audioNodeCompare);
+        return root.modelValues(Pipewire.nodes).filter(node => node.audio && node.isSink && !node.isStream).sort(audioNodeCompare);
     }
 
     function audioInputDevices() {
-        return Pipewire.nodes.values.filter(node => node.audio && !node.isSink && !node.isStream).sort(audioNodeCompare);
+        return root.modelValues(Pipewire.nodes).filter(node => node.audio && !node.isSink && !node.isStream).sort(audioNodeCompare);
     }
 
     function audioNodeCompare(left, right) {

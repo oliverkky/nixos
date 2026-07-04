@@ -3,7 +3,8 @@
 set -euo pipefail
 
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-source "$config_root/rofi/scripts/control-lib"
+script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
+source "$script_dir/control-lib"
 
 dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
 mkdir -p "$dir"

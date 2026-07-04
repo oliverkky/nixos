@@ -78,12 +78,6 @@
 
       # Misc
       system-config-printer
-      fastfetch
-      obsidian
-      brave
-      libreoffice
-      obs-studio
-      thunderbird
     ];
   };
 }
