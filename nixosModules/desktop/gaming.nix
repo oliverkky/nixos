@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 
@@ -15,6 +16,9 @@
   config = lib.mkIf config.my.nixos.desktop.gaming.enable {
     programs.steam = {
       enable = true;
+      package = pkgs.steam.override {
+        extraArgs = "-pipewire";
+      };
       remotePlay.openFirewall = config.my.nixos.desktop.gaming.steamRemotePlay.openFirewall;
       localNetworkGameTransfers.openFirewall =
         config.my.nixos.desktop.gaming.steamLocalNetworkTransfers.openFirewall;
