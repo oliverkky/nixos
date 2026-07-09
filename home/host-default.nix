@@ -10,8 +10,13 @@
   home.stateVersion = host.stateVersion;
 
   my.home = {
-    desktop.enable = true;
-    development.enable = true;
-    shell.enable = true;
+    desktop = {
+      enable = host.home.desktop.enable;
+      packages.audioProduction.enable = host.home.audioProduction.enable;
+      reaper.enable = host.home.audioProduction.enable;
+      vcv-rack.enable = host.home.audioProduction.enable;
+    };
+    development.enable = host.home.development.enable;
+    shell.enable = host.home.shell.enable;
   };
 }

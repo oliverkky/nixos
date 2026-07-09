@@ -19,12 +19,12 @@
     my.home.desktop = {
       cursor.enable = lib.mkDefault true;
       dotfiles.enable = lib.mkDefault true;
-      gtk.enable = lib.mkDefault true;
+      gtk.enable = lib.mkDefault false;
       packages.enable = lib.mkDefault true;
-      reaper.enable = lib.mkDefault true;
+      reaper.enable = lib.mkDefault false;
       scripts.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
-      vcv-rack.enable = lib.mkDefault true;
+      vcv-rack.enable = lib.mkDefault false;
       xdg.enable = lib.mkDefault true;
     };
   };

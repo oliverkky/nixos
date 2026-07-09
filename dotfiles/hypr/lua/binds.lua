@@ -22,7 +22,7 @@ return function(ctx)
     bind(main_mod .. " + W", hl.dsp.exec_cmd("systemctl --user restart quickshell.service"))
     bind(main_mod .. " + ESCAPE", hl.dsp.exec_cmd("qs ipc call systemMenu open"))
     bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd("waypaper"))
-    bind(main_mod .. " + SHIFT + s", hl.dsp.exec_cmd(rofi_script_dir .. "/control-screenshot"))
+    bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd(rofi_script_dir .. "/control-screenshot"))
     bind("CTRL + SHIFT + ESCAPE", hl.dsp.exec_cmd("missioncenter"))
 
     bind(main_mod .. " + h", hl.dsp.focus({ direction = "left" }))

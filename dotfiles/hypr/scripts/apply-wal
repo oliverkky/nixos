@@ -8,7 +8,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 image_path=$1
-wal_bin=${WAL_BIN:-"$HOME/.local/bin/wal"}
+wal_bin=${WAL_BIN:-wal}
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
 sddm_wallpaper="/var/lib/sddm-wallpaper/current-wallpaper.png"
@@ -26,11 +26,7 @@ if [ -f "$sddm_wallpaper" ] && [ -w "$sddm_wallpaper" ]; then
     chmod 0644 "$sddm_wallpaper" >/dev/null 2>&1 || true
 fi
 
-if [ ! -x "$wal_bin" ]; then
-    wal_bin=$(command -v wal 2>/dev/null || true)
-fi
-
-if [ -z "${wal_bin:-}" ] || [ ! -x "$wal_bin" ]; then
+if ! command -v "$wal_bin" >/dev/null 2>&1; then
     exit 1
 fi
 

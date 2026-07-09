@@ -14,7 +14,7 @@
       name = host.cursor.name;
       package = pkgs.bibata-cursors;
       size = host.cursor.size;
-      gtk.enable = true;
+      gtk.enable = lib.mkDefault false;
     };
 
     xresources.properties = {

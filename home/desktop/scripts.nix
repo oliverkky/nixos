@@ -62,6 +62,7 @@ let
       name,
       src,
       runtimeInputs,
+      sourceDirEnv ? null,
     }:
     pkgs.stdenvNoCC.mkDerivation {
       inherit name src;
@@ -78,8 +79,13 @@ let
         for script in "$out/libexec/${name}"/*; do
           [ -f "$script" ] || continue
           chmod +x "$script"
-          makeWrapper "$script" "$out/bin/$(basename "$script")" \
+          wrapper_args=(
             --prefix PATH : ${lib.escapeShellArg (makeBinPath runtimeInputs)}
+            ${lib.optionalString (
+              sourceDirEnv != null
+            ) "--set ${lib.escapeShellArg sourceDirEnv} \"$out/libexec/${name}\""}
+          )
+          makeWrapper "$script" "$out/bin/$(basename "$script")" "''${wrapper_args[@]}"
         done
 
         runHook postInstall
@@ -96,6 +102,7 @@ let
     name = "rofi-control-scripts";
     src = ../../dotfiles/rofi/scripts;
     runtimeInputs = rofiRuntimeInputs;
+    sourceDirEnv = "ROFI_SCRIPT_DIR";
   };
 in
 {

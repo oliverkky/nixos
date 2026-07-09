@@ -10,6 +10,7 @@ The main point is to be able to move through this environment either with keyboa
 ## Aplications
 
 `Main + Space` Opens Rofi. Inspired by Spotlight.
+`Main + Shift + S` Opens screenshot menu.
 `Main + B` Opens Brave Browser.
 `Main + O` Opens Obsidian.
 `Main + Z` Opens Zed.

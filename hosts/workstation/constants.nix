@@ -1,5 +1,12 @@
 {
   hostName = "workstation";
+  system = "x86_64-linux";
+  home = {
+    audioProduction.enable = true;
+    desktop.enable = true;
+    development.enable = true;
+    shell.enable = true;
+  };
   cursor = {
     name = "Bibata-Modern-Classic";
     size = 24;
@@ -9,7 +16,7 @@
   monitors = [
     {
       output = "DP-1";
-      mode = "2560x1440@75";
+      mode = "2560x1440@74.97Hz";
       position = "0x0";
       scale = 1.0;
     }
@@ -22,10 +29,10 @@
   ];
   primaryMonitor = "DP-1";
   primaryUser = "oliver";
+  primaryUserDescription = "Oliver Klinkovský";
   primaryUid = 1000;
   primaryGid = 100;
   reaper = {
-    uiScale = 1.0;
     pipewireLatency = "128/48000";
   };
   secondaryMonitor = "HDMI-A-1";

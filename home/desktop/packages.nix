@@ -1,10 +1,18 @@
 {
   config,
+  host ? null,
   lib,
   pkgs,
   ...
 }:
 
+let
+  orcaSlicer =
+    if host != null && host.hostName == "workstation" then
+      pkgs.callPackage ../../pkgs/orca-slicer-egl.nix { }
+    else
+      pkgs.orca-slicer;
+in
 {
   options.my.home.desktop.packages = {
     enable = lib.mkEnableOption "desktop user packages";
@@ -16,7 +24,7 @@
   config = lib.mkIf config.my.home.desktop.packages.enable {
     my.home.desktop.packages = {
       apps.enable = lib.mkDefault true;
-      audioProduction.enable = lib.mkDefault true;
+      audioProduction.enable = lib.mkDefault false;
       runtime.enable = lib.mkDefault true;
     };
 
@@ -32,6 +40,8 @@
         quickshell
         awww
         waypaper
+        rofi
+        pywal16
         cliphist
         wl-clip-persist
         playerctl
@@ -50,6 +60,7 @@
       ]
       ++ lib.optionals config.my.home.desktop.packages.apps.enable [
         brave
+        discord
         fastfetch
         gnome-calendar
         gnome-clocks
@@ -59,8 +70,11 @@
         mission-center
         obs-studio
         obsidian
+        orcaSlicer
         prismlauncher
+        showtime
         thunderbird
+        vlc
       ]
       ++ lib.optionals config.my.home.desktop.packages.audioProduction.enable [
         carla

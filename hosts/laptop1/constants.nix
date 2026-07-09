@@ -1,5 +1,12 @@
 {
   hostName = "laptop1";
+  system = "x86_64-linux";
+  home = {
+    audioProduction.enable = true;
+    desktop.enable = true;
+    development.enable = true;
+    shell.enable = true;
+  };
   battery.chargeType = "Standard";
   cursor = {
     name = "Bibata-Modern-Classic";
@@ -16,10 +23,10 @@
   ];
   primaryMonitor = "eDP-1";
   primaryUser = "oliver";
+  primaryUserDescription = "Oliver Klinkovský";
   primaryUid = 1000;
   primaryGid = 100;
   reaper = {
-    uiScale = 1.5;
     pipewireLatency = "64/48000";
   };
   zed.audioDevice = "alsa:default";

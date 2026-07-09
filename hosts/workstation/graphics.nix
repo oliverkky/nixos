@@ -7,16 +7,7 @@
 }:
 
 let
-  blenderRocm = pkgs.symlinkJoin {
-    name = "blender-rocm";
-    paths = [ pkgs.pkgsRocm.blender ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      rm "$out/bin/blender"
-      makeWrapper "${pkgs.pkgsRocm.blender}/bin/blender" "$out/bin/blender" \
-        --set LD_PRELOAD "${pkgs.rocmPackages.llvm.llvm.lib}/lib/libLLVM.so.22.0"
-    '';
-  };
+  blenderRocm = pkgs.callPackage ../../pkgs/blender-rocm.nix { };
 
   workstationHyprlandEnv = {
     # Aquamarine uses ':' as the AQ_DRM_DEVICES separator, so the PCI by-path
@@ -58,6 +49,8 @@ in
 {
   # The workstation has an RX 9070-class AMD GPU and an AMD iGPU.
   boot.initrd.kernelModules = [ "amdgpu" ];
+
+  users.users.${host.primaryUser}.extraGroups = [ "render" ];
 
   hardware.graphics = {
     enable = true;

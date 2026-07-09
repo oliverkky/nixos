@@ -16,7 +16,7 @@
   };
 
   config = lib.mkIf config.my.nixos.development.enable {
-    my.nixos.development.codexCli.enable = lib.mkDefault true;
+    my.nixos.development.codexCli.enable = lib.mkDefault false;
     my.nixos.development.podman.enable = lib.mkDefault true;
 
     virtualisation.podman = {
@@ -57,6 +57,7 @@
 
         # Linting / formatting
         ruff
+        uv
 
         # Core tools
         git

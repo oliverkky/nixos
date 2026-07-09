@@ -6,8 +6,11 @@
 }:
 
 {
-  options.my.nixos.desktop.packages.enable =
-    lib.mkEnableOption "desktop packages and integration services";
+  options.my.nixos.desktop.packages = {
+    enable = lib.mkEnableOption "desktop packages and integration services";
+    printing.enable = lib.mkEnableOption "printer discovery and CUPS tools";
+    networkDiscovery.enable = lib.mkEnableOption "mDNS discovery for desktop file and printer browsing";
+  };
 
   config = lib.mkIf config.my.nixos.desktop.packages.enable {
     # ── Fonts ─────────────────────────────────────────────────────────────────
@@ -40,11 +43,11 @@
 
     # ── Printing ──────────────────────────────────────────────────────────────
 
-    services.printing = {
+    services.printing = lib.mkIf config.my.nixos.desktop.packages.printing.enable {
       enable = true;
       browsed.enable = true;
     };
-    services.avahi = {
+    services.avahi = lib.mkIf config.my.nixos.desktop.packages.networkDiscovery.enable {
       enable = true;
       nssmdns4 = true;
       openFirewall = true;
@@ -58,26 +61,28 @@
 
     # ── Desktop packages ──────────────────────────────────────────────────────
 
-    environment.systemPackages = with pkgs; [
-      # Wayland compositor toolchain
-      rofi
-      glib
-      gsettings-desktop-schemas
+    environment.systemPackages =
+      with pkgs;
+      [
+        # Wayland compositor toolchain
+        glib
+        gsettings-desktop-schemas
 
-      # Theming
-      bibata-cursors
-      pywal16
+        # Theming
+        bibata-cursors
 
-      # File management
-      nautilus
-      file-roller
-      evince
-      gnome-disk-utility
-      snapshot
-      wsdd
-
-      # Misc
-      system-config-printer
-    ];
+        # File management
+        nautilus
+        file-roller
+        evince
+        gnome-disk-utility
+        snapshot
+      ]
+      ++ lib.optionals config.my.nixos.desktop.packages.printing.enable [
+        system-config-printer
+      ]
+      ++ lib.optionals config.my.nixos.desktop.packages.networkDiscovery.enable [
+        wsdd
+      ];
   };
 }

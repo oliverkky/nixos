@@ -7,12 +7,17 @@
   imports = [
     ./edid.nix
     ./hardware-configuration.nix
+    ./lid.nix
   ];
 
   my.nixos = {
     desktop = {
       enable = true;
       audio.production.enable = true;
+      packages = {
+        networkDiscovery.enable = true;
+        printing.enable = true;
+      };
     };
     development.enable = true;
     laptop.enable = true;
@@ -21,14 +26,6 @@
       hostName = host.hostName;
     };
     shell.enable = true;
-  };
-
-  # ── Laptop power behavior ───────────────────────────────────────────────────
-
-  services.logind.settings.Login = {
-    HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "suspend";
-    HandleLidSwitchDocked = "ignore";
   };
 
 }

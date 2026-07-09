@@ -2,8 +2,7 @@
 
 set -u
 
-config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-script_dir="${HYPR_SCRIPT_DIR:-$config_root/hypr/scripts}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 apply_display="$script_dir/apply-power-profile-display"
 
 for _ in {1..30}; do

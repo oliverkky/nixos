@@ -9,6 +9,7 @@
 
 let
   silentSddmWallpaper = "/var/lib/sddm-wallpaper/current-wallpaper.png";
+  silentSddmWallpaperGroup = "sddm-wallpaper";
   silentSddmPackage =
     inputs.silentSDDM.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
       (old: {
@@ -54,6 +55,8 @@ in
 
     services.displayManager.sddm = {
       enable = true;
+      # SilentSDDM's module defines this as false, so host control needs a
+      # stronger priority than a plain assignment.
       wayland.enable = lib.mkForce config.my.nixos.desktop.displayManager.wayland.enable;
       settings.Theme = {
         CursorTheme = "Bibata-Modern-Classic";
@@ -62,9 +65,11 @@ in
     };
     security.pam.services.sddm.enableGnomeKeyring = true;
 
+    users.groups.${silentSddmWallpaperGroup}.members = [ host.primaryUser ];
+
     systemd.tmpfiles.rules = [
-      "d /var/lib/sddm-wallpaper 0755 root root -"
-      "f ${silentSddmWallpaper} 0644 ${host.primaryUser} users -"
+      "d /var/lib/sddm-wallpaper 0775 root ${silentSddmWallpaperGroup} -"
+      "f ${silentSddmWallpaper} 0664 root ${silentSddmWallpaperGroup} -"
     ];
   };
 }

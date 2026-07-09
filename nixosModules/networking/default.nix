@@ -10,6 +10,12 @@
       example = "laptop1";
       description = "Host name to apply when the networking module is enabled.";
     };
+
+    allowedUDPPorts = lib.mkOption {
+      type = lib.types.listOf lib.types.port;
+      default = [ ];
+      description = "Host-specific UDP firewall exceptions.";
+    };
   };
 
   config = lib.mkIf config.my.nixos.networking.enable {
@@ -24,7 +30,7 @@
       # future exceptions have a clear home.
       firewall = {
         enable = true;
-        allowedUDPPorts = [ 5000 ];
+        allowedUDPPorts = config.my.nixos.networking.allowedUDPPorts;
       };
     };
   };

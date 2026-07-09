@@ -16,6 +16,8 @@ let
       (toString monitor.scale)
     ];
   hyprMonitors = lib.concatStringsSep ";" (map hyprMonitor (host.monitors or [ ]));
+  secondaryMonitor = host.secondaryMonitor or null;
+  secondaryMonitorWorkspace = host.secondaryMonitorWorkspace or null;
 in
 {
   options.my.nixos.desktop.hyprland.enable = lib.mkEnableOption "Hyprland compositor";
@@ -50,8 +52,9 @@ in
           host.monitors or [ ]
         )).scale
       );
-      HYPR_SECONDARY_MONITOR = host.secondaryMonitor or "";
-      HYPR_SECONDARY_MONITOR_WORKSPACE = toString (host.secondaryMonitorWorkspace or "");
+      HYPR_SECONDARY_MONITOR = if secondaryMonitor == null then "" else secondaryMonitor;
+      HYPR_SECONDARY_MONITOR_WORKSPACE =
+        if secondaryMonitorWorkspace == null then "" else toString secondaryMonitorWorkspace;
       XCURSOR_THEME = host.cursor.name;
       XCURSOR_SIZE = toString host.cursor.size;
     };

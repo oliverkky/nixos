@@ -23,10 +23,8 @@ fi
 
 profile="${1:-}"
 if [[ -z "$profile" ]]; then
-    profile="balanced"
-    if command -v powerprofilesctl >/dev/null 2>&1; then
-        profile="$(powerprofilesctl get 2>/dev/null || printf balanced)"
-    fi
+    command -v powerprofilesctl >/dev/null 2>&1 || exit 0
+    profile="$(powerprofilesctl get 2>/dev/null)" || exit 0
 fi
 
 cap_brightness_for_power_saver() {

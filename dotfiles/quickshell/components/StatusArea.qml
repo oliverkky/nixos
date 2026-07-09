@@ -8,7 +8,6 @@ import Quickshell.Networking
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
-import Quickshell.Widgets
 import Quickshell.Wayland
 import "." as Components
 
@@ -111,119 +110,22 @@ Item {
         height: 28
         spacing: 6
 
-        Rectangle {
-            id: trayContainer
-            width: trayRow.implicitWidth + 12
-            height: 28
-            radius: 999
+        Components.StatusTrayRow {
+            id: trayButtons
+
+            ui: root.ui
+            trayItems: root.trayItems
+            parentWindow: root.parentWindow
+            iconSource: root.trayIconSource
+            fallbackIcon: root.trayFallbackIcon
+            openMenu: (item, x, y, width, height) => root.openTrayMenu(item, trayButtons.x + x, trayButtons.y + y, width, height)
             visible: root.trayItems.length > 0 && (root.activePanel.length === 0 || !root.expandedSurfaceReady)
             enabled: root.activePanel.length === 0
-            color: trayMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-            border.width: 1
-            border.color: root.ui.border
-
-            MouseArea {
-                id: trayMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                enabled: root.activePanel.length === 0
-                acceptedButtons: Qt.NoButton
-            }
-
-            Row {
-                id: trayRow
-                anchors.centerIn: parent
-                spacing: 2
-
-                Repeater {
-                    model: root.trayItems
-
-                    MouseArea {
-                        id: trayButton
-                        required property var modelData
-
-                        implicitWidth: 26
-                        implicitHeight: 24
-                        width: implicitWidth
-                        height: implicitHeight
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 8
-                            color: trayButton.containsMouse ? root.ui.surfaceHover : "transparent"
-                        }
-
-                        IconImage {
-                            id: trayIcon
-
-                            anchors.centerIn: parent
-                            width: 16
-                            height: 16
-                            source: root.trayIconSource(trayButton.modelData)
-                            asynchronous: true
-                            mipmap: true
-                            opacity: trayButton.modelData && trayButton.modelData.status === Status.Passive ? 0.55 : 1
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            visible: !trayButton.modelData || trayIcon.source.toString().length === 0 || trayIcon.status === Image.Error
-                            text: root.trayFallbackIcon(trayButton.modelData)
-                            color: root.ui.textMuted
-                            font.family: "Cantarell"
-                            font.pixelSize: 16
-                            font.weight: Font.Bold
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        onClicked: mouse => {
-                            if (!trayButton.modelData)
-                                return;
-
-                            if (mouse.button === Qt.RightButton) {
-                                if (trayButton.modelData.hasMenu)
-                                    trayButton.openMenu();
-                            } else if (mouse.button === Qt.LeftButton && trayButton.modelData.hasMenu) {
-                                trayButton.openMenu();
-                            } else if (mouse.button === Qt.MiddleButton) {
-                                trayButton.modelData.secondaryActivate();
-                            } else {
-                                trayButton.modelData.activate();
-                            }
-                        }
-
-                        onWheel: wheel => {
-                            if (!trayButton.modelData)
-                                return;
-
-                            if (Math.abs(wheel.angleDelta.x) > Math.abs(wheel.angleDelta.y))
-                                trayButton.modelData.scroll(wheel.angleDelta.x, true);
-                            else
-                                trayButton.modelData.scroll(wheel.angleDelta.y, false);
-                        }
-
-                        function openMenu() {
-                            if (!trayButton.modelData || !trayButton.modelData.hasMenu)
-                                return;
-
-                            const localPoint = trayButton.mapToItem(root, 0, 0);
-                            if (root.openTrayMenu(trayButton.modelData, localPoint.x, localPoint.y, trayButton.width, trayButton.height))
-                                return;
-
-                            const nativePoint = trayButton.mapToItem(null, trayButton.width / 2, trayButton.height);
-                            trayButton.modelData.display(root.parentWindow, nativePoint.x, nativePoint.y);
-                        }
-                    }
-                }
-            }
         }
 
         Rectangle {
             id: container
-            width: systemRow.implicitWidth + 24
+            width: systemButtons.implicitWidth + 24
             height: 28
             radius: 999
             visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
@@ -240,76 +142,45 @@ Item {
                 acceptedButtons: Qt.NoButton
             }
 
-            Row {
-                id: systemRow
+            Components.StatusButtonRow {
+                id: systemButtons
+
                 anchors.centerIn: parent
-                spacing: 2
-
-                IconButton {
-                    ui: root.ui
-                    icon: root.bluetoothIcon()
-                    active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton)
-                            root.runNativeTool(["blueman-manager"]);
-                        else
-                            root.togglePanel("bluetooth");
-                    }
+                ui: root.ui
+                bluetoothIcon: root.bluetoothIcon()
+                bluetoothActive: root.bluetoothAdapter && root.bluetoothAdapter.enabled
+                networkIcon: root.networkIcon()
+                networkActive: root.networkConnected()
+                volumeIcon: root.volumeIcon()
+                volumeActive: root.sink && root.sink.audio && !root.sink.audio.muted
+                hasBattery: root.hasBattery()
+                batteryIcon: root.batteryIcon()
+                batteryPercent: root.batteryPercent()
+                batteryWarning: root.hasBattery() && root.batteryPercent() < 30
+                batteryCritical: root.hasBattery() && root.batteryPercent() < 15
+                idleInhibited: root.idleInhibited
+                contextActionsEnabled: true
+                onBluetoothClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["blueman-manager"]);
+                    else
+                        root.togglePanel("bluetooth");
                 }
-
-                IconButton {
-                    ui: root.ui
-                    icon: root.networkIcon()
-                    active: root.networkConnected()
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton)
-                            root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
-                        else
-                            root.togglePanel("network");
-                    }
+                onNetworkClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
+                    else
+                        root.togglePanel("network");
                 }
-
-                IconButton {
-                    ui: root.ui
-                    icon: root.volumeIcon()
-                    active: root.sink && root.sink.audio && !root.sink.audio.muted
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton)
-                            root.runNativeTool(["pavucontrol"]);
-                        else
-                            root.togglePanel("audio");
-                    }
+                onVolumeClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.runNativeTool(["pavucontrol"]);
+                    else
+                        root.togglePanel("audio");
                 }
-
-                IconButton {
-                    visible: root.hasBattery()
-                    ui: root.ui
-                    icon: root.batteryIcon()
-                    label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
-                    active: true
-                    warning: root.hasBattery() && root.batteryPercent() < 30
-                    critical: root.hasBattery() && root.batteryPercent() < 15
-                    compact: false
-                    onClicked: root.togglePanel("battery")
-                }
-
-                IconButton {
-                    visible: root.idleInhibited
-                    ui: root.ui
-                    icon: "󰅶"
-                    active: root.idleInhibited
-                    onClicked: root.togglePanel("battery")
-                }
-
-                IconButton {
-                    ui: root.ui
-                    icon: ""
-                    active: true
-                    onClicked: root.togglePanel("power")
-                }
+                onBatteryClicked: root.togglePanel("battery")
+                onIdleClicked: root.togglePanel("battery")
+                onPowerClicked: root.togglePanel("power")
             }
         }
     }
@@ -369,58 +240,29 @@ Item {
                         font.weight: Font.Bold
                     }
 
-                    Row {
+                    Components.StatusButtonRow {
                         id: statusHeaderRow
+
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 2
-
-                        IconButton {
-                            ui: root.ui
-                            icon: root.bluetoothIcon()
-                            active: root.bluetoothAdapter && root.bluetoothAdapter.enabled
-                            onClicked: root.togglePanel("bluetooth")
-                        }
-
-                        IconButton {
-                            ui: root.ui
-                            icon: root.networkIcon()
-                            active: root.networkConnected()
-                            onClicked: root.togglePanel("network")
-                        }
-
-                        IconButton {
-                            ui: root.ui
-                            icon: root.volumeIcon()
-                            active: root.sink && root.sink.audio && !root.sink.audio.muted
-                            onClicked: root.togglePanel("audio")
-                        }
-
-                        IconButton {
-                            visible: root.hasBattery()
-                            ui: root.ui
-                            icon: root.batteryIcon()
-                            label: root.hasBattery() ? `${Math.round(root.batteryPercent())}%` : ""
-                            active: true
-                            warning: root.hasBattery() && root.batteryPercent() < 30
-                            critical: root.hasBattery() && root.batteryPercent() < 15
-                            compact: false
-                            onClicked: root.togglePanel("battery")
-                        }
-
-                        IconButton {
-                            visible: root.idleInhibited
-                            ui: root.ui
-                            icon: "󰅶"
-                            active: root.idleInhibited
-                            onClicked: root.togglePanel("battery")
-                        }
-
-                        IconButton {
-                            ui: root.ui
-                            icon: ""
-                            active: true
-                            onClicked: root.togglePanel("power")
-                        }
+                        ui: root.ui
+                        bluetoothIcon: root.bluetoothIcon()
+                        bluetoothActive: root.bluetoothAdapter && root.bluetoothAdapter.enabled
+                        networkIcon: root.networkIcon()
+                        networkActive: root.networkConnected()
+                        volumeIcon: root.volumeIcon()
+                        volumeActive: root.sink && root.sink.audio && !root.sink.audio.muted
+                        hasBattery: root.hasBattery()
+                        batteryIcon: root.batteryIcon()
+                        batteryPercent: root.batteryPercent()
+                        batteryWarning: root.hasBattery() && root.batteryPercent() < 30
+                        batteryCritical: root.hasBattery() && root.batteryPercent() < 15
+                        idleInhibited: root.idleInhibited
+                        onBluetoothClicked: root.togglePanel("bluetooth")
+                        onNetworkClicked: root.togglePanel("network")
+                        onVolumeClicked: root.togglePanel("audio")
+                        onBatteryClicked: root.togglePanel("battery")
+                        onIdleClicked: root.togglePanel("battery")
+                        onPowerClicked: root.togglePanel("power")
                     }
                 }
 
@@ -440,204 +282,30 @@ Item {
         }
     }
 
-    Components.PopoverSurface {
+    Components.StatusTrayMenu {
         id: trayMenuPanel
 
         ui: root.ui
-        anchor.window: root.parentWindow
-        anchor.rect.x: root.trayPanelAnchorX()
-        anchor.rect.y: root.y
-        implicitWidth: 286
-        implicitHeight: root.trayPanelHeight()
+        parentWindow: root.parentWindow
+        activeTrayItem: root.activeTrayItem
+        rootMenu: root.activeTrayRootMenu()
+        modelValues: root.modelValues
+        iconSource: root.trayIconSource
+        titleProvider: root.trayPanelTitle
+        anchorX: root.trayPanelAnchorX()
+        anchorY: root.y
         originX: root.trayPanelOriginX(implicitWidth)
         originY: root.trayMenuOriginY
         originWidth: root.trayMenuOriginWidth
         originHeight: root.trayMenuOriginHeight
-        expanded: root.activeTrayItem !== null
-        closeKey: root.activeTrayItem ? "tray" : ""
 
-        onCloseRequested: root.closeTrayMenu()
+        onCloseMenuRequested: root.closeTrayMenu()
         onSurfaceClosed: {
             if (root.activeTrayItem) {
                 const menu = root.activeTrayRootMenu();
                 if (menu)
                     menu.sendClosed();
                 root.activeTrayItem = null;
-            }
-        }
-
-        Column {
-            width: parent.width
-            height: parent.height
-            spacing: 10
-
-            Row {
-                width: parent.width
-                height: 28
-                spacing: 10
-
-                IconImage {
-                    visible: root.activeTrayItem && root.trayIconSource(root.activeTrayItem).length > 0
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 16
-                    height: 16
-                    source: root.trayIconSource(root.activeTrayItem)
-                    asynchronous: true
-                    mipmap: true
-                }
-
-                Text {
-                    width: parent.width - (root.activeTrayItem && root.trayIconSource(root.activeTrayItem).length > 0 ? 26 : 0)
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.trayPanelTitle()
-                    color: root.ui.text
-                    elide: Text.ElideRight
-                    font.family: "Cantarell"
-                    font.pixelSize: 13
-                    font.weight: Font.Bold
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: root.ui.borderSoft
-            }
-
-            Flickable {
-                width: parent.width
-                height: Math.max(0, parent.height - 49)
-                clip: true
-                contentWidth: width
-                contentHeight: trayMenuList.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-
-                Column {
-                    id: trayMenuList
-
-                    width: parent.width
-                    spacing: 4
-
-                    Repeater {
-                        model: root.modelValues(trayMenuOpener.children)
-
-                        Loader {
-                            required property var modelData
-                            property var entry: modelData
-
-                            width: parent.width
-                            sourceComponent: modelData && modelData.isSeparator ? trayMenuSeparator : trayMenuAction
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    QsMenuOpener {
-        id: trayMenuOpener
-
-        menu: root.activeTrayRootMenu()
-    }
-
-    Component {
-        id: trayMenuSeparator
-
-        Rectangle {
-            width: parent.width
-            height: 9
-            color: "transparent"
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: 1
-                color: root.ui.borderSoft
-            }
-        }
-    }
-
-    Component {
-        id: trayMenuAction
-
-        MouseArea {
-            id: trayMenuButton
-
-            property var modelData: parent ? parent.entry : null
-            readonly property bool checked: modelData && modelData.checkState === Qt.Checked
-
-            width: parent.width
-            height: 32
-            hoverEnabled: true
-            enabled: modelData && modelData.enabled
-            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 8
-                color: trayMenuButton.containsMouse && trayMenuButton.enabled ? root.ui.surfaceHover : "transparent"
-            }
-
-            Row {
-                anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 10
-
-                Item {
-                    width: 18
-                    height: parent.height
-
-                    Text {
-                        visible: trayMenuButton.modelData && trayMenuButton.modelData.buttonType !== QsMenuButtonType.None
-                        anchors.centerIn: parent
-                        text: trayMenuButton.modelData && trayMenuButton.modelData.buttonType === QsMenuButtonType.RadioButton ? (trayMenuButton.checked ? "●" : "") : (trayMenuButton.checked ? "✓" : "")
-                        color: root.ui.text
-                        font.family: "Cantarell"
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                    }
-                }
-
-                Text {
-                    width: parent.width - 46 - submenuArrow.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: trayMenuButton.modelData ? trayMenuButton.modelData.text : ""
-                    color: trayMenuButton.enabled ? root.ui.text : root.ui.textMuted
-                    elide: Text.ElideRight
-                    font.family: "Cantarell"
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                    opacity: trayMenuButton.enabled ? 1 : 0.55
-                }
-
-                Text {
-                    id: submenuArrow
-
-                    width: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: trayMenuButton.modelData && trayMenuButton.modelData.hasChildren
-                    text: "›"
-                    color: root.ui.textMuted
-                    font.family: "Cantarell"
-                    font.pixelSize: 16
-                    font.weight: Font.Bold
-                }
-            }
-
-            onClicked: {
-                if (!trayMenuButton.modelData || !trayMenuButton.modelData.enabled)
-                    return;
-
-                if (trayMenuButton.modelData.hasChildren) {
-                    const point = trayMenuButton.mapToItem(null, trayMenuButton.width, 0);
-                    trayMenuButton.modelData.display(trayMenuPanel, point.x, point.y);
-                    return;
-                }
-
-                trayMenuButton.modelData.sendTriggered();
-                root.closeTrayMenu();
             }
         }
     }
@@ -893,11 +561,6 @@ Item {
             menu.sendClosed();
 
         activeTrayItem = null;
-    }
-
-    function trayPanelHeight() {
-        const entries = root.modelValues(trayMenuOpener.children).length;
-        return Math.min(432, Math.max(108, 63 + (entries * 36)));
     }
 
     function trayPanelTitle() {
