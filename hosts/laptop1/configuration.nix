@@ -14,6 +14,7 @@
     desktop = {
       enable = true;
       audio.production.enable = true;
+      gaming.enable = true;
       packages = {
         networkDiscovery.enable = true;
         printing.enable = true;
