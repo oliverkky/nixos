@@ -19,6 +19,7 @@ local ctx = {
     rofi_script_dir = rofi_script_dir,
     cursor_size = tonumber(os.getenv("XCURSOR_SIZE") or "") or 24,
     monitors = os.getenv("HYPR_MONITORS") or "",
+    monitor_hdrs = os.getenv("HYPR_MONITOR_HDRS") or "",
     primary_monitor = os.getenv("HYPR_PRIMARY_MONITOR") or "",
     primary_monitor_scale = tonumber(os.getenv("HYPR_PRIMARY_MONITOR_SCALE") or "") or 1,
     secondary_monitor = os.getenv("HYPR_SECONDARY_MONITOR") or "",

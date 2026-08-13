@@ -19,6 +19,54 @@ let
         type = lib.types.number;
         description = "Hyprland monitor scale.";
       };
+      hdr = {
+        enable = lib.mkEnableOption "HDR output support for this monitor";
+        bitdepth = lib.mkOption {
+          type = lib.types.enum [
+            8
+            10
+          ];
+          default = 10;
+          description = "Monitor bit depth used when HDR support is enabled.";
+        };
+        cm = lib.mkOption {
+          type = lib.types.enum [
+            "auto"
+            "hdr"
+            "hdredid"
+          ];
+          default = "auto";
+          description = "Hyprland color-management preset for HDR-capable output.";
+        };
+        sdrbrightness = lib.mkOption {
+          type = lib.types.float;
+          default = 1.2;
+          description = "SDR brightness while HDR output is active.";
+        };
+        sdrsaturation = lib.mkOption {
+          type = lib.types.float;
+          default = 1.0;
+          description = "SDR saturation while HDR output is active.";
+        };
+        supportsWideColor = lib.mkOption {
+          type = lib.types.enum [
+            (-1)
+            0
+            1
+          ];
+          default = 0;
+          description = "Override Hyprland wide-color detection: -1 off, 0 auto, 1 on.";
+        };
+        supportsHdr = lib.mkOption {
+          type = lib.types.enum [
+            (-1)
+            0
+            1
+          ];
+          default = 0;
+          description = "Override Hyprland HDR detection: -1 off, 0 auto, 1 on.";
+        };
+      };
     };
   };
 in

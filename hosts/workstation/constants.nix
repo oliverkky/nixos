@@ -19,6 +19,7 @@
       mode = "2560x1440@74.97Hz";
       position = "0x0";
       scale = 1.0;
+      hdr.enable = true;
     }
     {
       output = "HDMI-A-1";

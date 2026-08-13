@@ -16,6 +16,25 @@ let
       (toString monitor.scale)
     ];
   hyprMonitors = lib.concatStringsSep ";" (map hyprMonitor (host.monitors or [ ]));
+  hyprMonitorHdr =
+    monitor:
+    let
+      hdr = monitor.hdr or { };
+    in
+    lib.optionalString (hdr.enable or false) (
+      lib.concatStringsSep "," [
+        monitor.output
+        (toString hdr.bitdepth)
+        hdr.cm
+        (toString hdr.sdrbrightness)
+        (toString hdr.sdrsaturation)
+        (toString hdr.supportsWideColor)
+        (toString hdr.supportsHdr)
+      ]
+    );
+  hyprMonitorHdrs = lib.concatStringsSep ";" (
+    lib.filter (value: value != "") (map hyprMonitorHdr (host.monitors or [ ]))
+  );
   secondaryMonitor = host.secondaryMonitor or null;
   secondaryMonitorWorkspace = host.secondaryMonitorWorkspace or null;
 in
@@ -46,6 +65,7 @@ in
 
     environment.sessionVariables = {
       HYPR_MONITORS = hyprMonitors;
+      HYPR_MONITOR_HDRS = hyprMonitorHdrs;
       HYPR_PRIMARY_MONITOR = host.primaryMonitor;
       HYPR_PRIMARY_MONITOR_SCALE = toString (
         (lib.findFirst (monitor: monitor.output == host.primaryMonitor) { scale = 1; } (

@@ -1,17 +1,48 @@
 return function(ctx)
     local wal = ctx.wal
+    local monitor_hdr = {}
+
+    if ctx.monitor_hdrs ~= "" then
+        for monitor in string.gmatch(ctx.monitor_hdrs, "([^;]+)") do
+            local output, bitdepth, cm, sdrbrightness, sdrsaturation, supports_wide_color, supports_hdr =
+                string.match(monitor, "^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)$")
+
+            if output and bitdepth and cm and sdrbrightness and sdrsaturation then
+                monitor_hdr[output] = {
+                    bitdepth = tonumber(bitdepth) or 10,
+                    cm = cm,
+                    sdrbrightness = tonumber(sdrbrightness) or 1.2,
+                    sdrsaturation = tonumber(sdrsaturation) or 1.0,
+                    supports_wide_color = tonumber(supports_wide_color) or 0,
+                    supports_hdr = tonumber(supports_hdr) or 0,
+                }
+            end
+        end
+    end
 
     if ctx.monitors ~= "" then
         for monitor in string.gmatch(ctx.monitors, "([^;]+)") do
             local output, mode, position, scale = string.match(monitor, "^([^,]+),([^,]+),([^,]+),([^,]+)$")
 
             if output and mode and position and scale then
-                hl.monitor({
+                local monitor_config = {
                     output = output,
                     mode = mode,
                     position = position,
                     scale = tonumber(scale) or 1,
-                })
+                }
+                local hdr = monitor_hdr[output]
+
+                if hdr then
+                    monitor_config.bitdepth = hdr.bitdepth
+                    monitor_config.cm = hdr.cm
+                    monitor_config.sdrbrightness = hdr.sdrbrightness
+                    monitor_config.sdrsaturation = hdr.sdrsaturation
+                    monitor_config.supports_wide_color = hdr.supports_wide_color
+                    monitor_config.supports_hdr = hdr.supports_hdr
+                end
+
+                hl.monitor(monitor_config)
             end
         end
     elseif ctx.primary_monitor ~= "" then
@@ -78,6 +109,13 @@ return function(ctx)
 
         master = {
             new_status = "master",
+        },
+
+        render = {
+            cm_enabled = true,
+            cm_auto_hdr = 1,
+            use_fp16 = 2,
+            keep_unmodified_copy = 2,
         },
 
         misc = {
