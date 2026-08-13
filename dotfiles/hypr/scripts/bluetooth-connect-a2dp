@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -u
+
+mac="${1:-}"
+if [[ -z "$mac" ]]; then
+    echo "usage: bluetooth-connect-a2dp <MAC>" >&2
+    exit 2
+fi
+
+mac_upper="$(printf '%s' "$mac" | tr '[:lower:]' '[:upper:]')"
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Bluetooth" "$1"
+    fi
+}
+
+bluez_card_id() {
+    pw-dump 2>/dev/null \
+        | jq -r --arg mac "$mac_upper" '
+            .[]
+            | select(.type == "PipeWire:Interface:Device")
+            | select(.info.props["device.api"] == "bluez5")
+            | select((.info.props["api.bluez5.address"] // "" | ascii_upcase) == $mac)
+            | .id
+        ' \
+        | head -n 1
+}
+
+a2dp_profile_index() {
+    local card_id="$1"
+
+    pw-cli enum-params "$card_id" Profile 2>/dev/null \
+        | awk '
+            /Param:Profile:index/ {
+                getline
+                profile_index = $2
+            }
+
+            /Param:Profile:name/ {
+                getline
+                name = $2
+                gsub(/"/, "", name)
+                if (name == "a2dp-sink") {
+                    print profile_index
+                    exit
+                }
+            }
+        '
+}
+
+a2dp_sink_id() {
+    local card_id="$1"
+
+    pw-dump 2>/dev/null \
+        | jq -r --arg card_id "$card_id" '
+            .[]
+            | select(.type == "PipeWire:Interface:Node")
+            | select(.info.props["media.class"] == "Audio/Sink")
+            | select((.info.props["device.id"] | tostring) == $card_id)
+            | select(.info.props["api.bluez5.profile"] == "a2dp-sink")
+            | .id
+        ' \
+        | head -n 1
+}
+
+bluetooth_connected() {
+    bluetoothctl info "$mac_upper" 2>/dev/null \
+        | awk '/Connected:/ { print $2; exit }' \
+        | grep -qx "yes"
+}
+
+if ! bluetoothctl trust "$mac_upper" >/dev/null 2>&1; then
+    true
+fi
+
+if ! bluetooth_connected; then
+    if ! bluetoothctl connect "$mac_upper"; then
+        notify "Could not connect $mac_upper"
+        exit 1
+    fi
+fi
+
+card_id=""
+for _ in {1..60}; do
+    card_id="$(bluez_card_id)"
+    if [[ -n "$card_id" && "$card_id" != "null" ]]; then
+        break
+    fi
+    sleep 0.1
+done
+
+if [[ -z "$card_id" || "$card_id" == "null" ]]; then
+    notify "Connected $mac_upper, but PipeWire did not expose an audio card"
+    exit 1
+fi
+
+profile_index=""
+for _ in {1..40}; do
+    profile_index="$(a2dp_profile_index "$card_id")"
+    if [[ -n "$profile_index" ]]; then
+        break
+    fi
+    sleep 0.1
+done
+
+if [[ -z "$profile_index" ]]; then
+    notify "Connected $mac_upper, but A2DP stereo is not available"
+    exit 1
+fi
+
+if ! wpctl set-profile "$card_id" "$profile_index"; then
+    notify "Connected $mac_upper, but could not switch to A2DP stereo"
+    exit 1
+fi
+
+sink_id=""
+for _ in {1..40}; do
+    sink_id="$(a2dp_sink_id "$card_id")"
+    if [[ -n "$sink_id" && "$sink_id" != "null" ]]; then
+        break
+    fi
+    sleep 0.1
+done
+
+if [[ -n "$sink_id" && "$sink_id" != "null" ]]; then
+    wpctl set-default "$sink_id" >/dev/null 2>&1 || true
+fi

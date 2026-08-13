@@ -1,56 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
-config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
-script_dir="${ROFI_SCRIPT_DIR:-$config_root/rofi/scripts}"
-source "$script_dir/control-lib"
-
-dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
-mkdir -p "$dir"
-
-shot_file() {
-    printf '%s/Screenshot_%s.png' "$dir" "$(date +%Y-%m-%d-%H-%M-%S)"
-}
-
-copy_and_notify() {
-    local file=$1
-    wl-copy < "$file" || true
-    notify_user "Screenshot" "$file"
-}
-
-area_geometry() {
-    slurp
-}
-
-active_geometry() {
-    hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"'
-}
-
-choice=$(
-    {
-        printf '󰹑  Area\n'
-        printf '󰍹  Screen\n'
-        printf '󰖲  Active window\n'
-        printf '󰔛  Screen in 5s\n'
-    } | rofi_menu "Screenshot" "$dir" 4 1
-)
-
-file=$(shot_file)
-case "$choice" in
-    *Area)
-        geometry=$(area_geometry)
-        [ -n "$geometry" ] && grim -g "$geometry" "$file" && copy_and_notify "$file"
-        ;;
-    *Screen)
-        grim "$file" && copy_and_notify "$file"
-        ;;
-    *"Active window")
-        geometry=$(active_geometry)
-        [ "$geometry" != "null,null nullxnull" ] && grim -g "$geometry" "$file" && copy_and_notify "$file"
-        ;;
-    *"5s")
-        sleep 5
-        grim "$file" && copy_and_notify "$file"
-        ;;
-esac
+# Kept as a compatibility entry point for Rofi's control centre. The actual
+# screenshot chooser belongs to Quickshell so it can be used from the hotkey
+# and from the control centre without two competing menus.
+exec qs ipc call screenshotMenu open

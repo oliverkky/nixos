@@ -23,8 +23,15 @@ let
     jq
     kitty
     power-profiles-daemon
+    pipewire
     pywal16
+    grim
+    libnotify
+    slurp
+    wallutils
     waypaper
+    wireplumber
+    wl-clipboard
   ];
 
   rofiRuntimeInputs = with pkgs; [
@@ -136,6 +143,8 @@ in
     home.sessionVariables = {
       HYPR_SCRIPT_DIR = "${hyprScripts}/bin";
       ROFI_SCRIPT_DIR = "${rofiScripts}/bin";
+      HYPR_DISPLAY_CTL = "${hyprScripts}/bin/displayctl";
+      HYPR_BLUETOOTH_CONNECT_A2DP = "${hyprScripts}/bin/bluetooth-connect-a2dp";
       HYPR_SET_POWER_PROFILE_DISPLAY = "${hyprScripts}/bin/set-power-profile-display";
     };
   };

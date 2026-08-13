@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+mode="${1:-area}"
+delay="${2:-0}"
+pointer="${3:-pointer}"
+directory="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+
+mkdir -p "$directory"
+file="$directory/Screenshot_$(date +%Y-%m-%d-%H-%M-%S).png"
+
+if [[ "$delay" =~ ^[0-9]+$ ]] && (( delay > 0 )); then
+    sleep "$delay"
+fi
+
+grim_args=()
+[[ "$pointer" == "pointer" ]] && grim_args+=( -c )
+
+case "$mode" in
+    area)
+        geometry="$(slurp)" || exit 0
+        [[ -n "$geometry" ]] || exit 0
+        grim "${grim_args[@]}" -g "$geometry" "$file"
+        ;;
+    screen)
+        grim "${grim_args[@]}" "$file"
+        ;;
+    window)
+        geometry="$(hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')"
+        [[ "$geometry" != "null,null nullxnull" ]] || exit 0
+        grim "${grim_args[@]}" -g "$geometry" "$file"
+        ;;
+    *)
+        exit 2
+        ;;
+esac
+
+wl-copy < "$file" || true
+notify-send "Screenshot" "$file"

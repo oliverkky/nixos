@@ -1,0 +1,354 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command_name="${1:-state}"
+runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
+state_dir="$runtime_dir/quickshell-displayctl"
+mirror_snapshot="$state_dir/pre-mirror-monitors.tsv"
+
+die() {
+    printf '%s\n' "$*" >&2
+    exit 1
+}
+
+need() {
+    command -v "$1" >/dev/null 2>&1 || die "$1 is required"
+}
+
+need hyprctl
+need jq
+
+json_string() {
+    jq -Rrn --arg value "$1" '$value | @json'
+}
+
+normalize_mode() {
+    local mode="${1:-preferred}"
+    mode="${mode%Hz}"
+    printf '%s\n' "$mode"
+}
+
+mode_width() {
+    local mode
+    mode="$(normalize_mode "$1")"
+    if [[ "$mode" =~ ^([0-9]+)x([0-9]+)@ ]]; then
+        printf '%s\n' "${BASH_REMATCH[1]}"
+    else
+        printf '1920\n'
+    fi
+}
+
+layout_width() {
+    local mode="$1"
+    local scale="$2"
+    local width
+    width="$(mode_width "$mode")"
+
+    awk -v width="$width" -v scale="$scale" '
+        BEGIN {
+            if (scale == "" || scale == "auto" || scale <= 0) {
+                scale = 1
+            }
+            printf "%d\n", (width / scale) + 0.5
+        }
+    '
+}
+
+monitor_lua() {
+    local output="$1"
+    local mode="${2:-}"
+    local position="${3:-}"
+    local scale="${4:-}"
+    local mirror="${5:-}"
+    local disabled="${6:-false}"
+
+    local output_json mode_json position_json scale_json mirror_json
+    local hdr_lua=""
+    output_json="$(json_string "$output")"
+
+    if [[ "$disabled" == "true" ]]; then
+        printf 'hl.monitor({ output = %s, disabled = true })\n' "$output_json"
+        return
+    fi
+
+    mode="$(normalize_mode "${mode:-preferred}")"
+    position="${position:-auto}"
+    scale="${scale:-1}"
+
+    mode_json="$(json_string "$mode")"
+    position_json="$(json_string "$position")"
+
+    if [[ "$scale" == "auto" ]]; then
+        scale_json='"auto"'
+    else
+        scale_json="$scale"
+    fi
+
+    if [[ -n "${HYPR_MONITOR_HDRS:-}" ]]; then
+        local hdr_row bitdepth cm sdrbrightness sdrsaturation supports_wide_color supports_hdr
+        hdr_row="$(
+            tr ';' '\n' <<<"${HYPR_MONITOR_HDRS:-}" \
+                | awk -F ',' -v output="$output" '$1 == output { print; exit }'
+        )"
+
+        if [[ -n "$hdr_row" ]]; then
+            IFS=',' read -r _ bitdepth cm sdrbrightness sdrsaturation supports_wide_color supports_hdr <<<"$hdr_row"
+            hdr_lua="$(printf ', bitdepth = %s, cm = %s, sdrbrightness = %s, sdrsaturation = %s, supports_wide_color = %s, supports_hdr = %s' \
+                "${bitdepth:-10}" \
+                "$(json_string "${cm:-auto}")" \
+                "${sdrbrightness:-1.2}" \
+                "${sdrsaturation:-1.0}" \
+                "${supports_wide_color:-0}" \
+                "${supports_hdr:-0}")"
+        fi
+    fi
+
+    if [[ -n "$mirror" ]]; then
+        mirror_json="$(json_string "$mirror")"
+        printf 'hl.monitor({ output = %s, mode = %s, position = %s, scale = %s, mirror = %s%s })\n' \
+            "$output_json" "$mode_json" "$position_json" "$scale_json" "$mirror_json" "$hdr_lua"
+    else
+        printf 'hl.monitor({ output = %s, mode = %s, position = %s, scale = %s%s })\n' \
+            "$output_json" "$mode_json" "$position_json" "$scale_json" "$hdr_lua"
+    fi
+}
+
+apply_monitor() {
+    local output="$1"
+    local mode="${2:-preferred}"
+    local position="${3:-auto}"
+    local scale="${4:-1}"
+    local mirror="${5:-}"
+    local lua_config
+
+    lua_config="$(monitor_lua "$output" "$mode" "$position" "$scale" "$mirror" false)"
+    hyprctl eval "$lua_config" >/dev/null
+}
+
+disable_monitor() {
+    local output="$1"
+    local lua_config
+
+    lua_config="$(monitor_lua "$output" "" "" "" "" true)"
+    hyprctl eval "$lua_config" >/dev/null
+}
+
+state_json() {
+    local active_json all_json
+
+    active_json="$(hyprctl -j monitors 2>/dev/null || printf '[]')"
+    all_json="$(hyprctl -j monitors all 2>/dev/null || printf '[]')"
+
+    jq -n --argjson active "$active_json" --argjson all "$all_json" '
+        def active_for($name):
+            ($active[]? | select(.name == $name)) // {};
+
+        {
+            focused: (($active[]? | select(.focused == true) | .name) // ($active[0].name // "")),
+            monitors: [
+                $all[]?
+                | select((.name // "") != "")
+                | . as $monitor
+                | active_for($monitor.name) as $activeMonitor
+                | {
+                    name: $monitor.name,
+                    description: ($monitor.description // $activeMonitor.description // $monitor.name),
+                    enabled: ($activeMonitor.name != null),
+                    focused: ($activeMonitor.focused // false),
+                    x: ($activeMonitor.x // $monitor.x // 0),
+                    y: ($activeMonitor.y // $monitor.y // 0),
+                    width: ($activeMonitor.width // $monitor.width // 0),
+                    height: ($activeMonitor.height // $monitor.height // 0),
+                    refreshRate: ($activeMonitor.refreshRate // $monitor.refreshRate // 0),
+                    scale: ($activeMonitor.scale // $monitor.scale // 1),
+                    currentMode: (
+                        if ($activeMonitor.width != null and $activeMonitor.height != null) then
+                            "\($activeMonitor.width)x\($activeMonitor.height)@\($activeMonitor.refreshRate)"
+                        else
+                            ""
+                        end
+                    ),
+                    modes: (($monitor.availableModes // []) | unique)
+                }
+            ]
+        }
+    '
+}
+
+connected_rows() {
+    state_json | jq -r '
+        .monitors[]
+        | [
+            .name,
+            (if .currentMode != "" then .currentMode else (.modes[0] // "preferred") end),
+            (.scale | tostring)
+        ]
+        | @tsv
+    '
+}
+
+physical_connected_rows() {
+    local status_file status connector
+    for status_file in /sys/class/drm/card*-*/status; do
+        [[ -f "$status_file" ]] || continue
+        IFS= read -r status < "$status_file"
+        [[ "$status" == "connected" ]] || continue
+
+        connector="$(basename "$(dirname "$status_file")")"
+        connector="${connector#card*-}"
+        printf '%s\tpreferred\t1\n' "$connector"
+    done
+}
+
+live_connected_rows() {
+    # DRM still exposes a physical connector when Hyprland omits a mirror
+    # target. Prefer Hyprland's richer row and use DRM only for missing names.
+    {
+        connected_rows
+        physical_connected_rows
+    } | awk -F '\t' '!seen[$1]++'
+}
+
+snapshot_connected_rows() {
+    # Hyprland drops mirror targets from its monitor IPC after mirroring. Keep
+    # the last non-mirrored roster so another layout can restore every output.
+    if [[ ! -s "$mirror_snapshot" ]]; then
+        mkdir -p "$state_dir"
+        live_connected_rows > "$mirror_snapshot"
+    fi
+}
+
+layout_rows() {
+    if [[ -s "$mirror_snapshot" ]]; then
+        command cat "$mirror_snapshot"
+    else
+        live_connected_rows
+    fi
+}
+
+clear_mirror_snapshot() {
+    rm -f "$mirror_snapshot"
+}
+
+focused_monitor() {
+    state_json | jq -r '
+        if .focused != "" then
+            .focused
+        else
+            (.monitors[]? | select(.enabled) | .name) // (.monitors[0].name // "")
+        end
+    '
+}
+
+monitor_row() {
+    local output="$1"
+    layout_rows | awk -F '\t' -v output="$output" '$1 == output { print; exit }'
+}
+
+monitor_position() {
+    local output="$1"
+    state_json | jq -r --arg output "$output" '
+        first(.monitors[] | select(.name == $output) | "\(.x)x\(.y)") // "0x0"
+    '
+}
+
+layout_duplicate() {
+    local source
+    source="$(focused_monitor)"
+    [[ -n "$source" ]] || die "No monitor available"
+
+    snapshot_connected_rows
+
+    local name mode scale
+    while IFS=$'\t' read -r name mode scale; do
+        [[ -n "$name" ]] || continue
+        if [[ "$name" == "$source" ]]; then
+            apply_monitor "$name" "$mode" "0x0" "$scale"
+        else
+            apply_monitor "$name" "$mode" "0x0" "$scale" "$source"
+        fi
+    done < <(layout_rows)
+}
+
+layout_extend() {
+    local x=0
+    local name mode scale
+    while IFS=$'\t' read -r name mode scale; do
+        [[ -n "$name" ]] || continue
+        apply_monitor "$name" "$mode" "${x}x0" "$scale"
+        x=$((x + $(layout_width "$mode" "$scale")))
+    done < <(layout_rows)
+
+    clear_mirror_snapshot
+}
+
+layout_only() {
+    local keep="$1"
+    [[ -n "$keep" ]] || die "No monitor available"
+
+    local keep_name keep_mode keep_scale
+    IFS=$'\t' read -r keep_name keep_mode keep_scale < <(monitor_row "$keep")
+    [[ -n "$keep_name" ]] || die "Monitor $keep not found"
+
+    apply_monitor "$keep_name" "$keep_mode" "0x0" "$keep_scale"
+
+    local name mode scale
+    while IFS=$'\t' read -r name mode scale; do
+        [[ -n "$name" && "$name" != "$keep_name" ]] || continue
+        disable_monitor "$name"
+    done < <(layout_rows)
+
+    clear_mirror_snapshot
+}
+
+layout_other_only() {
+    local current="$1"
+    local fallback=""
+    local name mode scale
+
+    while IFS=$'\t' read -r name mode scale; do
+        [[ -n "$name" && "$name" != "$current" ]] || continue
+        fallback="$name"
+        break
+    done < <(layout_rows)
+
+    [[ -n "$fallback" ]] || die "No other monitor available"
+    layout_only "$fallback"
+}
+
+case "$command_name" in
+    state)
+        state_json
+        ;;
+    layout)
+        layout_name="${2:-}"
+        current="${3:-$(focused_monitor)}"
+        case "$layout_name" in
+            duplicate)
+                layout_duplicate
+                ;;
+            extend)
+                layout_extend
+                ;;
+            current-only)
+                layout_only "$current"
+                ;;
+            other-only)
+                layout_other_only "$current"
+                ;;
+            *)
+                die "Usage: displayctl layout duplicate|extend|current-only|other-only [current-monitor]"
+                ;;
+        esac
+        ;;
+    set-mode)
+        output="${2:-}"
+        mode="${3:-}"
+        scale="${4:-}"
+        [[ -n "$output" && -n "$mode" && -n "$scale" ]] || die "Usage: displayctl set-mode OUTPUT MODE SCALE"
+        apply_monitor "$output" "$mode" "$(monitor_position "$output")" "$scale"
+        ;;
+    *)
+        die "Usage: displayctl state | layout duplicate|extend|current-only|other-only [current-monitor] | set-mode OUTPUT MODE SCALE"
+        ;;
+esac

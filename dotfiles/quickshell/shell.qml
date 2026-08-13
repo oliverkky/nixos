@@ -10,6 +10,10 @@ ShellRoot {
     id: root
 
     signal openSystemMenu
+    signal openDisplayLayout
+    signal openDisplayCurrent
+    signal openScreenshotMenu
+    signal toggleStatusPanel(string panelName)
 
     settings.watchFiles: true
 
@@ -18,6 +22,34 @@ ShellRoot {
 
         function open() {
             root.openSystemMenu();
+        }
+    }
+
+    IpcHandler {
+        target: "displayMenu"
+
+        function openLayout() {
+            root.openDisplayLayout();
+        }
+
+        function openCurrent() {
+            root.openDisplayCurrent();
+        }
+    }
+
+    IpcHandler {
+        target: "screenshotMenu"
+
+        function open() {
+            root.openScreenshotMenu();
+        }
+    }
+
+    IpcHandler {
+        target: "statusPanel"
+
+        function toggle(panelName: string) {
+            root.toggleStatusPanel(panelName);
         }
     }
 
@@ -40,6 +72,26 @@ ShellRoot {
         model: root.primaryScreens
 
         Bar {
+            required property var modelData
+            shellRoot: root
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        ScreenshotPopover {
+            required property var modelData
+            shellRoot: root
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        DisplayPopoverAnchor {
             required property var modelData
             shellRoot: root
             screen: modelData
