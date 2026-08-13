@@ -15,6 +15,7 @@
         size = 13;
       };
       settings = {
+        include = "~/.cache/wal/colors-kitty.conf";
         scrollback_lines = 10000;
         enable_audio_bell = false;
         confirm_os_window_close = 0;

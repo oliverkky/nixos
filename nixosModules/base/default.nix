@@ -21,6 +21,7 @@
       "wheel"
       "video"
       "audio"
+      "wireshark"
     ];
     shell = pkgs.zsh;
   };

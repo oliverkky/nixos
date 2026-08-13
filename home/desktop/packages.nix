@@ -39,6 +39,7 @@ in
         hyprsunset
         quickshell
         awww
+        wallutils
         waypaper
         rofi
         pywal16
@@ -72,9 +73,12 @@ in
         obsidian
         orcaSlicer
         prismlauncher
+        remmina
+        freerdp
         showtime
         thunderbird
         vlc
+        gimp
       ]
       ++ lib.optionals config.my.home.desktop.packages.audioProduction.enable [
         carla

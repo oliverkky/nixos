@@ -23,6 +23,23 @@ in
   config = lib.mkIf config.my.home.desktop.services.enable {
     xdg.configFile."systemd/user/app-polkit\\x2dgnome\\x2dauthentication\\x2dagent\\x2d1@autostart.service".source =
       config.lib.file.mkOutOfStoreSymlink "/dev/null";
+    xdg.configFile."autostart/org.remmina.Remmina.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Remmina
+      Hidden=true
+    '';
+
+    services.udiskie = {
+      enable = false;
+      notify = true;
+      tray = "auto";
+      settings.icon_names.media = [
+        "drive-removable-media-usb"
+        "drive-removable-media"
+        "media-removable"
+      ];
+    };
 
     systemd.user.services = {
       polkit-gnome-authentication-agent-1 = {

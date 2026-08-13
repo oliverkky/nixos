@@ -27,7 +27,7 @@
   primaryUid = 1000;
   primaryGid = 100;
   reaper = {
-    pipewireLatency = "64/48000";
+    pipewireLatency = "128/48000";
   };
   zed.audioDevice = "alsa:default";
   stateVersion = "24.11";

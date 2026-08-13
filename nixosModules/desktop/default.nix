@@ -9,6 +9,7 @@
     ./hyprland.nix
     ./packages.nix
     ./power.nix
+    ./virtualization.nix
   ];
 
   options.my.nixos.desktop.enable = lib.mkEnableOption "desktop system bundle";
@@ -21,6 +22,7 @@
       hyprland.enable = lib.mkDefault true;
       packages.enable = lib.mkDefault true;
       power.enable = lib.mkDefault true;
+      virtualization.enable = lib.mkDefault true;
     };
   };
 }

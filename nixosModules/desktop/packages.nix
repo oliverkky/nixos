@@ -59,6 +59,10 @@
       "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}"
     ];
 
+    # ── Network tools ─────────────────────────────────────────────────────────
+
+    programs.wireshark.enable = true;
+
     # ── Desktop packages ──────────────────────────────────────────────────────
 
     environment.systemPackages =
@@ -77,6 +81,11 @@
         evince
         gnome-disk-utility
         snapshot
+
+        # Network analysis
+        bettercap
+        wireshark
+        net-tools
       ]
       ++ lib.optionals config.my.nixos.desktop.packages.printing.enable [
         system-config-printer

@@ -30,11 +30,14 @@
       # System inspection
       iotop
       iftop
+      btop
       lsof
       strace
       ltrace
       pciutils
       usbutils
+      alsa-utils
+      rt-tests
       lm_sensors
       sysstat
       ethtool
