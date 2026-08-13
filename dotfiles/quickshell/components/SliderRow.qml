@@ -39,15 +39,22 @@ Row {
         }
 
         MouseArea {
+            id: sliderMouse
+
             anchors.fill: parent
             anchors.margins: -8
             cursorShape: Qt.PointingHandCursor
-            onPressed: mouse => root.moved(Math.max(0, Math.min(root.maximum, root.maximum * mouse.x / track.width)))
+            onPressed: mouse => root.moved(root.valueForMouse(mouse))
             onPositionChanged: mouse => {
-                if (pressed)
-                    root.moved(Math.max(0, Math.min(root.maximum, root.maximum * mouse.x / track.width)));
+                if (sliderMouse.pressed)
+                    root.moved(root.valueForMouse(mouse));
             }
         }
+    }
+
+    function valueForMouse(mouse) {
+        const position = track.mapFromItem(sliderMouse, mouse.x, mouse.y).x;
+        return Math.max(0, Math.min(root.maximum, root.maximum * position / track.width));
     }
 
     function normalizedValue() {

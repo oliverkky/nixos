@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import Quickshell as QS
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
@@ -30,6 +31,11 @@ QS.PanelWindow {
     color: "transparent"
 
     WlrLayershell.namespace: "oliver.quickshell.notifications"
+
+    BackgroundEffect.blurRegion: Region {
+        item: toastStack
+        radius: 10
+    }
 
     ColorScheme {
         id: colorScheme

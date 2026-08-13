@@ -12,8 +12,8 @@ Rectangle {
     required property var fallbackIcon
     required property var openMenu
 
-    implicitWidth: trayRow.implicitWidth + 12
-    implicitHeight: 28
+    implicitWidth: trayRow.implicitWidth + 14
+    implicitHeight: 30
     width: implicitWidth
     height: implicitHeight
     radius: 999
@@ -33,7 +33,7 @@ Rectangle {
         id: trayRow
 
         anchors.centerIn: parent
-        spacing: 2
+        spacing: 3
 
         Repeater {
             model: root.trayItems
@@ -43,8 +43,8 @@ Rectangle {
 
                 required property var modelData
 
-                implicitWidth: 26
-                implicitHeight: 24
+                implicitWidth: 28
+                implicitHeight: 26
                 width: implicitWidth
                 height: implicitHeight
                 hoverEnabled: true
@@ -53,7 +53,7 @@ Rectangle {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 8
+                    radius: 9
                     color: trayButton.containsMouse ? root.ui.surfaceHover : "transparent"
                 }
 
@@ -111,11 +111,10 @@ Rectangle {
                         return;
 
                     const localPoint = trayButton.mapToItem(root, 0, 0);
-                    if (root.openMenu(trayButton.modelData, localPoint.x, localPoint.y, trayButton.width, trayButton.height))
-                        return;
-
-                    const nativePoint = trayButton.mapToItem(null, trayButton.width / 2, trayButton.height);
-                    trayButton.modelData.display(root.parentWindow, nativePoint.x, nativePoint.y);
+                    // Never hand this back to StatusNotifierItem.display(): it
+                    // creates Qt's native, unstyled menu. The shell menu can
+                    // wait for an app's DBusMenu layout to arrive instead.
+                    root.openMenu(trayButton.modelData, localPoint.x, localPoint.y, trayButton.width, trayButton.height);
                 }
             }
         }

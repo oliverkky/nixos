@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell as QS
+import Quickshell.Hyprland
 import Quickshell.Wayland
 
 QS.PopupWindow {
@@ -12,18 +13,42 @@ QS.PopupWindow {
     property real originWidth: 1
     property real originHeight: 28
     property bool expanded: false
+    // Some popovers have an element that exists in both their collapsed and
+    // expanded states. Keep that element drawn while the surface grows so it
+    // reads as one object moving into place, rather than two cross-fading
+    // copies.
+    property bool animateContent: true
+    property real collapsedContentLeftMargin: 12
+    property real collapsedContentRightMargin: 12
+    property real collapsedContentTopMargin: 12
     property string closeKey: expanded ? "expanded" : ""
     property bool hidingAfterClose: false
-    readonly property int debugAnimationDuration: 160
-    readonly property int closeAnimationDuration: 120
-    readonly property int debugSurfaceReadyDelay: debugAnimationDuration
+    property real progress: 0
+    readonly property real contentProgress: Math.max(0, Math.min(1, (progress - 0.12) / 0.88))
+    readonly property int surfaceRadius: 18
+    readonly property int debugAnimationDuration: 180
+    readonly property int closeAnimationDuration: 130
     default property alias content: content.data
     signal surfaceOpened()
     signal surfaceClosed()
     signal closeRequested()
 
     color: "transparent"
-    grabFocus: true
+    // Keyboard-triggered popovers have no Wayland pointer serial, so an xdg
+    // popup grab is rejected. Hyprland's shell focus-grab protocol works for
+    // both keyboard and pointer activation.
+    grabFocus: false
+
+    HyprlandFocusGrab {
+        id: focusGrab
+
+        windows: [root]
+        active: root.expanded
+        onCleared: {
+            if (root.expanded)
+                root.closeRequested();
+        }
+    }
 
     BackgroundEffect.blurRegion: Region {
         item: surface
@@ -40,8 +65,6 @@ QS.PopupWindow {
     onVisibleChanged: {
         if (visible)
             return;
-
-        openedTimer.stop();
 
         if (hidingAfterClose) {
             hidingAfterClose = false;
@@ -75,26 +98,28 @@ QS.PopupWindow {
         surface.y = 0;
         surface.width = root.implicitWidth;
         surface.height = root.implicitHeight;
-        surface.radius = 16;
+        surface.radius = root.surfaceRadius;
+        progress = 1;
     }
 
     function startOpenAnimation() {
         closeAnimation.stop();
         openAnimation.stop();
-        if (!visible)
-            visible = true;
 
         surface.x = root.originX;
         surface.y = root.originY;
         surface.width = root.originWidth;
         surface.height = root.originHeight;
         surface.radius = root.originHeight / 2;
+        progress = 0;
+
+        if (!visible)
+            visible = true;
+
         openAnimation.start();
-        openedTimer.restart();
     }
 
     function startCloseAnimation() {
-        openedTimer.stop();
         openAnimation.stop();
         if (!visible) {
             surfaceClosed();
@@ -111,21 +136,25 @@ QS.PopupWindow {
         y: 0
         width: root.implicitWidth
         height: root.implicitHeight
-        radius: 16
+        radius: root.surfaceRadius
         clip: true
-        color: root.ui.panelSurface
+        color: root.ui.popoverSurface
         border.width: 1
         border.color: root.ui.border
 
         Item {
             id: content
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            anchors.topMargin: 0
+            anchors.leftMargin: root.collapsedContentLeftMargin + ((12 - root.collapsedContentLeftMargin) * root.progress)
+            anchors.rightMargin: root.collapsedContentRightMargin + ((12 - root.collapsedContentRightMargin) * root.progress)
+            anchors.topMargin: root.collapsedContentTopMargin + ((12 - root.collapsedContentTopMargin) * root.progress)
             anchors.bottomMargin: 12
             clip: true
             focus: root.visible
+            opacity: root.animateContent ? root.contentProgress : 1
+            transform: Translate {
+                y: root.animateContent ? (1 - root.contentProgress) * -6 : 0
+            }
 
             Keys.onEscapePressed: {
                 root.closeRequested();
@@ -171,9 +200,22 @@ QS.PopupWindow {
         NumberAnimation {
             target: surface
             property: "radius"
-            to: 16
+            to: root.surfaceRadius
             duration: root.debugAnimationDuration
             easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            target: root
+            property: "progress"
+            to: 1
+            duration: root.debugAnimationDuration
+            easing.type: Easing.OutCubic
+        }
+
+        onFinished: {
+            root.syncOpenSurface();
+            root.surfaceOpened();
         }
     }
 
@@ -226,13 +268,14 @@ QS.PopupWindow {
             duration: root.closeAnimationDuration
             easing.type: Easing.InCubic
         }
-    }
 
-    Timer {
-        id: openedTimer
-        interval: root.debugSurfaceReadyDelay
-        repeat: false
-        onTriggered: root.surfaceOpened()
+        NumberAnimation {
+            target: root
+            property: "progress"
+            to: 0
+            duration: root.closeAnimationDuration
+            easing.type: Easing.InCubic
+        }
     }
 
 }

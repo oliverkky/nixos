@@ -14,6 +14,8 @@ Column {
     required property var batteryPercentLabel
 
     signal openFallback
+    signal connectA2dp(var device)
+    signal setBluetoothEnabled(bool enabled)
 
     width: parent.width
     height: parent.height
@@ -42,8 +44,7 @@ Column {
             label: root.adapter && root.adapter.enabled ? "On" : "Off"
             active: root.adapter && root.adapter.enabled
             compact: false
-            onClicked: if (root.adapter)
-                root.adapter.enabled = !root.adapter.enabled
+            onClicked: root.setBluetoothEnabled(!(root.adapter && root.adapter.enabled))
         }
 
         IconButton {
@@ -128,7 +129,7 @@ Column {
                     trailingWarning: modelData.connected && root.batteryAvailable(modelData) && root.batteryPercent(modelData) < 30
                     trailingCritical: modelData.connected && root.batteryAvailable(modelData) && root.batteryPercent(modelData) < 15
                     active: modelData.connected
-                    onClicked: modelData.connected ? modelData.disconnect() : modelData.connect()
+                    onClicked: modelData.connected ? modelData.disconnect() : root.connectA2dp(modelData)
                 }
             }
         }

@@ -43,35 +43,41 @@ Item {
         {
             icon: "",
             text: "Lock",
+            key: Qt.Key_L,
             command: ["loginctl", "lock-session"]
         },
         {
             icon: "󰍃",
-            text: "Logout",
+            text: "Sign off",
+            key: Qt.Key_S,
             command: ["hyprctl", "dispatch", "exit"]
         },
         {
             icon: "󰤄",
-            text: "Suspend",
-            command: ["systemctl", "suspend"]
+            text: "Hibernate",
+            key: Qt.Key_H,
+            command: ["systemctl", "hibernate"]
         },
         {
             icon: "󰜉",
             text: "Reboot",
+            key: Qt.Key_R,
             command: ["systemctl", "reboot"]
         },
         {
             icon: "",
-            text: "Shutdown",
+            text: "Power off",
+            key: Qt.Key_P,
             command: ["systemctl", "poweroff"],
             danger: true
         },
     ]
     readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
+    readonly property string bluetoothConnectA2dpPath: Quickshell.env("HYPR_BLUETOOTH_CONNECT_A2DP") || `${configHome}/hypr/scripts/bluetooth-connect-a2dp`
     readonly property string powerProfileDisplayPath: Quickshell.env("HYPR_SET_POWER_PROFILE_DISPLAY") || `${configHome}/hypr/scripts/set-power-profile-display`
 
     implicitWidth: capsuleRow.implicitWidth
-    implicitHeight: 28
+    implicitHeight: 30
     width: implicitWidth
     height: implicitHeight
 
@@ -107,8 +113,8 @@ Item {
     Row {
         id: capsuleRow
 
-        height: 28
-        spacing: 6
+        height: 30
+        spacing: 0
 
         Components.StatusTrayRow {
             id: trayButtons
@@ -119,17 +125,26 @@ Item {
             iconSource: root.trayIconSource
             fallbackIcon: root.trayFallbackIcon
             openMenu: (item, x, y, width, height) => root.openTrayMenu(item, trayButtons.x + x, trayButtons.y + y, width, height)
-            visible: root.trayItems.length > 0 && (root.activePanel.length === 0 || !root.expandedSurfaceReady)
-            enabled: root.activePanel.length === 0
+            visible: root.trayItems.length > 0
+            enabled: root.activePanel.length === 0 && !panel.visible
+        }
+
+        Item {
+            // Keep the tray beside the expanded status surface instead of
+            // letting that surface grow over it. Since StatusArea is anchored
+            // to the right edge, widening this gap moves only the tray left.
+            visible: trayButtons.visible
+            width: 7 + panel.progress * Math.max(0, panel.implicitWidth - container.width)
+            height: 1
         }
 
         Rectangle {
             id: container
-            width: systemButtons.implicitWidth + 24
-            height: 28
+            width: systemButtons.implicitWidth + 26
+            height: 30
             radius: 999
-            visible: root.activePanel.length === 0 || !root.expandedSurfaceReady
-            enabled: root.activePanel.length === 0
+            enabled: root.activePanel.length === 0 && !panel.visible
+            opacity: panel.visible ? Math.max(0, 1 - panel.progress * 1.4) : 1
             color: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
             border.width: 1
             border.color: root.ui.border
@@ -193,9 +208,9 @@ Item {
         anchor.rect.y: root.y
         implicitWidth: 360
         implicitHeight: root.panelHeight()
-        originX: Math.max(0, implicitWidth - root.width)
+        originX: Math.max(0, implicitWidth - container.width)
         originY: 0
-        originWidth: root.width
+        originWidth: container.width
         originHeight: root.height
         expanded: root.activePanel.length > 0
         closeKey: root.activePanel
@@ -205,7 +220,11 @@ Item {
         onCloseRequested: {
             root.activePanel = "";
         }
-        onSurfaceOpened: root.expandedSurfaceReady = true
+        onSurfaceOpened: {
+            root.expandedSurfaceReady = true;
+            if (root.activePanel === "power")
+                panelKeyboardHandler.forceActiveFocus();
+        }
         onSurfaceClosed: {
             root.activePanel = "";
             root.visiblePanel = "";
@@ -213,6 +232,8 @@ Item {
         }
 
         Item {
+            id: panelKeyboardHandler
+
             anchors.fill: parent
             focus: root.visiblePanel === "power"
             Keys.onPressed: event => {
@@ -238,6 +259,9 @@ Item {
                         font.family: "Cantarell"
                         font.pixelSize: 13
                         font.weight: Font.Bold
+                        transform: Translate {
+                            x: (1 - panel.contentProgress) * -8
+                        }
                     }
 
                     Components.StatusButtonRow {
@@ -263,6 +287,10 @@ Item {
                         onBatteryClicked: root.togglePanel("battery")
                         onIdleClicked: root.togglePanel("battery")
                         onPowerClicked: root.togglePanel("power")
+                        transform: Translate {
+                            x: (1 - panel.contentProgress) * 12
+                            y: (1 - panel.contentProgress) * -2
+                        }
                     }
                 }
 
@@ -288,8 +316,10 @@ Item {
         ui: root.ui
         parentWindow: root.parentWindow
         activeTrayItem: root.activeTrayItem
-        rootMenu: root.activeTrayRootMenu()
-        modelValues: root.modelValues
+        // QsMenuOpener must receive the persistent QsMenuHandle. Some
+        // applications (notably Steam) populate handle.menu asynchronously,
+        // so passing that transient root entry leaves the opener empty.
+        rootMenu: root.activeTrayMenuHandle()
         iconSource: root.trayIconSource
         titleProvider: root.trayPanelTitle
         anchorX: root.trayPanelAnchorX()
@@ -304,7 +334,7 @@ Item {
             if (root.activeTrayItem) {
                 const menu = root.activeTrayRootMenu();
                 if (menu)
-                    menu.sendClosed();
+                    menu.closed();
                 root.activeTrayItem = null;
             }
         }
@@ -366,6 +396,8 @@ Item {
             batteryPercent: root.bluetoothBatteryPercent
             batteryPercentLabel: root.bluetoothBatteryPercentLabel
             onOpenFallback: root.runNativeTool(["blueman-manager"])
+            onConnectA2dp: device => root.connectBluetoothA2dp(device)
+            onSetBluetoothEnabled: enabled => root.setBluetoothEnabled(enabled)
         }
     }
 
@@ -459,15 +491,22 @@ Item {
         if (activePanel !== "power")
             return false;
 
-        if (key === Qt.Key_Up || key === Qt.Key_K) {
+        for (let i = 0; i < powerActions.length; i++) {
+            if (powerActions[i].key === key) {
+                runPowerAction(i);
+                return true;
+            }
+        }
+
+        if (key === Qt.Key_Up || key === Qt.Key_Left || key === Qt.Key_K) {
             movePowerSelection(-1);
             return true;
         }
-        if (key === Qt.Key_Down || key === Qt.Key_J) {
+        if (key === Qt.Key_Down || key === Qt.Key_Right || key === Qt.Key_J) {
             movePowerSelection(1);
             return true;
         }
-        if (key === Qt.Key_Return || key === Qt.Key_Enter) {
+        if (key === Qt.Key_Return || key === Qt.Key_Enter || key === Qt.Key_Space) {
             runPowerAction(powerSelectedIndex);
             return true;
         }
@@ -484,14 +523,14 @@ Item {
     function panelHeight() {
         const panelName = visiblePanel.length > 0 ? visiblePanel : activePanel;
         if (panelName === "power")
-            return 282;
+            return 272;
         if (panelName === "audio")
-            return Math.max(456, 304 + ((audioOutputDevices().length + audioInputDevices().length) * 44));
+            return Math.max(468, 316 + ((audioOutputDevices().length + audioInputDevices().length) * 44));
         if (panelName === "battery")
-            return root.brightnessAvailable ? 323 : 265;
+            return root.brightnessAvailable ? 356 : 296;
         if (panelName === "bluetooth")
-            return 381;
-        return 501;
+            return 393;
+        return 513;
     }
 
     function panelTitle() {
@@ -524,13 +563,20 @@ Item {
         return item.menu.menu || null;
     }
 
+    function trayMenuHandleFor(item) {
+        return item && item.menu ? item.menu : null;
+    }
+
+    function activeTrayMenuHandle() {
+        return trayMenuHandleFor(activeTrayItem);
+    }
+
     function activeTrayRootMenu() {
         return trayRootMenuFor(activeTrayItem);
     }
 
     function openTrayMenu(item, x, y, width, height) {
-        const menu = trayRootMenuFor(item);
-        if (!menu)
+        if (!item || !item.hasMenu)
             return false;
 
         if (activeTrayItem === item) {
@@ -540,7 +586,7 @@ Item {
 
         const previousMenu = activeTrayRootMenu();
         if (previousMenu)
-            previousMenu.sendClosed();
+            previousMenu.closed();
 
         trayMenuOriginX = x;
         trayMenuOriginY = y;
@@ -550,15 +596,24 @@ Item {
         expandedSurfaceReady = false;
         activeTrayItem = item;
 
-        menu.updateLayout();
-        menu.sendOpened();
+        // The DBusMenu handle, rather than its transient root entry, is the
+        // QsMenuOpener input. It owns loading and updating the item model.
+        const handle = activeTrayMenuHandle();
+        if (!handle)
+            return true;
+
+        const menu = activeTrayRootMenu();
+        if (!menu)
+            return true;
+
+        menu.opened();
         return true;
     }
 
     function closeTrayMenu() {
         const menu = activeTrayRootMenu();
         if (menu)
-            menu.sendClosed();
+            menu.closed();
 
         activeTrayItem = null;
     }
@@ -597,7 +652,11 @@ Item {
     }
 
     function trayPanelAnchorX() {
-        const target = root.x + trayMenuOriginX + trayMenuOriginWidth - trayMenuPanel.implicitWidth;
+        // Keep the active 16px tray icon in the same horizontal position in
+        // both states. The clicked 28px tray button contains the icon with 6px
+        // side insets, and the expanded header keeps the icon 12px from the
+        // panel edge, so the panel edge sits 6px past the original button.
+        const target = root.x + trayMenuOriginX + trayMenuOriginWidth + 6 - trayMenuPanel.implicitWidth;
         const maxX = root.parentWindow && root.parentWindow.width ? root.parentWindow.width - trayMenuPanel.implicitWidth - 12 : target;
 
         return Math.max(12, Math.min(Math.max(12, maxX), target));
@@ -923,5 +982,28 @@ Item {
             return;
 
         Quickshell.execDetached([powerProfileDisplayPath, profile]);
+    }
+
+    function setBluetoothEnabled(enabled) {
+        if (bluetoothAdapter)
+            bluetoothAdapter.enabled = enabled;
+
+        Quickshell.execDetached(["bluetoothctl", "power", enabled ? "on" : "off"]);
+    }
+
+    function connectBluetoothA2dp(device) {
+        if (!device)
+            return;
+
+        // Start the connection through Quickshell so a missing or stale helper
+        // can never turn the device row into a no-op. The helper then selects
+        // A2DP once BlueZ has exposed the device to PipeWire.
+        device.connect();
+
+        const address = device.address || "";
+        if (!address)
+            return;
+
+        Quickshell.execDetached([bluetoothConnectA2dpPath, address]);
     }
 }

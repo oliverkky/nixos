@@ -49,6 +49,22 @@ return function(ctx)
         name = "blur-quickshell",
         match = { namespace = "oliver.quickshell" },
         blur = true,
+        blur_popups = true,
+        ignore_alpha = 0.0,
+    })
+
+    hl.layer_rule({
+        name = "blur-quickshell-notifications",
+        match = { namespace = "oliver.quickshell.notifications" },
+        blur = true,
+        ignore_alpha = 0.0,
+    })
+
+    hl.layer_rule({
+        name = "blur-quickshell-display-anchor",
+        match = { namespace = "oliver.quickshell.display-anchor" },
+        blur = true,
+        blur_popups = true,
         ignore_alpha = 0.0,
     })
 end

@@ -54,7 +54,7 @@ QS.PanelWindow {
         elide: Text.ElideRight
         font.family: "Cantarell"
         font.pixelSize: 18
-        font.weight: Font.Bold
+        font.weight: Font.DemiBold
         style: Text.Raised
         styleColor: colorScheme.shadow
     }

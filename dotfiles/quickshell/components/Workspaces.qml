@@ -6,8 +6,8 @@ Row {
 
     required property var ui
 
-    spacing: 8
-    height: 16
+    spacing: 7
+    height: 20
 
     property var workspaceList: modelValues(Hyprland.workspaces)
     property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 1

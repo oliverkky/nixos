@@ -21,5 +21,6 @@ return function()
     hl.animation({ leaf = "workspaces", enabled = true, speed = 1, bezier = "default", style = "slide" })
     hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1, bezier = "default", style = "slide" })
     hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1, bezier = "default", style = "slide" })
+    hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 1, bezier = "default", style = "fade" })
     hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" })
 end

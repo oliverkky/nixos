@@ -11,8 +11,8 @@ MouseArea {
     property bool critical: false
     property bool compact: true
 
-    implicitWidth: compact ? 26 : Math.max(46, content.implicitWidth + 18)
-    implicitHeight: 24
+    implicitWidth: compact ? 28 : Math.max(48, content.implicitWidth + 20)
+    implicitHeight: 26
     width: implicitWidth
     height: implicitHeight
     hoverEnabled: true
@@ -20,7 +20,7 @@ MouseArea {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: 9
         color: root.containsMouse ? root.ui.surfaceHover : "transparent"
     }
 

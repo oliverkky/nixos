@@ -7,7 +7,7 @@ QS.PanelWindow {
     id: root
 
     required property var shellRoot
-    property int barHeight: 32
+    property int barHeight: 36
 
     anchors {
         top: true
@@ -25,12 +25,17 @@ QS.PanelWindow {
     BackgroundEffect.blurRegion: Region {
         Region {
             item: workspaces
-            radius: 10
+            radius: workspaces.height / 2
         }
 
         Region {
             item: clock
             radius: clock.height / 2
+        }
+
+        Region {
+            item: privacyIndicator
+            radius: privacyIndicator.height / 2
         }
 
         Region {
@@ -49,6 +54,11 @@ QS.PanelWindow {
         function onOpenSystemMenu() {
             statusArea.openPowerMenu();
         }
+
+        function onToggleStatusPanel(panelName) {
+            statusArea.togglePanel(panelName);
+        }
+
     }
 
     Item {
@@ -58,7 +68,7 @@ QS.PanelWindow {
             id: workspaces
 
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: 14
             anchors.verticalCenter: parent.verticalCenter
             ui: colorScheme
         }
@@ -71,14 +81,24 @@ QS.PanelWindow {
             parentWindow: root
         }
 
+        PrivacyIndicator {
+            id: privacyIndicator
+
+            anchors.left: clock.right
+            anchors.leftMargin: 7
+            anchors.verticalCenter: clock.verticalCenter
+            ui: colorScheme
+        }
+
         StatusArea {
             id: statusArea
 
             anchors.right: parent.right
-            anchors.rightMargin: 12
+            anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
             ui: colorScheme
             parentWindow: root
         }
+
     }
 }

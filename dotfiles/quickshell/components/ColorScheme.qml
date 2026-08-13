@@ -13,16 +13,17 @@ QtObject {
 
     readonly property color text: foreground
     readonly property color textMuted: withAlpha(foreground, 0.62)
-    readonly property color surface: withAlpha(foreground, 0.20)
-    readonly property color surfaceHover: withAlpha(foreground, 0.28)
+    readonly property color surface: withAlpha(foreground, 0.16)
+    readonly property color surfaceHover: withAlpha(foreground, 0.24)
     readonly property color surfaceStrong: withAlpha(foreground, 0.90)
     readonly property color surfaceStrongHover: foreground
-    readonly property color panelSurface: withAlpha(background, 0.98)
-    readonly property color panelSurfaceHover: background
-    readonly property color border: withAlpha(foreground, 0.62)
-    readonly property color borderBottom: withAlpha(foreground, 0.26)
-    readonly property color borderSoft: withAlpha(foreground, 0.10)
-    readonly property color shadow: withAlpha(background, 0.34)
+    readonly property color panelSurface: withAlpha(background, 0.74)
+    readonly property color panelSurfaceHover: withAlpha(background, 0.84)
+    readonly property color popoverSurface: withAlpha(background, 0.45)
+    readonly property color border: withAlpha(foreground, 0.30)
+    readonly property color borderBottom: withAlpha(foreground, 0.18)
+    readonly property color borderSoft: withAlpha(foreground, 0.12)
+    readonly property color shadow: withAlpha(background, 0.42)
 
     readonly property string cacheHome: Quickshell.env("XDG_CACHE_HOME") || `${Quickshell.env("HOME")}/.cache`
     readonly property string walPath: `${cacheHome}/wal/colors.json`

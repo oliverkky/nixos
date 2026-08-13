@@ -26,7 +26,7 @@ Row {
     signal idleClicked(var mouse)
     signal powerClicked(var mouse)
 
-    spacing: 2
+    spacing: 3
 
     Components.IconButton {
         ui: root.ui
