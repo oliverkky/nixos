@@ -13,6 +13,7 @@ ShellRoot {
     signal openDisplayLayout
     signal openDisplayCurrent
     signal openScreenshotMenu
+    signal openCalendarMedia
     signal toggleStatusPanel(string panelName)
 
     settings.watchFiles: true
@@ -42,6 +43,14 @@ ShellRoot {
 
         function open() {
             root.openScreenshotMenu();
+        }
+    }
+
+    IpcHandler {
+        target: "calendarMedia"
+
+        function open() {
+            root.openCalendarMedia();
         }
     }
 

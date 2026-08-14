@@ -352,4 +352,8 @@ MouseArea {
 
         return mediaPlayer.trackArtUrl || "";
     }
+
+    function openPopover() {
+        calendar.expanded = true;
+    }
 }

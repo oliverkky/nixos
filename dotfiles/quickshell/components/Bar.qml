@@ -59,6 +59,10 @@ QS.PanelWindow {
             statusArea.togglePanel(panelName);
         }
 
+        function onOpenCalendarMedia() {
+            clock.openPopover();
+        }
+
     }
 
     Item {
