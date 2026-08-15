@@ -39,6 +39,7 @@ in
       hypr.source = ../../dotfiles/hypr;
       quickshell.source = ../../dotfiles/quickshell;
       rofi.source = ../../dotfiles/rofi;
+      sunsetr.source = ../../dotfiles/sunsetr;
       zed.source = zedConfig;
       wal.source = ../../dotfiles/wal;
       waypaper.source = ../../dotfiles/waypaper;

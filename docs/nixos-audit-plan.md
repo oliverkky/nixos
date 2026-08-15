@@ -78,7 +78,7 @@ After those are done, handle update discipline and security posture: kernel choi
 
 7. GNOME-style toggles were partially fake.
    - Previous Waybar scripts toggled `org.gnome.settings-daemon.plugins.color night-light-enabled`, but GNOME Settings Daemon was not running.
-   - Done: removed the Waybar path. Keep Quickshell controls tied to actual Hyprland/Hyprsunset state.
+   - Done: removed the Waybar path. Keep Quickshell controls tied to actual Hyprland/sunsetr state.
 
 8. Monitor identity is hard-coded in laptop-specific places.
    - Hyprland and power-profile display scripts assume the laptop panel identity.

@@ -19,7 +19,7 @@
     my.home.desktop = {
       cursor.enable = lib.mkDefault true;
       dotfiles.enable = lib.mkDefault true;
-      gtk.enable = lib.mkDefault false;
+      gtk.enable = lib.mkDefault true;
       packages.enable = lib.mkDefault true;
       reaper.enable = lib.mkDefault false;
       scripts.enable = lib.mkDefault true;

@@ -1,0 +1,20 @@
+# Use the compositor-independent Wayland backend so sunsetr owns the filter
+# directly instead of relying on a compositor-specific helper daemon.
+backend = "wayland"
+
+# Calculate transitions from local sunrise and sunset throughout the year.
+transition_mode = "geo"
+latitude = 49.8175
+longitude = 15.4730
+
+# Use the existing night profile while using sunsetr's percentage-based gamma
+# values.
+night_temp = 4500
+night_gamma = 50
+day_temp = 6500
+day_gamma = 100
+
+smoothing = true
+startup_duration = 1
+shutdown_duration = 1
+update_interval = "auto"
