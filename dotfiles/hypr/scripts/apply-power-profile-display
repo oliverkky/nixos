@@ -106,7 +106,31 @@ if [[ -z "$mode" ]]; then
     mode="${resolution}@${refresh}"
 fi
 
-lua_config="hl.monitor({ output = \"$monitor\", mode = \"$mode\", position = \"${x}x${y}\", scale = $scale })"
+hdr_lua=""
+if [[ -n "${HYPR_MONITOR_HDRS:-}" ]]; then
+    hdr_row="$(
+        tr ';' '\n' <<<"${HYPR_MONITOR_HDRS:-}" \
+            | awk -F ',' -v output="$monitor" '$1 == output { print; exit }'
+    )"
+
+    if [[ -n "$hdr_row" ]]; then
+        IFS=',' read -r _ bitdepth cm sdrbrightness sdrsaturation supports_wide_color supports_hdr <<<"$hdr_row"
+        cm_json="$(jq -Rrn --arg value "${cm:-auto}" '$value | @json')"
+        hdr_lua="$(printf ', bitdepth = %s, cm = %s, sdrbrightness = %s, sdrsaturation = %s, supports_wide_color = %s, supports_hdr = %s' \
+            "${bitdepth:-10}" \
+            "$cm_json" \
+            "${sdrbrightness:-1.2}" \
+            "${sdrsaturation:-1.0}" \
+            "${supports_wide_color:-0}" \
+            "${supports_hdr:-0}")"
+    fi
+fi
+
+if [[ -z "$hdr_lua" && "${HYPR_COLOR_MANAGEMENT:-true}" == "false" ]]; then
+    hdr_lua=', bitdepth = 8, cm = "srgb", supports_wide_color = -1, supports_hdr = -1'
+fi
+
+lua_config="hl.monitor({ output = \"$monitor\", mode = \"$mode\", position = \"${x}x${y}\", scale = $scale$hdr_lua })"
 
 if hyprctl eval "$lua_config"; then
     exit 0
