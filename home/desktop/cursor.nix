@@ -11,6 +11,7 @@
 
   config = lib.mkIf config.my.home.desktop.cursor.enable {
     home.pointerCursor = {
+      enable = true;
       name = host.cursor.name;
       package = pkgs.bibata-cursors;
       size = host.cursor.size;

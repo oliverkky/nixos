@@ -53,6 +53,7 @@ in
     # Hyprland's portal handles compositor-specific interfaces, but it does
     # not provide the file chooser used by apps such as Brave and Zed.
     xdg.portal = {
+      enable = true;
       extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
       config.common = {
         default = [
@@ -75,6 +76,7 @@ in
       HYPR_SECONDARY_MONITOR = if secondaryMonitor == null then "" else secondaryMonitor;
       HYPR_SECONDARY_MONITOR_WORKSPACE =
         if secondaryMonitorWorkspace == null then "" else toString secondaryMonitorWorkspace;
+      NIXOS_OZONE_WL = "1";
       XCURSOR_THEME = host.cursor.name;
       XCURSOR_SIZE = toString host.cursor.size;
     };

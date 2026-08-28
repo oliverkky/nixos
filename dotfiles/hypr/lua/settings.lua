@@ -56,6 +56,9 @@ return function(ctx)
 
     hl.env("XCURSOR_SIZE", tostring(ctx.cursor_size))
     hl.env("HYPRCURSOR_SIZE", tostring(ctx.cursor_size))
+    -- Keep Electron apps launched by Hyprland/Rofi on Wayland even when the
+    -- systemd user manager is still carrying a pre-rebuild environment.
+    hl.env("NIXOS_OZONE_WL", "1")
 
     hl.config({
         xwayland = {

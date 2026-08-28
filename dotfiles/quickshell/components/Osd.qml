@@ -24,7 +24,7 @@ QS.PanelWindow {
     }
 
     implicitWidth: 396
-    implicitHeight: 100
+    implicitHeight: 80
     visible: showing
     exclusiveZone: 0
     aboveWindows: true

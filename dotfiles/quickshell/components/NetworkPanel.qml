@@ -63,7 +63,7 @@ Column {
         id: wifiScroller
 
         width: parent.width
-        height: Math.max(102, parent.height - networkHeader.height - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0) - networkFallback.height - networkDisconnect.height - 32)
+        height: Math.max(102, parent.height - networkHeader.height - (passwordPrompt.visible ? passwordPrompt.height + 8 : 0) - networkFallback.height - 32)
         clip: true
         contentWidth: width
         contentHeight: wifiList.implicitHeight
@@ -191,17 +191,5 @@ Column {
         text: "Open nmtui"
         subtext: "Native NetworkManager fallback"
         onClicked: root.openFallback()
-    }
-
-    PanelAction {
-        id: networkDisconnect
-
-        width: parent.width
-        ui: root.ui
-        icon: "󰤭"
-        text: "Disconnect"
-        subtext: root.connected ? root.label : ""
-        active: false
-        onClicked: root.disconnectWifi()
     }
 }

@@ -86,6 +86,10 @@ in
         neural-amp-modeler-lv2
         qpwgraph
         raysession
+        wineWow64Packages.yabridge
+        winetricks
+        yabridge
+        yabridgectl
       ];
   };
 

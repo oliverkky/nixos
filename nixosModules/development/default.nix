@@ -59,6 +59,11 @@
         ruff
         uv
 
+        # Go programming language
+        go
+        golangci-lint
+        gopls
+
         # Core tools
         git
       ]

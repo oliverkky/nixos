@@ -30,102 +30,108 @@ in
       scrollbar_min_thumb_height 4
       combo_height 20
 
-      _3dface #2B2F33
-      _3dshadow #1E2226
-      _3dhilight #3A3F44
-      _3ddkshadow #111418
+      _3dface #303030
+      _3dshadow #1B1B1B
+      _3dhilight #4A4A4A
+      _3ddkshadow #101010
 
-      button_bg #30353A
-      button_text #E8EAED
-      button_text_disabled #7D858C
-      button_shadow #1C2024
-      button_hilight #444A50
+      button_bg #353535
+      button_text #E2E2E2
+      button_text_disabled #777777
+      button_shadow #1A1A1A
+      button_hilight #646464
 
-      checkbox_text #E8EAED
-      checkbox_text_disabled #7D858C
-      checkbox_fg #E8EAED
-      checkbox_inter #444A50
-      checkbox_bg #24282C
+      checkbox_text #E2E2E2
+      checkbox_text_disabled #777777
+      checkbox_fg #E2E2E2
+      checkbox_inter #5A5A5A
+      checkbox_bg #242424
 
-      scrollbar #1A1D20
-      scrollbar_fg #6F7780
-      scrollbar_bg #24282C
+      scrollbar #181818
+      scrollbar_fg #6A6A6A
+      scrollbar_bg #292929
 
-      edit_cursor #8AB4F8
-      edit_bg #1F2327
-      edit_bg_disabled #2B2F33
-      edit_text #E8EAED
-      edit_text_disabled #7D858C
-      edit_bg_sel #315A86
+      edit_cursor #C8C8C8
+      edit_bg #202020
+      edit_bg_disabled #2B2B2B
+      edit_text #E2E2E2
+      edit_text_disabled #777777
+      edit_bg_sel #555555
       edit_text_sel #FFFFFF
-      edit_hilight #3A3F44
-      edit_shadow #16191C
+      edit_hilight #494949
+      edit_shadow #161616
 
-      info_bk #25313A
-      info_text #E8EAED
+      info_bk #2B2B2B
+      info_text #E2E2E2
 
-      menu_bg #25292D
-      menu_shadow #16191C
-      menu_hilight #3A3F44
-      menu_text #E8EAED
-      menu_text_disabled #7D858C
-      menu_bg_sel #315A86
+      menu_bg #282828
+      menu_shadow #161616
+      menu_hilight #4A4A4A
+      menu_text #E2E2E2
+      menu_text_disabled #777777
+      menu_bg_sel #555555
       menu_text_sel #FFFFFF
-      menu_scroll #3A3F44
-      menu_scroll_arrow #9AA0A6
-      menu_submenu_arrow #C9CDD2
+      menu_scroll #4A4A4A
+      menu_scroll_arrow #A0A0A0
+      menu_submenu_arrow #C8C8C8
 
-      menubar_bg #25292D
-      menubar_text #E8EAED
-      menubar_text_disabled #7D858C
-      menubar_bg_sel #315A86
+      menubar_bg #282828
+      menubar_text #E2E2E2
+      menubar_text_disabled #777777
+      menubar_bg_sel #555555
       menubar_text_sel #FFFFFF
 
-      trackbar_track #1E2226
-      trackbar_mark #6F7780
-      trackbar_knob #C9CDD2
-      progress #8AB4F8
+      trackbar_track #1E1E1E
+      trackbar_mark #6A6A6A
+      trackbar_knob #BEBEBE
+      progress #BEBEBE
 
-      label_text #E8EAED
-      label_text_disabled #7D858C
-      combo_text #E8EAED
-      combo_text_disabled #7D858C
-      combo_bg #30353A
-      combo_bg2 #25292D
-      combo_shadow #1C2024
-      combo_hilight #444A50
-      combo_arrow #C9CDD2
+      label_text #E2E2E2
+      label_text_disabled #777777
+      combo_text #E2E2E2
+      combo_text_disabled #777777
+      combo_bg #353535
+      combo_bg2 #282828
+      combo_shadow #1A1A1A
+      combo_hilight #646464
+      combo_arrow #C8C8C8
       combo_arrow_press #FFFFFF
 
-      listview_bg #1F2327
-      listview_bg_sel #315A86
-      listview_text #E8EAED
+      listview_bg #202020
+      listview_bg_sel #5A5A5A
+      listview_text #E2E2E2
       listview_text_sel #FFFFFF
-      listview_bg_sel_inactive #30353A
-      listview_text_sel_inactive #E8EAED
-      listview_grid #30353A
-      listview_hdr_arrow #C9CDD2
-      listview_hdr_shadow #1C2024
-      listview_hdr_hilight #444A50
-      listview_hdr_bg #2B2F33
-      listview_hdr_text #E8EAED
+      listview_bg_sel_inactive #383838
+      listview_text_sel_inactive #E2E2E2
+      listview_grid #363636
+      listview_hdr_arrow #C8C8C8
+      listview_hdr_shadow #1A1A1A
+      listview_hdr_hilight #646464
+      listview_hdr_bg #303030
+      listview_hdr_text #E2E2E2
 
-      treeview_text #E8EAED
-      treeview_bg #1F2327
-      treeview_bg_sel #315A86
+      # REAPER's FX browser uses the generic list colors for its main pane.
+      genlist_bg #202020
+      genlist_fg #E2E2E2
+      genlist_selbg #5A5A5A
+      genlist_selfg #FFFFFF
+
+      treeview_text #E2E2E2
+      treeview_bg #202020
+      treeview_bg_sel #5A5A5A
       treeview_text_sel #FFFFFF
-      treeview_bg_sel_inactive #30353A
-      treeview_text_sel_inactive #E8EAED
-      treeview_arrow #C9CDD2
+      treeview_bg_sel_inactive #383838
+      treeview_text_sel_inactive #E2E2E2
+      treeview_arrow #C8C8C8
 
-      tab_shadow #1C2024
-      tab_hilight #444A50
-      tab_text #E8EAED
-      focusrect #8AB4F8
-      group_text #E8EAED
-      group_shadow #1C2024
-      group_hilight #444A50
-      focus_hilight #3A3F44
+      tab_shadow #1A1A1A
+      tab_hilight #646464
+      tab_text #E2E2E2
+      focusrect #BEBEBE
+      group_text #E2E2E2
+      group_shadow #1A1A1A
+      group_hilight #646464
+      focus_hilight #4A4A4A
     '';
   };
 }
