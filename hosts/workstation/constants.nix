@@ -12,14 +12,17 @@
     size = 24;
     dpi = 96;
   };
-  hyprland.drmDevice = "/dev/dri/card1";
+  hyprland = {
+    colorManagement.enable = false;
+    drmDevice = "/dev/dri/card1";
+  };
   monitors = [
     {
       output = "DP-1";
       mode = "2560x1440@74.97Hz";
       position = "0x0";
       scale = 1.0;
-      hdr.enable = true;
+      hdr.enable = false;
     }
     {
       output = "HDMI-A-1";

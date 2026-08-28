@@ -67,6 +67,7 @@ in
     environment.sessionVariables = {
       HYPR_MONITORS = hyprMonitors;
       HYPR_MONITOR_HDRS = hyprMonitorHdrs;
+      HYPR_COLOR_MANAGEMENT = lib.boolToString host.hyprland.colorManagement.enable;
       HYPR_PRIMARY_MONITOR = host.primaryMonitor;
       HYPR_PRIMARY_MONITOR_SCALE = toString (
         (lib.findFirst (monitor: monitor.output == host.primaryMonitor) { scale = 1; } (

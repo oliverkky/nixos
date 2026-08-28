@@ -40,6 +40,13 @@ return function(ctx)
                     monitor_config.sdrsaturation = hdr.sdrsaturation
                     monitor_config.supports_wide_color = hdr.supports_wide_color
                     monitor_config.supports_hdr = hdr.supports_hdr
+                elseif not ctx.color_management then
+                    -- Explicitly reset outputs that may still carry HDR state
+                    -- after a config reload.
+                    monitor_config.bitdepth = 8
+                    monitor_config.cm = "srgb"
+                    monitor_config.supports_wide_color = -1
+                    monitor_config.supports_hdr = -1
                 end
 
                 hl.monitor(monitor_config)
@@ -115,8 +122,8 @@ return function(ctx)
         },
 
         render = {
-            cm_enabled = true,
-            cm_auto_hdr = 1,
+            cm_enabled = ctx.color_management and 1 or 0,
+            cm_auto_hdr = ctx.color_management and 1 or 0,
             use_fp16 = 2,
             keep_unmodified_copy = 2,
         },

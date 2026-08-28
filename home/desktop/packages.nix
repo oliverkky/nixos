@@ -36,7 +36,7 @@ in
         wl-clipboard
         hyprlock
         hypridle
-        hyprsunset
+        sunsetr
         quickshell
         awww
         wallutils
@@ -63,6 +63,7 @@ in
         brave
         discord
         fastfetch
+        gimp
         gnome-calendar
         gnome-clocks
         gnome-weather

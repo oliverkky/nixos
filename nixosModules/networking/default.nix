@@ -16,6 +16,12 @@
       default = [ ];
       description = "Host-specific UDP firewall exceptions.";
     };
+
+    allowedTCPPorts = lib.mkOption {
+      type = lib.types.listOf lib.types.port;
+      default = [ ];
+      description = "Host-specific TCP firewall exceptions.";
+    };
   };
 
   config = lib.mkIf config.my.nixos.networking.enable {
@@ -30,6 +36,7 @@
       # future exceptions have a clear home.
       firewall = {
         enable = true;
+        allowedTCPPorts = config.my.nixos.networking.allowedTCPPorts;
         allowedUDPPorts = config.my.nixos.networking.allowedUDPPorts;
       };
     };

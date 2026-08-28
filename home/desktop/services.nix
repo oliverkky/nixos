@@ -82,14 +82,14 @@ in
         Install.WantedBy = [ "graphical-session.target" ];
       };
 
-      hyprsunset = {
+      sunsetr = {
         Unit = {
-          Description = "Hyprland screen temperature daemon";
+          Description = "Automatic blue-light filter";
           PartOf = [ "graphical-session.target" ];
           After = [ "graphical-session.target" ];
         };
         Service = {
-          ExecStart = "${pkgs.hyprsunset}/bin/hyprsunset";
+          ExecStart = "${pkgs.sunsetr}/bin/sunsetr";
           Restart = "on-failure";
         };
         Install.WantedBy = [ "graphical-session.target" ];

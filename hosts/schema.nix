@@ -105,10 +105,17 @@ in
       };
     };
 
-    hyprland.drmDevice = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Optional DRM device path used by host-specific Hyprland workarounds.";
+    hyprland = {
+      colorManagement.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable Hyprland color management and automatic HDR.";
+      };
+      drmDevice = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Optional DRM device path used by host-specific Hyprland workarounds.";
+      };
     };
 
     monitors = lib.mkOption {
