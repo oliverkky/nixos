@@ -9,8 +9,8 @@ longitude = 15.4730
 
 # Use the existing night profile while using sunsetr's percentage-based gamma
 # values.
-night_temp = 4500
-night_gamma = 50
+night_temp = 3000
+night_gamma = 80
 day_temp = 6500
 day_gamma = 100
 
