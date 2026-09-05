@@ -26,6 +26,16 @@
       lib = nixpkgs.lib;
       supportedSystems = [ "x86_64-linux" ];
       forAllSystems = lib.genAttrs supportedSystems;
+      testSource = builtins.path {
+        path = ./.;
+        name = "nixos-config-tests";
+        filter =
+          path: type:
+          let
+            name = builtins.baseNameOf path;
+          in
+          name != ".git" && name != "omarchy";
+      };
       loadHost =
         name:
         let
@@ -88,6 +98,58 @@
           text = ''
             find . -path ./.git -prune -o -name '*.nix' -type f -exec nixfmt {} +
           '';
+        }
+      );
+
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          desktop-tests =
+            pkgs.runCommand "desktop-tests"
+              {
+                nativeBuildInputs = with pkgs; [
+                  bash
+                  coreutils
+                  findutils
+                  gawk
+                  gnugrep
+                  gnused
+                  jq
+                  lua
+                  python3
+                  ripgrep
+                  shellcheck
+                ];
+              }
+              ''
+                export PATH=${
+                  lib.makeBinPath [
+                    pkgs.bash
+                    pkgs.coreutils
+                    pkgs.findutils
+                    pkgs.gawk
+                    pkgs.gnugrep
+                    pkgs.gnused
+                    pkgs.jq
+                    pkgs.lua
+                    pkgs.python3
+                    pkgs.ripgrep
+                    pkgs.shellcheck
+                  ]
+                }
+                cp -R ${testSource} source
+                chmod -R u+w source
+                cd source
+                patchShebangs dotfiles test
+                ./test/all
+                touch "$out"
+              '';
+
+          laptop1-system = self.nixosConfigurations.laptop1.config.system.build.toplevel;
+          workstation-system = self.nixosConfigurations.workstation.config.system.build.toplevel;
         }
       );
 

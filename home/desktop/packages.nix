@@ -80,6 +80,7 @@ in
         thunderbird
         vlc
         gimp
+        anki
       ]
       ++ lib.optionals config.my.home.desktop.packages.audioProduction.enable [
         carla

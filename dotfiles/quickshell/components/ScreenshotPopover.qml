@@ -60,7 +60,7 @@ QS.PanelWindow {
 
         root.open = false;
         Quickshell.execDetached([
-            "screenshotctl", root.captureMode,
+            "desktopctl", "screenshot", root.captureMode,
             root.delayed ? "3" : "0",
             root.includePointer ? "pointer" : "no-pointer"
         ]);

@@ -111,6 +111,15 @@ let
     runtimeInputs = rofiRuntimeInputs;
     sourceDirEnv = "ROFI_SCRIPT_DIR";
   };
+
+  desktopCommands = makeScriptSet {
+    name = "desktop-commands";
+    src = ../../dotfiles/desktop/scripts;
+    runtimeInputs = [
+      hyprScripts
+      rofiScripts
+    ];
+  };
 in
 {
   options.my.home.desktop.scripts = {
@@ -127,25 +136,30 @@ in
       readOnly = true;
       description = "Store package containing rofi helper scripts.";
     };
+
+    commandPackage = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      description = "Store package containing the unified desktopctl command.";
+    };
   };
 
   config = lib.mkIf config.my.home.desktop.scripts.enable {
     my.home.desktop.scripts = {
       hyprPackage = hyprScripts;
       rofiPackage = rofiScripts;
+      commandPackage = desktopCommands;
     };
 
     home.packages = [
       hyprScripts
       rofiScripts
+      desktopCommands
     ];
 
     home.sessionVariables = {
       HYPR_SCRIPT_DIR = "${hyprScripts}/bin";
       ROFI_SCRIPT_DIR = "${rofiScripts}/bin";
-      HYPR_DISPLAY_CTL = "${hyprScripts}/bin/displayctl";
-      HYPR_BLUETOOTH_CONNECT_A2DP = "${hyprScripts}/bin/bluetooth-connect-a2dp";
-      HYPR_SET_POWER_PROFILE_DISPLAY = "${hyprScripts}/bin/set-power-profile-display";
     };
   };
 }

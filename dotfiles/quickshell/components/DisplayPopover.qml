@@ -46,8 +46,8 @@ Item {
     ]
     readonly property var scaleChoices: ["auto", "1", "1.25", "1.5", "1.66", "2"]
     // Resolve through PATH so a shell carrying an old Nix store environment
-    // cannot pin the popover to a removed displayctl generation.
-    readonly property string displayCtlPath: "displayctl"
+    // cannot pin the popover to a removed desktopctl generation.
+    readonly property var displayCommand: ["desktopctl", "display"]
 
     width: 1
     height: 1
@@ -328,7 +328,7 @@ Item {
     function refreshState() {
         stateError = "";
         stateCommandError = "";
-        stateReader.exec([displayCtlPath, "state"]);
+        stateReader.exec(displayCommand.concat(["state"]));
     }
 
     function loadState(output) {
@@ -501,7 +501,7 @@ Item {
         if (monitor.length === 0)
             return;
 
-        Quickshell.execDetached([displayCtlPath, "layout", command, monitor]);
+        Quickshell.execDetached(displayCommand.concat(["layout", command, monitor]));
         activeMode = "";
     }
 
@@ -510,7 +510,7 @@ Item {
         if (monitor.length === 0)
             return;
 
-        Quickshell.execDetached([displayCtlPath, "set-mode", monitor, mode, currentScale()]);
+        Quickshell.execDetached(displayCommand.concat(["set-mode", monitor, mode, currentScale()]));
         refreshAfterAction.restart();
     }
 
@@ -520,7 +520,7 @@ Item {
         if (monitor.length === 0)
             return;
 
-        Quickshell.execDetached([displayCtlPath, "set-mode", monitor, mode, scale]);
+        Quickshell.execDetached(displayCommand.concat(["set-mode", monitor, mode, scale]));
         refreshAfterAction.restart();
     }
 }

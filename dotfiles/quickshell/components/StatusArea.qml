@@ -72,9 +72,6 @@ Item {
             danger: true
         },
     ]
-    readonly property string configHome: Quickshell.env("XDG_CONFIG_HOME") || `${Quickshell.env("HOME")}/.config`
-    readonly property string bluetoothConnectA2dpPath: Quickshell.env("HYPR_BLUETOOTH_CONNECT_A2DP") || `${configHome}/hypr/scripts/bluetooth-connect-a2dp`
-    readonly property string powerProfileDisplayPath: Quickshell.env("HYPR_SET_POWER_PROFILE_DISPLAY") || `${configHome}/hypr/scripts/set-power-profile-display`
 
     implicitWidth: capsuleRow.implicitWidth
     implicitHeight: 30
@@ -981,7 +978,7 @@ Item {
         if (!powerProfilesAvailable)
             return;
 
-        Quickshell.execDetached([powerProfileDisplayPath, profile]);
+        Quickshell.execDetached(["desktopctl", "power", "profile", "set", profile]);
     }
 
     function setBluetoothEnabled(enabled) {
@@ -1004,6 +1001,6 @@ Item {
         if (!address)
             return;
 
-        Quickshell.execDetached([bluetoothConnectA2dpPath, address]);
+        Quickshell.execDetached(["desktopctl", "bluetooth", "connect-a2dp", address]);
     }
 }
