@@ -22,6 +22,8 @@ symlinkJoin {
     rm "$out/bin/reaper"
     makeWrapper "${pipewire.jack}/bin/pw-jack" "$out/bin/reaper" \
       --add-flags "${reaper}/bin/reaper" \
+      --run "source /etc/set-environment" \
+      --prefix LD_LIBRARY_PATH : /run/current-system/sw/share/nix-ld/lib \
       --set PIPEWIRE_LATENCY "${lib.escapeShellArg pipewireLatency}" \
       --prefix LV2_PATH : "${lib.escapeShellArg lv2Path}"
   '';

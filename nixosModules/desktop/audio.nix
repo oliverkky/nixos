@@ -26,8 +26,41 @@
         mesa
         libGL
         vulkan-loader
+
+        # TONE3000
+        webkitgtk_4_1
+        glib-networking
+        gtk3
+        curl
+        alsa-lib
+        freetype
+        fontconfig
+        libX11
+        stdenv.cc.cc.lib
+
+        # TONE3000 uses GStreamer for media playback.  `appsink` lives in the
+        # base plugin set; the other common sets cover the codecs it may use.
+        gst_all_1.gstreamer
+        gst_all_1.gst-plugins-base
+        gst_all_1.gst-plugins-good
+        gst_all_1.gst-plugins-bad
       ];
     };
+
+    # GStreamer discovers codec plugins independently of the dynamic linker.
+    # Make them visible to TONE3000 and to the plugin when it is loaded by a
+    # DAW, without adding a global LD_LIBRARY_PATH.
+    environment.sessionVariables.GST_PLUGIN_SYSTEM_PATH_1_0 = lib.makeSearchPath "lib/gstreamer-1.0" [
+      pkgs.gst_all_1.gst-plugins-base
+      pkgs.gst_all_1.gst-plugins-good
+      pkgs.gst_all_1.gst-plugins-bad
+    ];
+
+    # WebKitGTK uses libsoup/GIO for HTTPS. Foreign applications do not get
+    # WebKitGTK's Nix wrapper, so expose the GnuTLS GIO module explicitly.
+    environment.sessionVariables.GIO_EXTRA_MODULES = [
+      "${pkgs.glib-networking}/lib/gio/modules"
+    ];
 
     # ── Sound ─────────────────────────────────────────────────────────────────
 
