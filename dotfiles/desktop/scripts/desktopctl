@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: desktopctl <group> <command> [arguments...]
+
+Desktop commands:
+  audio menu|volume-up|volume-down|volume-mute|mic-mute
+  bluetooth menu|connect-a2dp <address>
+  brightness menu|up|down|set <percent>
+  clipboard menu
+  control-center
+  display info|state|layout ...|set-mode ...
+  launcher
+  network menu
+  power menu|profile apply [profile]|profile set <profile>
+  screenshot menu|area|screen|window [delay] [pointer|no-pointer]
+  wallpaper apply <image>|restore|set <image>
+
+Run `desktopctl commands` for the machine-readable route list.
+EOF
+}
+
+commands() {
+    cat <<'EOF'
+audio menu
+audio volume-up
+audio volume-down
+audio volume-mute
+audio mic-mute
+bluetooth menu
+bluetooth connect-a2dp
+brightness menu
+brightness up
+brightness down
+brightness set
+clipboard menu
+control-center
+display info
+display state
+display layout
+display set-mode
+launcher
+network menu
+power menu
+power profile apply
+power profile set
+screenshot menu
+screenshot area
+screenshot screen
+screenshot window
+wallpaper apply
+wallpaper restore
+wallpaper set
+EOF
+}
+
+die_usage() {
+    printf 'desktopctl: %s\n\n' "$1" >&2
+    usage >&2
+    exit 2
+}
+
+require_argument() {
+    local description=$1
+    local value=${2:-}
+
+    [[ -n $value ]] || die_usage "$description is required"
+}
+
+group=${1:-}
+[[ -n $group ]] || {
+    usage
+    exit 0
+}
+shift
+
+case "$group" in
+    -h | --help | help)
+        usage
+        ;;
+    commands)
+        commands
+        ;;
+    audio)
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            menu) exec control-audio "$@" ;;
+            volume-up | volume-down | volume-mute | mic-mute) exec osdctl "$command_name" "$@" ;;
+            *) die_usage "unknown audio command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    bluetooth)
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            menu) exec control-bluetooth "$@" ;;
+            connect-a2dp)
+                require_argument "Bluetooth address" "${1:-}"
+                exec bluetooth-connect-a2dp "$@"
+                ;;
+            *) die_usage "unknown bluetooth command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    brightness)
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            menu) exec control-brightness "$@" ;;
+            up | down) exec osdctl "brightness-$command_name" "$@" ;;
+            set)
+                require_argument "brightness percentage" "${1:-}"
+                exec osdctl brightness-set "$@"
+                ;;
+            *) die_usage "unknown brightness command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    clipboard)
+        [[ ${1:-} == "menu" ]] || die_usage "unknown clipboard command: ${1:-<missing>}"
+        shift
+        exec control-clipboard "$@"
+        ;;
+    control-center)
+        exec control-center "$@"
+        ;;
+    display)
+        command_name=${1:-state}
+        shift || true
+        case "$command_name" in
+            info) exec display-info "$@" ;;
+            state | layout | set-mode) exec displayctl "$command_name" "$@" ;;
+            *) die_usage "unknown display command: $command_name" ;;
+        esac
+        ;;
+    launcher)
+        exec launcher "$@"
+        ;;
+    network)
+        [[ ${1:-} == "menu" ]] || die_usage "unknown network command: ${1:-<missing>}"
+        shift
+        exec control-network "$@"
+        ;;
+    power)
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            menu) exec control-session "$@" ;;
+            profile)
+                profile_command=${1:-}
+                shift || true
+                case "$profile_command" in
+                    apply) exec apply-power-profile-display "$@" ;;
+                    set)
+                        require_argument "power profile" "${1:-}"
+                        exec set-power-profile-display "$@"
+                        ;;
+                    *) die_usage "unknown power profile command: ${profile_command:-<missing>}" ;;
+                esac
+                ;;
+            *) die_usage "unknown power command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    screenshot)
+        command_name=${1:-menu}
+        shift || true
+        case "$command_name" in
+            menu) exec control-screenshot "$@" ;;
+            area | screen | window) exec screenshotctl "$command_name" "$@" ;;
+            *) die_usage "unknown screenshot command: $command_name" ;;
+        esac
+        ;;
+    wallpaper)
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            apply)
+                require_argument "wallpaper image" "${1:-}"
+                exec apply-wal "$@"
+                ;;
+            restore) exec restore-wallpaper "$@" ;;
+            set)
+                require_argument "wallpaper image" "${1:-}"
+                exec set-wallpaper "$@"
+                ;;
+            *) die_usage "unknown wallpaper command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    *)
+        die_usage "unknown command group: $group"
+        ;;
+esac

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+failed=()
+
+for test_file in "$ROOT"/test/*-test.sh; do
+    printf '==> %s\n' "${test_file#$ROOT/}"
+    "$test_file" || failed+=("${test_file#$ROOT/}")
+done
+
+if (( ${#failed[@]} > 0 )); then
+    printf '\n%d test files failed:\n' "${#failed[@]}" >&2
+    printf '  %s\n' "${failed[@]}" >&2
+    exit 1
+fi
+
+printf '\nAll desktop tests passed.\n'
