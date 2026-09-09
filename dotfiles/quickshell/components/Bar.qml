@@ -72,7 +72,7 @@ QS.PanelWindow {
             id: workspaces
 
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            anchors.leftMargin: 4
             anchors.verticalCenter: parent.verticalCenter
             ui: colorScheme
         }
@@ -89,7 +89,7 @@ QS.PanelWindow {
             id: privacyIndicator
 
             anchors.left: clock.right
-            anchors.leftMargin: 7
+            anchors.leftMargin: 6
             anchors.verticalCenter: clock.verticalCenter
             ui: colorScheme
         }
@@ -98,7 +98,7 @@ QS.PanelWindow {
             id: statusArea
 
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: 4
             anchors.verticalCenter: parent.verticalCenter
             ui: colorScheme
             parentWindow: root
