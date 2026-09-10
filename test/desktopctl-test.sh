@@ -13,8 +13,8 @@ touch "$COMMAND_LOG"
 for command_name in \
     apply-power-profile-display apply-wal bluetooth-connect-a2dp \
     control-audio control-bluetooth control-brightness control-center \
-    control-clipboard control-network control-screenshot control-session \
-    display-info displayctl launcher osdctl restore-wallpaper screenshotctl \
+    control-network control-screenshot control-session \
+    display-info displayctl launcher osdctl qs restore-wallpaper screenshotctl \
     set-power-profile-display set-wallpaper; do
     make_logging_stub "$stub_dir" "$command_name"
 done
@@ -24,12 +24,13 @@ desktopctl="$ROOT/dotfiles/desktop/scripts/desktopctl"
 
 "$desktopctl" audio volume-up
 "$desktopctl" brightness set 42
+"$desktopctl" clipboard menu
 "$desktopctl" display layout extend eDP-1
 "$desktopctl" power profile set balanced
 "$desktopctl" screenshot window 3 no-pointer
 "$desktopctl" wallpaper set "/tmp/wall paper.png"
 
-expected=$'osdctl\tvolume-up\nosdctl\tbrightness-set\t42\ndisplayctl\tlayout\textend\teDP-1\nset-power-profile-display\tbalanced\nscreenshotctl\twindow\t3\tno-pointer\nset-wallpaper\t/tmp/wall paper.png'
+expected=$'osdctl\tvolume-up\nosdctl\tbrightness-set\t42\nqs\tipc\tcall\tclipboardHistory\topen\ndisplayctl\tlayout\textend\teDP-1\nset-power-profile-display\tbalanced\nscreenshotctl\twindow\t3\tno-pointer\nset-wallpaper\t/tmp/wall paper.png'
 assert_equal "desktopctl maps public routes and preserves arguments" "$expected" "$(<"$COMMAND_LOG")"
 
 set +e

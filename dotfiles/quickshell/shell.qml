@@ -13,6 +13,7 @@ ShellRoot {
     signal openDisplayLayout
     signal openDisplayCurrent
     signal openScreenshotMenu
+    signal openClipboardHistory
     signal openCalendarMedia
     signal toggleStatusPanel(string panelName)
 
@@ -43,6 +44,14 @@ ShellRoot {
 
         function open() {
             root.openScreenshotMenu();
+        }
+    }
+
+    IpcHandler {
+        target: "clipboardHistory"
+
+        function open() {
+            root.openClipboardHistory();
         }
     }
 
@@ -91,6 +100,16 @@ ShellRoot {
         model: Quickshell.screens
 
         ScreenshotPopover {
+            required property var modelData
+            shellRoot: root
+            screen: modelData
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        ClipboardHistory {
             required property var modelData
             shellRoot: root
             screen: modelData

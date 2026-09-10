@@ -115,7 +115,13 @@ let
   desktopCommands = makeScriptSet {
     name = "desktop-commands";
     src = ../../dotfiles/desktop/scripts;
-    runtimeInputs = [
+    runtimeInputs = with pkgs; [
+      cliphist
+      coreutils
+      file
+      jq
+      quickshell
+      wl-clipboard
       hyprScripts
       rofiScripts
     ];

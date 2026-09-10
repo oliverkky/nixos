@@ -10,7 +10,7 @@ Desktop commands:
   audio menu|volume-up|volume-down|volume-mute|mic-mute
   bluetooth menu|connect-a2dp <address>
   brightness menu|up|down|set <percent>
-  clipboard menu
+  clipboard menu|list|copy <id>|preview <id>
   control-center
   display info|state|layout ...|set-mode ...
   launcher
@@ -37,6 +37,9 @@ brightness up
 brightness down
 brightness set
 clipboard menu
+clipboard list
+clipboard copy
+clipboard preview
 control-center
 display info
 display state
@@ -68,6 +71,11 @@ require_argument() {
     local value=${2:-}
 
     [[ -n $value ]] || die_usage "$description is required"
+}
+
+require_clipboard_id() {
+    local value=${1:-}
+    [[ $value =~ ^[0-9]+$ ]] || die_usage "clipboard id must be numeric"
 }
 
 group=${1:-}
@@ -119,9 +127,45 @@ case "$group" in
         esac
         ;;
     clipboard)
-        [[ ${1:-} == "menu" ]] || die_usage "unknown clipboard command: ${1:-<missing>}"
-        shift
-        exec control-clipboard "$@"
+        command_name=${1:-}
+        shift || true
+        case "$command_name" in
+            menu)
+                exec qs ipc call clipboardHistory open
+                ;;
+            list)
+                cliphist list | jq -R -s '
+                    split("\n")
+                    | map(select(length > 0) | capture("^(?<id>[^\\t]+)\\t(?<preview>.*)$"))
+                    | .[0:250]
+                '
+                ;;
+            copy)
+                require_clipboard_id "${1:-}"
+                cliphist decode "$1" | wl-copy
+                ;;
+            preview)
+                require_clipboard_id "${1:-}"
+                cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/clipboard"
+                preview_path="$cache_root/$1"
+                mkdir -p "$cache_root"
+
+                if [[ ! -f $preview_path ]]; then
+                    temporary=$(mktemp "$cache_root/.preview-$1.XXXXXX")
+                    trap 'rm -f "$temporary"' EXIT
+                    cliphist decode "$1" > "$temporary"
+                    mime_type=$(file --brief --mime-type "$temporary")
+                    [[ $mime_type == image/* ]] || exit 1
+                    mv -f "$temporary" "$preview_path"
+                    trap - EXIT
+                fi
+
+                printf '%s\n' "$preview_path"
+                ;;
+            *)
+                die_usage "unknown clipboard command: ${command_name:-<missing>}"
+                ;;
+        esac
         ;;
     control-center)
         exec control-center "$@"
