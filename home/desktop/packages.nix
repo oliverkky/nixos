@@ -67,6 +67,7 @@ in
         gnome-calendar
         gnome-clocks
         gnome-weather
+        heroic
         libreoffice
         lmstudio
         mission-center
