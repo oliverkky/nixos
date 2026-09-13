@@ -1,5 +1,5 @@
 return function(ctx)
-    local wal = ctx.wal
+    local palette = ctx.palette
     local monitor_hdr = {}
 
     if ctx.monitor_hdrs ~= "" then
@@ -77,8 +77,8 @@ return function(ctx)
             gaps_out = 4,
             border_size = 2,
             col = {
-                active_border = { colors = { wal.color1, wal.color6 }, angle = 45 },
-                inactive_border = { colors = { wal.color8, "rgba(00000000)" }, angle = 90 },
+                active_border = { colors = { palette.color1, palette.color6 }, angle = 45 },
+                inactive_border = { colors = { palette.color8, "rgba(00000000)" }, angle = 90 },
             },
             resize_on_border = false,
             allow_tearing = true,

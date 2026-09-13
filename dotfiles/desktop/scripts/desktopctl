@@ -222,7 +222,7 @@ case "$group" in
         case "$command_name" in
             apply)
                 require_argument "wallpaper image" "${1:-}"
-                exec apply-wal "$@"
+                exec apply-wallust "$@"
                 ;;
             restore) exec restore-wallpaper "$@" ;;
             set)

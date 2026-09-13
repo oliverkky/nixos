@@ -26,24 +26,24 @@ QtObject {
     readonly property color shadow: withAlpha(background, 0.42)
 
     readonly property string cacheHome: Quickshell.env("XDG_CACHE_HOME") || `${Quickshell.env("HOME")}/.cache`
-    readonly property string walPath: `${cacheHome}/wal/colors.json`
+    readonly property string wallustPath: `${cacheHome}/wallust/colors.json`
 
-    property FileView walFile: FileView {
-        id: walFile
-        path: root.walPath
+    property FileView wallustFile: FileView {
+        id: wallustFile
+        path: root.wallustPath
         blockLoading: true
         watchChanges: true
         printErrors: false
 
-        onLoaded: root.loadWal()
+        onLoaded: root.loadWallust()
         onFileChanged: reload()
     }
 
-    Component.onCompleted: loadWal()
+    Component.onCompleted: loadWallust()
 
-    function loadWal() {
+    function loadWallust() {
         try {
-            const parsed = JSON.parse(walFile.text());
+            const parsed = JSON.parse(wallustFile.text());
             if (parsed.special) {
                 root.background = parsed.special.background || root.background;
                 root.foreground = parsed.special.foreground || root.foreground;

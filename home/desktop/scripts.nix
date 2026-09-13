@@ -24,7 +24,7 @@ let
     kitty
     power-profiles-daemon
     pipewire
-    pywal16
+    wallust
     grim
     libnotify
     slurp

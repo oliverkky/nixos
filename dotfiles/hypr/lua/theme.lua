@@ -5,7 +5,7 @@ return function(ctx)
         color14 = "rgba(c2c2bcff)",
     }
 
-    local file = io.open(ctx.home .. "/.cache/wal/colors-hyprland.conf", "r")
+    local file = io.open(ctx.cache_root .. "/wallust/colors-hyprland.conf", "r")
     if not file then
         return colors
     end

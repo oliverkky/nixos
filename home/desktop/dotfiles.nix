@@ -41,7 +41,16 @@ in
       rofi.source = ../../dotfiles/rofi;
       sunsetr.source = ../../dotfiles/sunsetr;
       zed.source = zedConfig;
-      wal.source = ../../dotfiles/wal;
+      "wallust/templates".source = ../../dotfiles/wallust/templates;
+      "wallust/wallust.toml".text = ''
+        backend = "wal"
+        palette = "dark16"
+
+        [templates]
+        kitty = { template = "colors-kitty.conf", target = "${config.xdg.cacheHome}/wallust/colors-kitty.conf" }
+        hyprland = { template = "colors-hyprland.conf", target = "${config.xdg.cacheHome}/wallust/colors-hyprland.conf" }
+        quickshell = { template = "colors.json", target = "${config.xdg.cacheHome}/wallust/colors.json" }
+      '';
       waypaper.source = ../../dotfiles/waypaper;
     };
   };

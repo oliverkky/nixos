@@ -3,11 +3,13 @@
 local user = os.getenv("USER")
 local home = os.getenv("HOME") or (user and ("/home/" .. user) or ".")
 local config_root = os.getenv("XDG_CONFIG_HOME") or (home .. "/.config")
+local cache_root = os.getenv("XDG_CACHE_HOME") or (home .. "/.cache")
 local module_root = config_root .. "/hypr/lua"
 
 local ctx = {
     home = home,
     config_root = config_root,
+    cache_root = cache_root,
     terminal = "kitty",
     file_manager = "nautilus",
     menu = "desktopctl launcher",
@@ -27,7 +29,7 @@ local function load_module(name)
     return dofile(module_root .. "/" .. name .. ".lua")(ctx)
 end
 
-ctx.wal = load_module("theme")
+ctx.palette = load_module("theme")
 
 load_module("settings")
 load_module("animations")

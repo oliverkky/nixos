@@ -2,20 +2,35 @@
 
 set -eu
 
-if [ "$#" -lt 1 ]; then
-    echo "usage: apply-wal <image>" >&2
-    exit 1
+if [ "$#" -ne 1 ]; then
+    echo "usage: apply-wallust <image>" >&2
+    exit 2
 fi
 
 image_path=$1
-wal_bin=${WAL_BIN:-wal}
+wallust_bin=${WALLUST_BIN:-wallust}
 config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
 state_root="${XDG_STATE_HOME:-$HOME/.local/state}"
 sddm_wallpaper="/var/lib/sddm-wallpaper/current-wallpaper.png"
 last_wallpaper="$state_root/hypr/last-wallpaper"
 
-mkdir -p "$(dirname "$last_wallpaper")"
-printf '%s\n' "$image_path" > "$last_wallpaper"
+if [ ! -f "$image_path" ]; then
+    echo "file not found: $image_path" >&2
+    exit 1
+fi
+
+if ! command -v "$wallust_bin" >/dev/null 2>&1; then
+    echo "command not found: $wallust_bin" >&2
+    exit 1
+fi
+
+state_dir=$(dirname "$last_wallpaper")
+mkdir -p "$state_dir"
+state_tmp=$(mktemp "$state_dir/.last-wallpaper.XXXXXX")
+trap 'rm -f -- "$state_tmp"' EXIT HUP INT TERM
+printf '%s\n' "$image_path" > "$state_tmp"
+mv -- "$state_tmp" "$last_wallpaper"
+trap - EXIT HUP INT TERM
 
 if [ -f "$sddm_wallpaper" ] && [ -w "$sddm_wallpaper" ]; then
     if command -v magick >/dev/null 2>&1; then
@@ -26,12 +41,7 @@ if [ -f "$sddm_wallpaper" ] && [ -w "$sddm_wallpaper" ]; then
     chmod 0644 "$sddm_wallpaper" >/dev/null 2>&1 || true
 fi
 
-if ! command -v "$wal_bin" >/dev/null 2>&1; then
-    exit 1
-fi
-
-"$wal_bin" -i "$image_path" -n
+"$wallust_bin" --quiet --skip-sequences run "$image_path"
 
 hyprctl reload >/dev/null 2>&1 || true
-
 kitty @ --to unix:/tmp/kitty-theme load-config "$config_root/kitty/kitty.conf" >/dev/null 2>&1 || true

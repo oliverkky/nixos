@@ -11,7 +11,7 @@ export COMMAND_LOG="$test_dir/commands.log"
 touch "$COMMAND_LOG"
 
 for command_name in \
-    apply-power-profile-display apply-wal bluetooth-connect-a2dp \
+    apply-power-profile-display apply-wallust bluetooth-connect-a2dp \
     control-audio control-bluetooth control-brightness control-center \
     control-network control-screenshot control-session \
     display-info displayctl launcher osdctl qs restore-wallpaper screenshotctl \

@@ -31,7 +31,7 @@ if [ -s "$last_wallpaper" ]; then
             --transition-duration 1 \
             --transition-fps 60 \
             "$wallpaper"
-        "$script_dir/apply-wal" "$wallpaper" >/dev/null 2>&1 || true
+        "$script_dir/apply-wallust" "$wallpaper" >/dev/null 2>&1 || true
         exit 0
     fi
 fi

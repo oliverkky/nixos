@@ -42,7 +42,7 @@ in
         wallutils
         waypaper
         rofi
-        pywal16
+        wallust
         cliphist
         wl-clip-persist
         playerctl
