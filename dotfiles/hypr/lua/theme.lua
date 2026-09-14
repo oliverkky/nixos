@@ -1,5 +1,6 @@
 return function(ctx)
     local colors = {
+        color0 = "rgba(30343bff)",
         color8 = "rgba(5c6570ff)",
         color13 = "rgba(6697c6ff)",
         color14 = "rgba(c2c2bcff)",
