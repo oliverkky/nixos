@@ -35,6 +35,7 @@
     # Hyprland, where no full GNOME/KDE session starts a keyring for us.
 
     services.gnome.gnome-keyring.enable = true;
+    services.gnome.evolution-data-server.enable = true;
     services.gnome.localsearch.enable = true;
     services.gnome.tinysparql.enable = true;
     services.gvfs.enable = true;

@@ -26,8 +26,7 @@
         size = host.cursor.size;
       };
       gtk3.extraConfig.gtk-application-prefer-dark-theme = 1;
-      gtk4.extraConfig.gtk-application-prefer-dark-theme = 1;
-      gtk4.theme = config.gtk.theme;
+      gtk4.theme = null;
     };
 
     dconf.settings."org/gnome/desktop/interface" = {

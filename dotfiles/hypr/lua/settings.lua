@@ -63,6 +63,9 @@ return function(ctx)
 
     hl.env("XCURSOR_SIZE", tostring(ctx.cursor_size))
     hl.env("HYPRCURSOR_SIZE", tostring(ctx.cursor_size))
+    -- Hyprland's capability wrapper strips TZDIR from the inherited
+    -- environment, but NixOS applications need it to find timezone data.
+    hl.env("TZDIR", "/etc/zoneinfo")
     -- Keep Electron apps launched by Hyprland/Rofi on Wayland even when the
     -- systemd user manager is still carrying a pre-rebuild environment.
     hl.env("NIXOS_OZONE_WL", "1")
