@@ -24,6 +24,7 @@
     laptop.enable = true;
     networking = {
       enable = true;
+      allowedTCPPorts = [ 1234 8080 ];
       hostName = host.hostName;
     };
     shell.enable = true;
