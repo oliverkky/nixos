@@ -47,14 +47,14 @@ Row {
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: 140
+                    duration: 40
                     easing.type: Easing.OutCubic
                 }
             }
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: 140
+                    duration: 40
                     easing.type: Easing.OutCubic
                 }
             }
@@ -71,14 +71,14 @@ Row {
 
                 Behavior on width {
                     NumberAnimation {
-                        duration: 140
+                        duration: 40
                         easing.type: Easing.OutCubic
                     }
                 }
 
                 Behavior on color {
                     ColorAnimation {
-                        duration: 140
+                        duration: 40
                         easing.type: Easing.OutCubic
                     }
                 }
