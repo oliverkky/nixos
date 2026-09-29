@@ -27,10 +27,14 @@ desktopctl="$ROOT/dotfiles/desktop/scripts/desktopctl"
 "$desktopctl" clipboard menu
 "$desktopctl" display layout extend eDP-1
 "$desktopctl" power profile set balanced
+"$desktopctl" screen-time menu
+"$desktopctl" screen-time status
+"$desktopctl" screen-time reset-today
+"$desktopctl" screen-time reset-all
 "$desktopctl" screenshot window 3 no-pointer
 "$desktopctl" wallpaper set "/tmp/wall paper.png"
 
-expected=$'osdctl\tvolume-up\nosdctl\tbrightness-set\t42\nqs\tipc\tcall\tclipboardHistory\topen\ndisplayctl\tlayout\textend\teDP-1\nset-power-profile-display\tbalanced\nscreenshotctl\twindow\t3\tno-pointer\nset-wallpaper\t/tmp/wall paper.png'
+expected=$'osdctl\tvolume-up\nosdctl\tbrightness-set\t42\nqs\tipc\tcall\tclipboardHistory\topen\ndisplayctl\tlayout\textend\teDP-1\nset-power-profile-display\tbalanced\nqs\tipc\tcall\tscreenTime\topen\nqs\tipc\tcall\tscreenTime\tstatus\nqs\tipc\tcall\tscreenTime\tresetToday\nqs\tipc\tcall\tscreenTime\tresetAll\nscreenshotctl\twindow\t3\tno-pointer\nset-wallpaper\t/tmp/wall paper.png'
 assert_equal "desktopctl maps public routes and preserves arguments" "$expected" "$(<"$COMMAND_LOG")"
 
 set +e
@@ -42,3 +46,4 @@ assert_contains "desktopctl explains a missing argument" "$error_output" "bright
 
 routes=$("$desktopctl" commands)
 assert_contains "desktopctl publishes its routes" "$routes" "power profile set"
+assert_contains "desktopctl publishes screen-time routes" "$routes" "screen-time reset-all"

@@ -49,6 +49,7 @@ in
         brightnessctl
         libnotify
         pavucontrol
+        python3
         curl
         imagemagick
         ffmpeg

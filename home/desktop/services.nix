@@ -10,10 +10,16 @@ let
   quickshellRuntimeInit = pkgs.writeShellScript "quickshell-runtime-init" ''
     runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
     osd_dir="$runtime_dir/quickshell-osd"
+    screen_time_dir="''${XDG_DATA_HOME:-$HOME/.local/share}/oliver-quickshell/screen-time"
 
     mkdir -p "$osd_dir"
     if [ ! -f "$osd_dir/state.json" ]; then
       printf '{"visible":false,"icon":"","text":"","value":0}\n' > "$osd_dir/state.json"
+    fi
+
+    mkdir -p "$screen_time_dir"
+    if [ ! -f "$screen_time_dir/history.json" ]; then
+      printf '{}\n' > "$screen_time_dir/history.json"
     fi
   '';
 in

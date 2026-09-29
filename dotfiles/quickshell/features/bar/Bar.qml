@@ -4,11 +4,13 @@ import Quickshell as QS
 import Quickshell.Wayland
 import "../../shared/theme" as Theme
 import "../status" as Status
+import "../screentime" as ScreenTime
 
 QS.PanelWindow {
     id: root
 
     required property var shellRoot
+    required property var screenTimeService
     property int barHeight: 36
 
     anchors {
@@ -44,6 +46,11 @@ QS.PanelWindow {
             item: statusArea
             radius: statusArea.height / 2
         }
+
+        Region {
+            item: screenTime
+            radius: screenTime.height / 2
+        }
     }
 
     Theme.Theme {
@@ -54,15 +61,22 @@ QS.PanelWindow {
         target: root.shellRoot
 
         function onOpenSystemMenu() {
+            screenTime.closePopover();
             statusArea.openPowerMenu();
         }
 
         function onToggleStatusPanel(panelName) {
+            screenTime.closePopover();
             statusArea.togglePanel(panelName);
         }
 
         function onOpenCalendarMedia() {
+            screenTime.closePopover();
             clock.openPopover();
+        }
+
+        function onOpenScreenTime() {
+            screenTime.openPopover();
         }
 
     }
@@ -104,6 +118,21 @@ QS.PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             ui: theme
             parentWindow: root
+        }
+
+        ScreenTime.ScreenTimeWidget {
+            id: screenTime
+
+            anchors.right: statusArea.left
+            anchors.rightMargin: 6
+            anchors.verticalCenter: parent.verticalCenter
+            ui: theme
+            parentWindow: root
+            service: root.screenTimeService
+            onOpening: {
+                statusArea.activePanel = "";
+                clock.closePopover();
+            }
         }
 
     }

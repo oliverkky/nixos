@@ -9,6 +9,7 @@ import "features/notifications" as NotificationFeature
 import "features/osd" as OsdFeature
 import "features/popovers" as PopoverFeature
 import "features/startup" as StartupFeature
+import "features/screentime" as ScreenTimeFeature
 
 ShellRoot {
     id: root
@@ -19,6 +20,7 @@ ShellRoot {
     signal openScreenshotMenu
     signal openClipboardHistory
     signal openCalendarMedia
+    signal openScreenTime
     signal toggleStatusPanel(string panelName)
 
     settings.watchFiles: true
@@ -68,6 +70,26 @@ ShellRoot {
     }
 
     IpcHandler {
+        target: "screenTime"
+
+        function open() {
+            root.openScreenTime();
+        }
+
+        function resetToday() {
+            screenTimeTracker.resetToday();
+        }
+
+        function resetAll() {
+            screenTimeTracker.resetAll();
+        }
+
+        function status(): string {
+            return screenTimeTracker.ready ? screenTimeTracker.barLabel : "loading";
+        }
+    }
+
+    IpcHandler {
         target: "statusPanel"
 
         function toggle(panelName: string) {
@@ -90,12 +112,17 @@ ShellRoot {
     }
     readonly property var mainScreens: root.primaryScreens.length > 0 ? [root.primaryScreens[0]] : []
 
+    ScreenTimeFeature.ScreenTimeService {
+        id: screenTimeTracker
+    }
+
     Variants {
         model: root.primaryScreens
 
         BarFeature.Bar {
             required property var modelData
             shellRoot: root
+            screenTimeService: screenTimeTracker
             screen: modelData
         }
     }

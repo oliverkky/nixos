@@ -66,9 +66,9 @@ while IFS= read -r route; do
 done < <(sed -n 's/.*exec_cmd("desktopctl \([^"]*\)").*/\1/p' "$ROOT/dotfiles/hypr/lua/binds.lua")
 pass "Hyprland desktopctl bindings use declared routes"
 
-rg -q '"desktopctl", "display"' "$ROOT/dotfiles/quickshell/components/DisplayPopover.qml" ||
+rg -q '"desktopctl", "display"' "$ROOT/dotfiles/quickshell/features/popovers/DisplayPopover.qml" ||
     fail "display popover uses desktopctl"
-rg -q '"desktopctl", "screenshot"' "$ROOT/dotfiles/quickshell/components/ScreenshotPopover.qml" ||
+rg -q '"desktopctl", "screenshot"' "$ROOT/dotfiles/quickshell/features/popovers/ScreenshotPopover.qml" ||
     fail "screenshot popover uses desktopctl"
 rg -q '^post_command = desktopctl wallpaper apply ' "$ROOT/dotfiles/waypaper/config.ini" ||
     fail "Waypaper uses desktopctl"

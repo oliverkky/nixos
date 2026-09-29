@@ -357,4 +357,8 @@ MouseArea {
     function openPopover() {
         calendar.expanded = true;
     }
+
+    function closePopover() {
+        calendar.expanded = false;
+    }
 }

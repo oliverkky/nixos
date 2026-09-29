@@ -16,6 +16,7 @@ Desktop commands:
   launcher
   network menu
   power menu|profile apply [profile]|profile set <profile>
+  screen-time menu|status|reset-today|reset-all
   screenshot menu|area|screen|window [delay] [pointer|no-pointer]
   wallpaper apply <image>|restore|set <image>
 
@@ -50,6 +51,10 @@ network menu
 power menu
 power profile apply
 power profile set
+screen-time menu
+screen-time status
+screen-time reset-today
+screen-time reset-all
 screenshot menu
 screenshot area
 screenshot screen
@@ -205,6 +210,17 @@ case "$group" in
                 esac
                 ;;
             *) die_usage "unknown power command: ${command_name:-<missing>}" ;;
+        esac
+        ;;
+    screen-time)
+        command_name=${1:-menu}
+        shift || true
+        case "$command_name" in
+            menu) exec qs ipc call screenTime open "$@" ;;
+            status) exec qs ipc call screenTime status "$@" ;;
+            reset-today) exec qs ipc call screenTime resetToday "$@" ;;
+            reset-all) exec qs ipc call screenTime resetAll "$@" ;;
+            *) die_usage "unknown screen-time command: $command_name" ;;
         esac
         ;;
     screenshot)

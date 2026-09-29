@@ -16,6 +16,7 @@ Examples:
 desktopctl audio volume-up
 desktopctl display layout extend
 desktopctl power profile set balanced
+desktopctl screen-time menu
 desktopctl wallpaper set /path/to/image.png
 ```
 
