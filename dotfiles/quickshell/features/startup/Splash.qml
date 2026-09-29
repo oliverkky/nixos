@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell as QS
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -26,7 +27,7 @@ QS.PanelWindow {
     focusable: false
     color: "transparent"
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 

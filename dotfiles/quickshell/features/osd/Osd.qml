@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell as QS
 import Quickshell.Wayland
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -38,7 +39,7 @@ QS.PanelWindow {
         radius: surface.radius
     }
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 

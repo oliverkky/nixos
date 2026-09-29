@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Services.Pipewire
+import "../../shared/controls" as Controls
 
 Column {
     id: root
@@ -17,7 +18,7 @@ Column {
 
     spacing: 10
 
-    SliderRow {
+    Controls.SliderRow {
         width: parent.width
         ui: root.ui
         icon: root.volumeIcon()
@@ -29,7 +30,7 @@ Column {
         }
     }
 
-    PanelAction {
+    Controls.PanelAction {
         width: parent.width
         ui: root.ui
         icon: root.volumeIcon()
@@ -38,7 +39,7 @@ Column {
             root.sink.audio.muted = !root.sink.audio.muted
     }
 
-    PanelAction {
+    Controls.PanelAction {
         width: parent.width
         ui: root.ui
         icon: root.source && root.source.audio && root.source.audio.muted ? "󰍭" : "󰍬"
@@ -66,7 +67,7 @@ Column {
     Repeater {
         model: root.outputDevices
 
-        PanelAction {
+        Controls.PanelAction {
             required property var modelData
 
             width: parent.width
@@ -93,7 +94,7 @@ Column {
     Repeater {
         model: root.inputDevices
 
-        PanelAction {
+        Controls.PanelAction {
             required property var modelData
 
             width: parent.width
@@ -106,7 +107,7 @@ Column {
         }
     }
 
-    PanelAction {
+    Controls.PanelAction {
         width: parent.width
         ui: root.ui
         icon: "󰓃"

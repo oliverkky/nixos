@@ -9,7 +9,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
 import Quickshell.Wayland
-import "." as Components
+import "../../shared/surfaces" as Surfaces
 
 Item {
     id: root
@@ -113,7 +113,7 @@ Item {
         height: 30
         spacing: 0
 
-        Components.StatusTrayRow {
+        StatusTrayRow {
             id: trayButtons
 
             ui: root.ui
@@ -154,7 +154,7 @@ Item {
                 acceptedButtons: Qt.NoButton
             }
 
-            Components.StatusButtonRow {
+            StatusButtonRow {
                 id: systemButtons
 
                 anchors.centerIn: parent
@@ -197,7 +197,7 @@ Item {
         }
     }
 
-    Components.PopoverSurface {
+    Surfaces.PopoverSurface {
         id: panel
         ui: root.ui
         anchor.window: root.parentWindow
@@ -261,7 +261,7 @@ Item {
                         }
                     }
 
-                    Components.StatusButtonRow {
+                    StatusButtonRow {
                         id: statusHeaderRow
 
                         anchors.verticalCenter: parent.verticalCenter
@@ -307,7 +307,7 @@ Item {
         }
     }
 
-    Components.StatusTrayMenu {
+    StatusTrayMenu {
         id: trayMenuPanel
 
         ui: root.ui

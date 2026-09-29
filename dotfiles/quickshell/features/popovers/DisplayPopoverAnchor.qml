@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell as QS
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -30,7 +31,7 @@ QS.PanelWindow {
 
     WlrLayershell.namespace: "oliver.quickshell.display-anchor"
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 

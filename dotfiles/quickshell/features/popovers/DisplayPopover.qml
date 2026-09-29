@@ -3,7 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "." as Components
+import "../../shared/controls" as Controls
+import "../../shared/surfaces" as Surfaces
 
 Item {
     id: root
@@ -87,7 +88,7 @@ Item {
         }
     }
 
-    Components.PopoverSurface {
+    Surfaces.PopoverSurface {
         id: panel
 
         ui: root.ui
@@ -143,7 +144,7 @@ Item {
                         font.weight: Font.Bold
                     }
 
-                    Components.IconButton {
+                    Controls.IconButton {
                         id: refreshButton
 
                         ui: root.ui
@@ -201,7 +202,7 @@ Item {
             Repeater {
                 model: root.layoutActions
 
-                Components.PanelAction {
+                Controls.PanelAction {
                     required property int index
                     required property var modelData
 
@@ -264,7 +265,7 @@ Item {
                     Repeater {
                         model: root.currentModes()
 
-                        Components.PanelAction {
+                        Controls.PanelAction {
                             required property int index
                             required property string modelData
 
@@ -299,7 +300,7 @@ Item {
                 Repeater {
                     model: root.scaleChoices
 
-                    Components.PanelAction {
+                    Controls.PanelAction {
                         required property int index
                         required property string modelData
 

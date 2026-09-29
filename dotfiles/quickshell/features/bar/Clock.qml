@@ -1,7 +1,8 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
-import "." as Components
+import "../../shared/controls" as Controls
+import "../../shared/surfaces" as Surfaces
 
 MouseArea {
     id: root
@@ -51,7 +52,7 @@ MouseArea {
         font.weight: Font.Bold
     }
 
-    Components.PopoverSurface {
+    Surfaces.PopoverSurface {
         id: calendar
         ui: root.ui
         anchor.window: root.parentWindow
@@ -164,7 +165,7 @@ MouseArea {
                         }
                     }
 
-                    IconButton {
+                    Controls.IconButton {
                         ui: root.ui
                         icon: "󰒮"
                         enabled: root.mediaPlayer && root.mediaPlayer.canGoPrevious
@@ -173,7 +174,7 @@ MouseArea {
                             root.mediaPlayer.previous()
                     }
 
-                    IconButton {
+                    Controls.IconButton {
                         ui: root.ui
                         icon: root.mediaPlayer && root.mediaPlayer.isPlaying ? "󰏤" : "󰐊"
                         enabled: root.mediaPlayer && root.mediaPlayer.canTogglePlaying
@@ -182,7 +183,7 @@ MouseArea {
                             root.mediaPlayer.togglePlaying()
                     }
 
-                    IconButton {
+                    Controls.IconButton {
                         ui: root.ui
                         icon: "󰒭"
                         enabled: root.mediaPlayer && root.mediaPlayer.canGoNext
@@ -213,13 +214,13 @@ MouseArea {
                     font.weight: Font.Bold
                 }
 
-                IconButton {
+                Controls.IconButton {
                     ui: root.ui
                     icon: "󰅁"
                     onClicked: root.shiftMonth(-1)
                 }
 
-                IconButton {
+                Controls.IconButton {
                     ui: root.ui
                     icon: "󰅂"
                     onClicked: root.shiftMonth(1)

@@ -2,6 +2,8 @@ import QtQuick
 import Quickshell
 import Quickshell as QS
 import Quickshell.Wayland
+import "../../shared/theme" as Theme
+import "../status" as Status
 
 QS.PanelWindow {
     id: root
@@ -44,8 +46,8 @@ QS.PanelWindow {
         }
     }
 
-    ColorScheme {
-        id: colorScheme
+    Theme.Theme {
+        id: theme
     }
 
     Connections {
@@ -72,16 +74,16 @@ QS.PanelWindow {
             id: workspaces
 
             anchors.left: parent.left
-            anchors.leftMargin: 4
+            anchors.leftMargin: 14
             anchors.verticalCenter: parent.verticalCenter
-            ui: colorScheme
+            ui: theme
         }
 
         Clock {
             id: clock
 
             anchors.centerIn: parent
-            ui: colorScheme
+            ui: theme
             parentWindow: root
         }
 
@@ -91,16 +93,16 @@ QS.PanelWindow {
             anchors.left: clock.right
             anchors.leftMargin: 6
             anchors.verticalCenter: clock.verticalCenter
-            ui: colorScheme
+            ui: theme
         }
 
-        StatusArea {
+        Status.StatusArea {
             id: statusArea
 
             anchors.right: parent.right
-            anchors.rightMargin: 4
+            anchors.rightMargin: 14
             anchors.verticalCenter: parent.verticalCenter
-            ui: colorScheme
+            ui: theme
             parentWindow: root
         }
 

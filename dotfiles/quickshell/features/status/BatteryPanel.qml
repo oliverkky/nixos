@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Services.UPower
+import "../../shared/controls" as Controls
 
 Column {
     id: root
@@ -25,7 +26,7 @@ Column {
 
     spacing: 8
 
-    PanelAction {
+    Controls.PanelAction {
         width: parent.width
         ui: root.ui
         icon: root.batteryIcon
@@ -63,7 +64,7 @@ Column {
             }
         }
 
-        SliderRow {
+        Controls.SliderRow {
             width: parent.width
             ui: root.ui
             icon: "󰃠"
@@ -73,7 +74,7 @@ Column {
         }
     }
 
-    PanelAction {
+    Controls.PanelAction {
         width: parent.width
         ui: root.ui
         icon: root.idleInhibited ? "󰅶" : "󰾪"
@@ -83,7 +84,7 @@ Column {
         onClicked: root.toggleIdleInhibited()
     }
 
-    PanelAction {
+    Controls.PanelAction {
         visible: root.powerProfilesAvailable
         width: parent.width
         ui: root.ui
@@ -93,7 +94,7 @@ Column {
         onClicked: root.setPowerProfile("power-saver")
     }
 
-    PanelAction {
+    Controls.PanelAction {
         visible: root.powerProfilesAvailable
         width: parent.width
         ui: root.ui
@@ -103,7 +104,7 @@ Column {
         onClicked: root.setPowerProfile("balanced")
     }
 
-    PanelAction {
+    Controls.PanelAction {
         visible: root.powerProfilesAvailable && root.hasPerformanceProfile
         width: parent.width
         ui: root.ui

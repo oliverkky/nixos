@@ -20,7 +20,7 @@ MouseArea {
 
     Rectangle {
         anchors.fill: parent
-        radius: 9
+        radius: root.ui.geometry.buttonRadius
         color: root.containsMouse ? root.ui.surfaceHover : "transparent"
     }
 
@@ -32,8 +32,8 @@ MouseArea {
         Text {
             text: root.icon
             color: root.critical ? root.ui.critical : root.warning ? root.ui.warning : root.active ? root.ui.text : root.ui.textMuted
-            font.family: "Symbols Nerd Font"
-            font.pixelSize: 14
+            font.family: root.ui.typography.iconFamily
+            font.pixelSize: root.ui.typography.iconSize
             font.weight: Font.Bold
             verticalAlignment: Text.AlignVCenter
         }
@@ -42,8 +42,8 @@ MouseArea {
             visible: root.label.length > 0
             text: root.label
             color: root.ui.text
-            font.family: "Cantarell"
-            font.pixelSize: 12
+            font.family: root.ui.typography.bodyFamily
+            font.pixelSize: root.ui.typography.bodySize
             font.weight: Font.Bold
             verticalAlignment: Text.AlignVCenter
         }

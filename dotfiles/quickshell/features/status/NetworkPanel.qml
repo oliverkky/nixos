@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Networking
+import "../../shared/controls" as Controls
 
 Column {
     id: root
@@ -43,7 +44,7 @@ Column {
             font.weight: Font.Bold
         }
 
-        IconButton {
+        Controls.IconButton {
             ui: root.ui
             icon: root.wifiEnabled ? "󰖩" : "󰖪"
             label: root.wifiEnabled ? "On" : "Off"
@@ -52,7 +53,7 @@ Column {
             onClicked: root.toggleWifi()
         }
 
-        IconButton {
+        Controls.IconButton {
             ui: root.ui
             icon: "󰑓"
             onClicked: root.rescan()
@@ -78,7 +79,7 @@ Column {
             Repeater {
                 model: root.networks
 
-                PanelAction {
+                Controls.PanelAction {
                     required property var modelData
 
                     width: parent.width
@@ -152,7 +153,7 @@ Column {
             Row {
                 spacing: 8
 
-                PanelAction {
+                Controls.PanelAction {
                     width: 92
                     ui: root.ui
                     icon: "󰌑"
@@ -160,7 +161,7 @@ Column {
                     onClicked: root.submitPassword(passwordInput.text)
                 }
 
-                PanelAction {
+                Controls.PanelAction {
                     width: 82
                     ui: root.ui
                     icon: "󰅖"
@@ -182,7 +183,7 @@ Column {
         }
     }
 
-    PanelAction {
+    Controls.PanelAction {
         id: networkFallback
 
         width: parent.width

@@ -1,9 +1,9 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
-import "." as Components
+import "../../shared/surfaces" as Surfaces
 
-Components.PopoverSurface {
+Surfaces.PopoverSurface {
     id: root
 
     required property var parentWindow

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Bluetooth
+import "../../shared/controls" as Controls
 
 Column {
     id: root
@@ -38,7 +39,7 @@ Column {
             font.weight: Font.Bold
         }
 
-        IconButton {
+        Controls.IconButton {
             ui: root.ui
             icon: root.adapter && root.adapter.enabled ? "󰂯" : "󰂲"
             label: root.adapter && root.adapter.enabled ? "On" : "Off"
@@ -47,7 +48,7 @@ Column {
             onClicked: root.setBluetoothEnabled(!(root.adapter && root.adapter.enabled))
         }
 
-        IconButton {
+        Controls.IconButton {
             ui: root.ui
             icon: "󰑓"
             active: root.adapter && root.adapter.discovering
@@ -116,7 +117,7 @@ Column {
             Repeater {
                 model: root.devices
 
-                PanelAction {
+                Controls.PanelAction {
                     required property var modelData
 
                     width: parent.width
@@ -135,7 +136,7 @@ Column {
         }
     }
 
-    PanelAction {
+    Controls.PanelAction {
         id: bluetoothFallback
 
         width: parent.width

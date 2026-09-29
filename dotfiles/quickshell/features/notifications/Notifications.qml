@@ -6,6 +6,7 @@ import Quickshell as QS
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
 import Quickshell.Widgets
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -37,7 +38,7 @@ QS.PanelWindow {
         radius: 10
     }
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 

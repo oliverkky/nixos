@@ -6,6 +6,8 @@ import Quickshell as QS
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
+import "../../shared/controls" as Controls
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -39,7 +41,7 @@ QS.PanelWindow {
 
     WlrLayershell.namespace: "oliver.quickshell.clipboard"
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 
@@ -149,7 +151,7 @@ QS.PanelWindow {
                     font.weight: Font.Bold
                 }
 
-                IconButton {
+                Controls.IconButton {
                     ui: colorScheme
                     icon: "󰑓"
                     label: "Refresh"

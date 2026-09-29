@@ -5,7 +5,7 @@ Item {
 
     required property var ui
     property string icon: ""
-    property string iconFont: "JetBrainsMonoNL Nerd Font"
+    property string iconFont: root.ui.typography.monoIconFamily
     property string label: ""
     property bool checked: false
     property bool highlighted: false
@@ -16,9 +16,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: root.ui.geometry.controlRadius
         color: root.highlighted ? root.ui.surfaceHover : "transparent"
-        border.width: root.highlighted ? 1 : 0
+        border.width: root.highlighted ? root.ui.borders.width : 0
         border.color: root.ui.accent
     }
 
@@ -32,7 +32,7 @@ Item {
             text: root.icon
             color: root.checked ? root.ui.text : root.ui.textMuted
             font.family: root.iconFont
-            font.pixelSize: 14
+            font.pixelSize: root.ui.typography.iconSize
         }
 
         Text {
@@ -40,8 +40,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
             color: root.ui.text
-            font.family: "Cantarell"
-            font.pixelSize: 11
+            font.family: root.ui.typography.bodyFamily
+            font.pixelSize: root.ui.typography.labelSize
         }
 
         Rectangle {

@@ -4,7 +4,11 @@
 
 import Quickshell
 import Quickshell.Io
-import "components"
+import "features/bar" as BarFeature
+import "features/notifications" as NotificationFeature
+import "features/osd" as OsdFeature
+import "features/popovers" as PopoverFeature
+import "features/startup" as StartupFeature
 
 ShellRoot {
     id: root
@@ -89,7 +93,7 @@ ShellRoot {
     Variants {
         model: root.primaryScreens
 
-        Bar {
+        BarFeature.Bar {
             required property var modelData
             shellRoot: root
             screen: modelData
@@ -99,7 +103,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        ScreenshotPopover {
+        PopoverFeature.ScreenshotPopover {
             required property var modelData
             shellRoot: root
             screen: modelData
@@ -109,7 +113,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        ClipboardHistory {
+        PopoverFeature.ClipboardHistory {
             required property var modelData
             shellRoot: root
             screen: modelData
@@ -119,7 +123,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        DisplayPopoverAnchor {
+        PopoverFeature.DisplayPopoverAnchor {
             required property var modelData
             shellRoot: root
             screen: modelData
@@ -129,7 +133,7 @@ ShellRoot {
     Variants {
         model: root.primaryScreens
 
-        Osd {
+        OsdFeature.Osd {
             required property var modelData
             screen: modelData
         }
@@ -138,7 +142,7 @@ ShellRoot {
     Variants {
         model: root.primaryScreens
 
-        Splash {
+        StartupFeature.Splash {
             required property var modelData
             screen: modelData
         }
@@ -147,7 +151,7 @@ ShellRoot {
     Variants {
         model: root.mainScreens
 
-        Notifications {
+        NotificationFeature.Notifications {
             required property var modelData
             screen: modelData
         }

@@ -3,6 +3,8 @@ import Quickshell
 import Quickshell as QS
 import Quickshell.Hyprland
 import Quickshell.Wayland
+import "../../shared/controls" as Controls
+import "../../shared/theme" as Theme
 
 QS.PanelWindow {
     id: root
@@ -39,7 +41,7 @@ QS.PanelWindow {
 
     WlrLayershell.namespace: "oliver.quickshell.screenshot"
 
-    ColorScheme {
+    Theme.Theme {
         id: colorScheme
     }
 
@@ -241,7 +243,7 @@ QS.PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 8
 
-                ToggleRow {
+                Controls.ToggleRow {
                     ui: colorScheme
                     icon: "󰗊"
                     label: "Pointer"
@@ -253,7 +255,7 @@ QS.PanelWindow {
                     }
                 }
 
-                ToggleRow {
+                Controls.ToggleRow {
                     ui: colorScheme
                     icon: "󰔛"
                     label: "Delay 3s"

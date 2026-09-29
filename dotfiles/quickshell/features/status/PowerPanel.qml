@@ -1,4 +1,5 @@
 import QtQuick
+import "../../shared/controls" as Controls
 
 Column {
     id: root
@@ -14,7 +15,7 @@ Column {
     Repeater {
         model: root.actions
 
-        PanelAction {
+        Controls.PanelAction {
             required property int index
             required property var modelData
 

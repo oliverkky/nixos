@@ -1,5 +1,5 @@
 import QtQuick
-import "." as Components
+import "../../shared/controls" as Controls
 
 Row {
     id: root
@@ -28,7 +28,7 @@ Row {
 
     spacing: 3
 
-    Components.IconButton {
+    Controls.IconButton {
         ui: root.ui
         icon: root.bluetoothIcon
         active: root.bluetoothActive
@@ -36,7 +36,7 @@ Row {
         onClicked: mouse => root.bluetoothClicked(mouse)
     }
 
-    Components.IconButton {
+    Controls.IconButton {
         ui: root.ui
         icon: root.networkIcon
         active: root.networkActive
@@ -44,7 +44,7 @@ Row {
         onClicked: mouse => root.networkClicked(mouse)
     }
 
-    Components.IconButton {
+    Controls.IconButton {
         ui: root.ui
         icon: root.volumeIcon
         active: root.volumeActive
@@ -52,7 +52,7 @@ Row {
         onClicked: mouse => root.volumeClicked(mouse)
     }
 
-    Components.IconButton {
+    Controls.IconButton {
         visible: root.hasBattery
         ui: root.ui
         icon: root.batteryIcon
@@ -64,7 +64,7 @@ Row {
         onClicked: mouse => root.batteryClicked(mouse)
     }
 
-    Components.IconButton {
+    Controls.IconButton {
         visible: root.idleInhibited
         ui: root.ui
         icon: "󰅶"
@@ -72,7 +72,7 @@ Row {
         onClicked: mouse => root.idleClicked(mouse)
     }
 
-    Components.IconButton {
+    Controls.IconButton {
         ui: root.ui
         icon: ""
         active: true

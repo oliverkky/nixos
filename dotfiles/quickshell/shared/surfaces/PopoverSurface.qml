@@ -25,7 +25,7 @@ QS.PopupWindow {
     property bool hidingAfterClose: false
     property real progress: 0
     readonly property real contentProgress: Math.max(0, Math.min(1, (progress - 0.12) / 0.88))
-    readonly property int surfaceRadius: 18
+    readonly property int surfaceRadius: root.ui.geometry.popoverRadius
     readonly property int debugAnimationDuration: 180
     readonly property int closeAnimationDuration: 130
     default property alias content: content.data
@@ -139,7 +139,7 @@ QS.PopupWindow {
         radius: root.surfaceRadius
         clip: true
         color: root.ui.popoverSurface
-        border.width: 1
+        border.width: root.ui.borders.width
         border.color: root.ui.border
 
         Item {

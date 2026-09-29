@@ -9,16 +9,16 @@ Row {
     property real maximum: 1
     signal moved(real value)
 
-    height: 34
-    spacing: 10
+    height: root.ui.geometry.controlHeight
+    spacing: root.ui.geometry.spacing
 
     Text {
         width: 18
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
         color: root.ui.text
-        font.family: "Symbols Nerd Font"
-        font.pixelSize: 14
+        font.family: root.ui.typography.iconFamily
+        font.pixelSize: root.ui.typography.iconSize
         font.weight: Font.Bold
         horizontalAlignment: Text.AlignHCenter
     }
@@ -28,7 +28,7 @@ Row {
         width: parent.width - 28
         height: 8
         anchors.verticalCenter: parent.verticalCenter
-        radius: 999
+        radius: root.ui.geometry.pillRadius
         color: root.ui.surface
 
         Rectangle {

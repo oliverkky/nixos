@@ -17,16 +17,16 @@ MouseArea {
     property bool trailingCritical: false
     readonly property bool hasTrailing: trailingIcon.length > 0 || trailingText.length > 0
 
-    implicitHeight: 34
+    implicitHeight: root.ui.geometry.controlHeight
     height: implicitHeight
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
 
     Rectangle {
         anchors.fill: parent
-        radius: 8
+        radius: root.ui.geometry.controlRadius
         color: root.containsMouse || root.active || root.selected ? root.ui.surfaceHover : "transparent"
-        border.width: root.active || root.selected ? 1 : 0
+        border.width: root.active || root.selected ? root.ui.borders.width : 0
         border.color: root.ui.borderSoft
     }
 
@@ -41,8 +41,8 @@ MouseArea {
             anchors.verticalCenter: parent.verticalCenter
             text: root.icon
             color: root.danger ? root.ui.critical : root.warning ? root.ui.warning : root.ui.text
-            font.family: "Symbols Nerd Font"
-            font.pixelSize: 14
+            font.family: root.ui.typography.iconFamily
+            font.pixelSize: root.ui.typography.iconSize
             font.weight: Font.Bold
             horizontalAlignment: Text.AlignHCenter
         }
@@ -60,8 +60,8 @@ MouseArea {
                 text: root.text
                 color: root.danger ? root.ui.critical : root.warning ? root.ui.warning : root.ui.text
                 elide: Text.ElideRight
-                font.family: "Cantarell"
-                font.pixelSize: 12
+                font.family: root.ui.typography.bodyFamily
+                font.pixelSize: root.ui.typography.bodySize
                 font.weight: Font.Bold
             }
 
@@ -71,8 +71,8 @@ MouseArea {
                 text: root.subtext
                 color: root.ui.textMuted
                 elide: Text.ElideRight
-                font.family: "Cantarell"
-                font.pixelSize: 11
+                font.family: root.ui.typography.bodyFamily
+                font.pixelSize: root.ui.typography.labelSize
             }
         }
 
@@ -87,7 +87,7 @@ MouseArea {
                 visible: root.trailingIcon.length > 0
                 text: root.trailingIcon
                 color: root.trailingCritical ? root.ui.critical : root.trailingWarning ? root.ui.warning : root.ui.textMuted
-                font.family: "Symbols Nerd Font"
+                font.family: root.ui.typography.iconFamily
                 font.pixelSize: 13
                 font.weight: Font.Bold
             }
@@ -96,8 +96,8 @@ MouseArea {
                 visible: root.trailingText.length > 0
                 text: root.trailingText
                 color: root.trailingCritical ? root.ui.critical : root.trailingWarning ? root.ui.warning : root.ui.textMuted
-                font.family: "Cantarell"
-                font.pixelSize: 11
+                font.family: root.ui.typography.bodyFamily
+                font.pixelSize: root.ui.typography.labelSize
                 font.weight: Font.Bold
             }
         }
