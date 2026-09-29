@@ -80,11 +80,11 @@ return function(ctx)
             gaps_out = 4,
             border_size = 2,
             col = {
-                active_border = { colors = { palette.color14 }, angle = 0 },
+                active_border = { colors = { palette.color14, palette.color12 }, angle = 45 },
                 inactive_border = { colors = { palette.color0 }, angle = 0 },
             },
             resize_on_border = false,
-            allow_tearing = true,
+            allow_tearing = false,
             layout = "dwindle",
         },
 
@@ -151,6 +151,8 @@ return function(ctx)
     })
 
     for _, device_name in ipairs({
+        "logitech-m196",
+        "logi-m196",
         "razer-deathadder-v4-pro",
         "razer-deathadder-v4-pro-1",
         "razer-deathadder-v4-pro-keyboard-1",
