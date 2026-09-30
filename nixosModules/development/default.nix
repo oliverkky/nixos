@@ -63,6 +63,7 @@
         go
         golangci-lint
         gopls
+        govulncheck
 
         # Core tools
         git
