@@ -64,6 +64,7 @@ in
         brave
         discord
         fastfetch
+        firefox
         gimp
         gnome-calendar
         gnome-clocks
