@@ -69,6 +69,7 @@ in
         gnome-clocks
         gnome-weather
         gnome-font-viewer
+        papers
         heroic
         libreoffice
         lmstudio

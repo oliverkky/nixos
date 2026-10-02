@@ -81,7 +81,6 @@
         # File management
         nautilus
         file-roller
-        evince
         gnome-disk-utility
         snapshot
 
