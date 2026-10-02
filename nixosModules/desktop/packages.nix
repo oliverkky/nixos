@@ -74,6 +74,7 @@
         # Wayland compositor toolchain
         glib
         gsettings-desktop-schemas
+        wayvnc
 
         # Theming
         bibata-cursors
