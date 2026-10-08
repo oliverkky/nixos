@@ -78,7 +78,7 @@ return function(ctx)
         general = {
             gaps_in = 2,
             gaps_out = 4,
-            border_size = 2,
+            border_size = 0,
             col = {
                 active_border = { colors = { palette.color14, palette.color12 }, angle = 45 },
                 inactive_border = { colors = { palette.color0 }, angle = 0 },

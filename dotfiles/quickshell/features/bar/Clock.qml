@@ -55,9 +55,9 @@ MouseArea {
     Surfaces.PopoverSurface {
         id: calendar
         ui: root.ui
-        anchor.window: root.parentWindow
-        anchor.rect.x: root.x + root.width / 2 - implicitWidth / 2
-        anchor.rect.y: root.y
+        sourceWindow: root.parentWindow
+        panelX: root.x + root.width / 2 - implicitWidth / 2
+        panelY: root.y
         implicitWidth: 300
         implicitHeight: root.hasMediaPlayer ? 441 : 357
         originX: Math.max(0, (implicitWidth - root.width) / 2)

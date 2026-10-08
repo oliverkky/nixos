@@ -200,9 +200,9 @@ Item {
     Surfaces.PopoverSurface {
         id: panel
         ui: root.ui
-        anchor.window: root.parentWindow
-        anchor.rect.x: Math.max(12, root.x + root.width - implicitWidth)
-        anchor.rect.y: root.y
+        sourceWindow: root.parentWindow
+        panelX: Math.max(12, root.x + root.width - implicitWidth)
+        panelY: root.y
         implicitWidth: 360
         implicitHeight: root.panelHeight()
         originX: Math.max(0, implicitWidth - container.width)

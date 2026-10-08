@@ -16,9 +16,9 @@ Surfaces.PopoverSurface {
 
     signal closeMenuRequested()
 
-    anchor.window: root.parentWindow
-    anchor.rect.x: root.anchorX
-    anchor.rect.y: root.anchorY
+    sourceWindow: root.parentWindow
+    panelX: root.anchorX
+    panelY: root.anchorY
     implicitWidth: 286
     // DBusMenu entries arrive asynchronously for several tray apps. Size from
     // the stable delegate count and fixed row metrics instead of Column

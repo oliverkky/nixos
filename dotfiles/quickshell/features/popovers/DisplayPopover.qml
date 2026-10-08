@@ -92,9 +92,9 @@ Item {
         id: panel
 
         ui: root.ui
-        anchor.window: root.parentWindow
-        anchor.rect.x: root.parentWindow ? Math.max(12, root.parentWindow.width - implicitWidth - 12) : 12
-        anchor.rect.y: root.parentWindow && root.parentWindow.screen
+        sourceWindow: root.parentWindow
+        panelX: root.parentWindow ? Math.max(12, root.parentWindow.width - implicitWidth - 12) : 12
+        panelY: root.parentWindow && root.parentWindow.screen
             ? Math.max(12, Math.round((root.parentWindow.screen.height - implicitHeight) / 2))
             : 40
         implicitWidth: 420

@@ -4,10 +4,13 @@ import Quickshell as QS
 import Quickshell.Hyprland
 import Quickshell.Wayland
 
-QS.PopupWindow {
+QS.PanelWindow {
     id: root
 
     required property var ui
+    required property var sourceWindow
+    property real panelX: 0
+    property real panelY: 0
     property real originX: 0
     property real originY: 0
     property real originWidth: 1
@@ -33,11 +36,22 @@ QS.PopupWindow {
     signal surfaceClosed()
     signal closeRequested()
 
+    screen: sourceWindow ? sourceWindow.screen : null
+    anchors {
+        top: true
+        left: true
+    }
+    margins {
+        top: root.panelY
+        left: root.panelX
+    }
+    exclusionMode: ExclusionMode.Ignore
+    aboveWindows: true
+    focusable: true
+    visible: false
     color: "transparent"
-    // Keyboard-triggered popovers have no Wayland pointer serial, so an xdg
-    // popup grab is rejected. Hyprland's shell focus-grab protocol works for
-    // both keyboard and pointer activation.
-    grabFocus: false
+    mask: Region { item: surface }
+    WlrLayershell.namespace: "oliver.quickshell.popover"
 
     HyprlandFocusGrab {
         id: focusGrab

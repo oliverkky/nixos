@@ -43,8 +43,19 @@ let
   };
   hyprglassInit = pkgs.writeShellScript "hyprglass-init" ''
     set -eu
-    ${pkgs.hyprland}/bin/hyprctl plugin load ${hyprglass}/lib/libhyprglass.so
-    ${pkgs.hyprland}/bin/hyprctl --batch "keyword plugin:hyprglass:default_theme dark; keyword plugin:hyprglass:default_preset subtle; keyword plugin:hyprglass:manage_window_blur 1; keyword plugin:hyprglass:layers:enabled 1; keyword plugin:hyprglass:layers:namespaces oliver.quickshell,oliver.quickshell.notifications,oliver.quickshell.display-anchor,oliver.quickshell.screenshot,oliver.quickshell.clipboard; keyword plugin:hyprglass:layers:preset subtle; keyword plugin:hyprglass:layers:namespace_mask_thresholds oliver.quickshell=0.03,oliver.quickshell.notifications=0.03,oliver.quickshell.display-anchor=0.03,oliver.quickshell.screenshot=0.03,oliver.quickshell.clipboard=0.03"
+    hyprctl=${pkgs.hyprland}/bin/hyprctl
+    grep=${pkgs.gnugrep}/bin/grep
+
+    if ! "$hyprctl" plugin list | "$grep" -q 'Plugin hyprglass by'; then
+      "$hyprctl" plugin load ${hyprglass}/lib/libhyprglass.so
+    fi
+
+    "$hyprctl" reload
+
+    if ! "$hyprctl" getoption plugin:hyprglass:layers:enabled | "$grep" -Fq 'set: true'; then
+      echo "HyprGlass loaded, but layer effects did not enable" >&2
+      exit 1
+    fi
   '';
 in
 {

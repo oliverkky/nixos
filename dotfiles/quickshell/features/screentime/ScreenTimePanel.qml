@@ -140,7 +140,7 @@ Item {
                                             radius: 4
                                             anchors.left: parent.left
                                             anchors.verticalCenter: parent.verticalCenter
-                                            color: legendRow.index < root.groupedApps.length - 1 || root.groupedApps.length === root.appRows.length ? root.sliceColors[legendRow.index] : root.sliceColors[root.groupedApps.length - 1]
+                                            color: (legendRow.index < root.groupedApps.length - 1 || root.groupedApps.length === root.appRows.length ? root.sliceColors[legendRow.index] : root.sliceColors[root.groupedApps.length - 1]) || root.ui.accent
                                         }
                                         Text {
                                             x: 16

@@ -13,9 +13,9 @@ QtObject {
     readonly property color surfaceHover: withAlpha(foreground, 0.24)
     readonly property color surfaceStrong: withAlpha(foreground, 0.90)
     readonly property color surfaceStrongHover: foreground
-    readonly property color panelSurface: withAlpha(background, 0.74)
-    readonly property color panelSurfaceHover: withAlpha(background, 0.84)
-    readonly property color popoverSurface: withAlpha(background, 0.45)
+    readonly property color panelSurface: withAlpha(background, 0.52)
+    readonly property color panelSurfaceHover: withAlpha(background, 0.64)
+    readonly property color popoverSurface: withAlpha(background, 0.32)
 
     function withAlpha(colorValue, alpha) {
         if (typeof colorValue === "string") {

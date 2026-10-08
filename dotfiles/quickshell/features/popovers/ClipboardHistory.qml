@@ -152,6 +152,7 @@ QS.PanelWindow {
                 }
 
                 Controls.IconButton {
+                    id: refreshButton
                     ui: colorScheme
                     icon: "󰑓"
                     label: "Refresh"
