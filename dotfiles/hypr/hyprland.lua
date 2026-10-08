@@ -32,6 +32,7 @@ end
 ctx.palette = load_module("theme")
 
 load_module("settings")
+load_module("hyprglass")
 load_module("animations")
 load_module("autostart")
 load_module("binds")

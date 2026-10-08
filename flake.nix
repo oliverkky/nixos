@@ -14,6 +14,10 @@
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hyprglass = {
+      url = "github:hyprnux/hyprglass/hyprland-0.56";
+      flake = false;
+    };
   };
   outputs =
     {

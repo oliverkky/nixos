@@ -59,6 +59,23 @@
         "type": "github"
       }
     },
+    "hyprglass": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791038604,
+        "narHash": "sha256-V8w1SLd9u2wfMh0kvFkHbhV9I5wDQey0S2SyfvGo2LM=",
+        "owner": "hyprnux",
+        "repo": "hyprglass",
+        "rev": "99f30ca394bd0058ee79bf1c272c320f223e4540",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hyprnux",
+        "ref": "hyprland-0.56",
+        "repo": "hyprglass",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1785090369,
@@ -79,6 +96,7 @@
       "inputs": {
         "codex-cli-nix": "codex-cli-nix",
         "home-manager": "home-manager",
+        "hyprglass": "hyprglass",
         "nixpkgs": "nixpkgs",
         "silentSDDM": "silentSDDM"
       }

@@ -1,6 +1,7 @@
 {
   config,
   host,
+  inputs,
   lib,
   pkgs,
   ...
@@ -37,6 +38,14 @@ let
   );
   secondaryMonitor = host.secondaryMonitor or null;
   secondaryMonitorWorkspace = host.secondaryMonitorWorkspace or null;
+  hyprglass = pkgs.callPackage ../../pkgs/hyprglass.nix {
+    src = inputs.hyprglass;
+  };
+  hyprglassInit = pkgs.writeShellScript "hyprglass-init" ''
+    set -eu
+    ${pkgs.hyprland}/bin/hyprctl plugin load ${hyprglass}/lib/libhyprglass.so
+    ${pkgs.hyprland}/bin/hyprctl --batch "keyword plugin:hyprglass:default_theme dark; keyword plugin:hyprglass:default_preset subtle; keyword plugin:hyprglass:manage_window_blur 1; keyword plugin:hyprglass:layers:enabled 1; keyword plugin:hyprglass:layers:namespaces oliver.quickshell,oliver.quickshell.notifications,oliver.quickshell.display-anchor,oliver.quickshell.screenshot,oliver.quickshell.clipboard; keyword plugin:hyprglass:layers:preset subtle; keyword plugin:hyprglass:layers:namespace_mask_thresholds oliver.quickshell=0.03,oliver.quickshell.notifications=0.03,oliver.quickshell.display-anchor=0.03,oliver.quickshell.screenshot=0.03,oliver.quickshell.clipboard=0.03"
+  '';
 in
 {
   options.my.nixos.desktop.hyprland.enable = lib.mkEnableOption "Hyprland compositor";
@@ -77,9 +86,13 @@ in
       HYPR_SECONDARY_MONITOR = if secondaryMonitor == null then "" else secondaryMonitor;
       HYPR_SECONDARY_MONITOR_WORKSPACE =
         if secondaryMonitorWorkspace == null then "" else toString secondaryMonitorWorkspace;
+      HYPRGLASS_INIT = "${hyprglassInit}";
+      HYPRCTL_PATH = "${pkgs.hyprland}/bin/hyprctl";
       NIXOS_OZONE_WL = "1";
       XCURSOR_THEME = host.cursor.name;
       XCURSOR_SIZE = toString host.cursor.size;
     };
+
+    environment.systemPackages = [ hyprglass ];
   };
 }

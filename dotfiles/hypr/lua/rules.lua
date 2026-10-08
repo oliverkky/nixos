@@ -21,12 +21,6 @@ return function(ctx)
     end
 
     hl.window_rule({
-        name = "kitty-opacity",
-        match = { class = "kitty" },
-        opacity = "0.92 0.88",
-    })
-
-    hl.window_rule({
         name = "rofi-opacity-upper",
         match = { class = "Rofi" },
         opacity = "0.96 0.96",

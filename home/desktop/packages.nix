@@ -61,6 +61,7 @@ in
         imv
       ]
       ++ lib.optionals config.my.home.desktop.packages.apps.enable [
+        blender
         brave
         discord
         fastfetch
