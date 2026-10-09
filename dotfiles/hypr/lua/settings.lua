@@ -78,7 +78,7 @@ return function(ctx)
         general = {
             gaps_in = 2,
             gaps_out = 4,
-            border_size = 0,
+            border_size = 2,
             col = {
                 active_border = { colors = { palette.color14, palette.color12 }, angle = 45 },
                 inactive_border = { colors = { palette.color0 }, angle = 0 },
@@ -100,6 +100,11 @@ return function(ctx)
                 range = 4,
                 render_power = 9,
                 color = "rgba(1a1a1aaa)",
+            },
+            glow = {
+                enabled = false,
+                color = { colors = { palette.color14, palette.color12 }, angle = 45 },
+                range = 40,
             },
             blur = {
                 enabled = true,
