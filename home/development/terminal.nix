@@ -23,5 +23,14 @@
         dynamic_background_opacity = true;
       };
     };
+
+    programs.ghostty = {
+      enable = true;
+      settings = {
+        font-family = "JetBrainsMono Nerd Font";
+        font-size = 13;
+        background-opacity = "0.88";
+      };
+    };
   };
 }
