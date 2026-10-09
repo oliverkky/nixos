@@ -4,52 +4,28 @@ import Quickshell.Services.Mpris
 import "../../shared/controls" as Controls
 import "../../shared/surfaces" as Surfaces
 
-MouseArea {
+Item {
     id: root
 
     required property var ui
     required property var parentWindow
+    signal opening
 
     property date shownMonth: new Date(clock.date.getFullYear(), clock.date.getMonth(), 1)
-    property bool expandedSurfaceReady: false
     readonly property var mediaPlayers: Mpris.players && Mpris.players.values ? Mpris.players.values : []
     readonly property var mediaPlayer: root.activeMediaPlayer()
     readonly property bool hasMediaPlayer: root.mediaPlayer !== null
-    readonly property real pillProgress: calendar.visible ? calendar.progress : 0
+    readonly property rect expandedRect: calendar.expandedRect
+    readonly property bool occupyingExpandedArea: calendar.occupyingExpandedArea
 
     implicitWidth: clockText.implicitWidth + 34
     implicitHeight: 30
     width: implicitWidth
     height: implicitHeight
-    hoverEnabled: true
-    cursorShape: Qt.PointingHandCursor
-    onClicked: calendar.expanded = !calendar.expanded
 
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        radius: 999
-        visible: opacity > 0
-        opacity: Math.max(0, 1 - root.pillProgress * 1.4)
-        color: root.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-        border.width: 1
-        border.color: root.ui.border
-    }
-
-    Text {
-        id: clockText
-        anchors.centerIn: parent
-        visible: opacity > 0
-        opacity: Math.max(0, 1 - root.pillProgress * 1.4)
-        text: Qt.formatDateTime(clock.date, "hh:mm | ddd dd MMM yyyy")
-        color: root.ui.text
-        font.family: "Cantarell"
-        font.pixelSize: 12
-        font.weight: Font.Bold
     }
 
     Surfaces.PopoverSurface {
@@ -64,11 +40,29 @@ MouseArea {
         originY: 0
         originWidth: root.width
         originHeight: root.height
+        persistent: true
+        collapsedSurfaceColor: pillMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
         expanded: false
         closeKey: expanded ? "calendar" : ""
         onCloseRequested: calendar.expanded = false
-        onSurfaceOpened: root.expandedSurfaceReady = true
-        onSurfaceClosed: root.expandedSurfaceReady = false
+
+        collapsedContent: MouseArea {
+            id: pillMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.openPopover()
+
+            Text {
+                id: clockText
+                anchors.centerIn: parent
+                text: Qt.formatDateTime(clock.date, "hh:mm | ddd dd MMM yyyy")
+                color: root.ui.text
+                font.family: "Cantarell"
+                font.pixelSize: 12
+                font.weight: Font.Bold
+            }
+        }
 
         Column {
             anchors.fill: parent
@@ -355,6 +349,8 @@ MouseArea {
     }
 
     function openPopover() {
+        if (!calendar.expanded)
+            root.opening();
         calendar.expanded = true;
     }
 

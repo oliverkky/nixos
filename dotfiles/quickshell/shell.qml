@@ -111,12 +111,14 @@ ShellRoot {
         return screens.length > 0 ? screens : Quickshell.screens;
     }
     readonly property var mainScreens: root.primaryScreens.length > 0 ? [root.primaryScreens[0]] : []
+    readonly property var notificationAvoidRects: barVariants.instances.length > 0 ? barVariants.instances[0].notificationAvoidRects : []
 
     ScreenTimeFeature.ScreenTimeService {
         id: screenTimeTracker
     }
 
     Variants {
+        id: barVariants
         model: root.primaryScreens
 
         BarFeature.Bar {
@@ -181,6 +183,7 @@ ShellRoot {
         NotificationFeature.Notifications {
             required property var modelData
             screen: modelData
+            avoidRects: root.notificationAvoidRects
         }
     }
 }

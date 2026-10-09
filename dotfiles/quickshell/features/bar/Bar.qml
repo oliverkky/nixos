@@ -12,6 +12,17 @@ QS.PanelWindow {
     required property var shellRoot
     required property var screenTimeService
     property int barHeight: 36
+    readonly property var notificationAvoidRects: [
+        clock.occupyingExpandedArea ? clock.expandedRect : null,
+        screenTime.occupyingExpandedArea ? screenTime.expandedRect : null,
+        statusArea.occupyingExpandedArea ? statusArea.expandedRect : null,
+        statusArea.trayMenuOccupyingExpandedArea ? statusArea.trayMenuExpandedRect : null
+    ].filter(rect => rect !== null)
+    readonly property real screenTimeClearance: Math.max(
+        6,
+        statusArea.occupyingExpandedArea ? statusArea.x - statusArea.expandedRect.x + 8 : 6,
+        statusArea.trayMenuOccupyingExpandedArea ? statusArea.x - statusArea.trayMenuExpandedRect.x + 8 : 6
+    )
 
     anchors {
         top: true
@@ -23,6 +34,11 @@ QS.PanelWindow {
     exclusiveZone: barHeight
     aboveWindows: true
     color: "transparent"
+    // This window is stacked above the persistent pill windows. Let pointer
+    // events pass through its empty clock, status, and screen-time slots.
+    mask: Region {
+        Region { item: workspaces }
+    }
 
     WlrLayershell.namespace: "oliver.quickshell"
 
@@ -33,24 +49,10 @@ QS.PanelWindow {
         }
 
         Region {
-            item: clock
-            radius: clock.height / 2
-        }
-
-        Region {
             item: privacyIndicator
             radius: privacyIndicator.height / 2
         }
 
-        Region {
-            item: statusArea
-            radius: statusArea.height / 2
-        }
-
-        Region {
-            item: screenTime
-            radius: screenTime.height / 2
-        }
     }
 
     Theme.Theme {
@@ -99,13 +101,20 @@ QS.PanelWindow {
             anchors.centerIn: parent
             ui: theme
             parentWindow: root
+            onOpening: {
+                screenTime.closePopover();
+                statusArea.activePanel = "";
+                statusArea.closeTrayMenu();
+            }
         }
 
         PrivacyIndicator {
             id: privacyIndicator
 
             anchors.left: clock.right
-            anchors.leftMargin: 6
+            anchors.leftMargin: clock.occupyingExpandedArea
+                ? Math.max(6, clock.expandedRect.x + clock.expandedRect.width - clock.x - clock.width + 6)
+                : 6
             anchors.verticalCenter: clock.verticalCenter
             ui: theme
         }
@@ -118,19 +127,24 @@ QS.PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             ui: theme
             parentWindow: root
+            onOpening: {
+                screenTime.closePopover();
+                clock.closePopover();
+            }
         }
 
         ScreenTime.ScreenTimeWidget {
             id: screenTime
 
             anchors.right: statusArea.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: root.screenTimeClearance
             anchors.verticalCenter: parent.verticalCenter
             ui: theme
             parentWindow: root
             service: root.screenTimeService
             onOpening: {
                 statusArea.activePanel = "";
+                statusArea.closeTrayMenu();
                 clock.closePopover();
             }
         }

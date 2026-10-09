@@ -12,6 +12,8 @@ QS.PanelWindow {
     id: root
 
     property var notifications: []
+    property var avoidRects: []
+    readonly property var placement: root.notificationPlacement()
 
     anchors {
         top: true
@@ -19,12 +21,14 @@ QS.PanelWindow {
     }
 
     margins {
-        top: 12
-        right: 12
+        top: root.placement.top
+        right: root.screen ? root.screen.width - root.placement.left - root.implicitWidth : 12
     }
 
-    implicitWidth: 360
-    implicitHeight: root.notifications.length > 0 ? Math.min(582, root.notifications.length * 118 - 8) : 1
+    implicitWidth: root.screen ? Math.min(360, Math.max(1, root.screen.width - 24)) : 360
+    implicitHeight: root.notifications.length > 0
+        ? Math.max(1, Math.min(582, root.notifications.length * 118 - 8, (root.screen ? root.screen.height : 1200) - root.placement.top - 12))
+        : 1
     visible: root.notifications.length > 0
     exclusiveZone: 0
     aboveWindows: true
@@ -34,7 +38,7 @@ QS.PanelWindow {
     WlrLayershell.namespace: "oliver.quickshell.notifications"
 
     BackgroundEffect.blurRegion: Region {
-        item: toastStack
+        item: notificationViewport
         radius: 10
     }
 
@@ -57,271 +61,317 @@ QS.PanelWindow {
         }
     }
 
-    Column {
-        id: toastStack
+    Flickable {
+        id: notificationViewport
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: toastStack.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        width: parent.width
-        spacing: 8
+        Column {
+            id: toastStack
 
-        Repeater {
-            model: root.notifications
+            width: notificationViewport.width
+            spacing: 8
 
-            MouseArea {
-                id: toast
+            Repeater {
+                model: root.notifications
 
-                required property var modelData
-                readonly property var notification: modelData
-                readonly property int timeout: root.notificationTimeout(notification)
+                MouseArea {
+                    id: toast
 
-                width: root.width
-                height: card.implicitHeight
-                implicitHeight: card.implicitHeight
-                hoverEnabled: true
-                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                cursorShape: Qt.PointingHandCursor
+                    required property var modelData
+                    readonly property var notification: modelData
+                    readonly property int timeout: root.notificationTimeout(notification)
 
-                Component.onCompleted: resetTimer()
-                onContainsMouseChanged: resetTimer()
-                onTimeoutChanged: resetTimer()
+                    width: root.width
+                    height: card.implicitHeight
+                    implicitHeight: card.implicitHeight
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
 
-                Connections {
-                    target: toast.notification
+                    Component.onCompleted: resetTimer()
+                    onContainsMouseChanged: resetTimer()
+                    onTimeoutChanged: resetTimer()
 
-                    function onClosed(reason) {
-                        root.removeNotification(toast.notification);
-                    }
+                    Connections {
+                        target: toast.notification
 
-                    function onSummaryChanged() {
-                        toast.resetTimer();
-                    }
-
-                    function onBodyChanged() {
-                        toast.resetTimer();
-                    }
-
-                    function onUrgencyChanged() {
-                        toast.resetTimer();
-                    }
-
-                    function onExpireTimeoutChanged() {
-                        toast.resetTimer();
-                    }
-                }
-
-                Timer {
-                    id: expireTimer
-
-                    interval: Math.max(1, toast.timeout)
-                    running: false
-                    repeat: false
-
-                    onTriggered: {
-                        if (toast.notification)
-                            toast.notification.expire();
-                    }
-                }
-
-                Rectangle {
-                    id: card
-
-                    width: parent.width
-                    implicitHeight: Math.max(110, content.implicitHeight + 28)
-                    height: implicitHeight
-                    radius: 8
-                    color: colorScheme.panelSurface
-                    border.width: 1
-                    border.color: toast.notification && toast.notification.urgency === NotificationUrgency.Critical ? colorScheme.critical : colorScheme.borderSoft
-
-                    Row {
-                        id: content
-
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 14
-                        }
-                        spacing: 12
-
-                        Item {
-                            width: 40
-                            height: 40
-                            anchors.top: parent.top
-
-                            Image {
-                                id: notificationImage
-
-                                anchors.fill: parent
-                                source: root.notificationImageSource(toast.notification)
-                                visible: source.toString().length > 0 && status !== Image.Error
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                mipmap: true
-                            }
-
-                            IconImage {
-                                id: appIcon
-
-                                anchors.fill: parent
-                                source: root.notificationIconSource(toast.notification)
-                                visible: !notificationImage.visible && source.toString().length > 0
-                                asynchronous: true
-                                mipmap: true
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 8
-                                visible: !notificationImage.visible && !appIcon.visible
-                                color: colorScheme.surface
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰂚"
-                                    color: colorScheme.text
-                                    font.family: "Symbols Nerd Font"
-                                    font.pixelSize: 20
-                                }
-                            }
+                        function onClosed(reason) {
+                            root.removeNotification(toast.notification);
                         }
 
-                        Column {
-                            width: parent.width - 52
-                            spacing: 6
+                        function onSummaryChanged() {
+                            toast.resetTimer();
+                        }
 
-                            Row {
-                                width: parent.width
-                                spacing: 8
+                        function onBodyChanged() {
+                            toast.resetTimer();
+                        }
 
-                                Text {
-                                    width: parent.width - closeButton.width - parent.spacing
-                                    text: root.notificationTitle(toast.notification)
-                                    color: colorScheme.text
-                                    elide: Text.ElideRight
-                                    textFormat: Text.PlainText
-                                    font.family: "Cantarell"
-                                    font.pixelSize: 13
-                                    font.weight: Font.Bold
+                        function onUrgencyChanged() {
+                            toast.resetTimer();
+                        }
+
+                        function onExpireTimeoutChanged() {
+                            toast.resetTimer();
+                        }
+                    }
+
+                    Timer {
+                        id: expireTimer
+
+                        interval: Math.max(1, toast.timeout)
+                        running: false
+                        repeat: false
+
+                        onTriggered: {
+                            if (toast.notification)
+                                toast.notification.expire();
+                        }
+                    }
+
+                    Rectangle {
+                        id: card
+
+                        width: parent.width
+                        implicitHeight: Math.max(110, content.implicitHeight + 28)
+                        height: implicitHeight
+                        radius: 8
+                        color: colorScheme.panelSurface
+                        border.width: 1
+                        border.color: toast.notification && toast.notification.urgency === NotificationUrgency.Critical ? colorScheme.critical : colorScheme.borderSoft
+
+                        Row {
+                            id: content
+
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: 14
+                            }
+                            spacing: 12
+
+                            Item {
+                                width: 40
+                                height: 40
+                                anchors.top: parent.top
+
+                                Image {
+                                    id: notificationImage
+
+                                    anchors.fill: parent
+                                    source: root.notificationImageSource(toast.notification)
+                                    visible: source.toString().length > 0 && status !== Image.Error
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    mipmap: true
                                 }
 
-                                MouseArea {
-                                    id: closeButton
+                                IconImage {
+                                    id: appIcon
 
-                                    width: 22
-                                    height: 22
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
+                                    anchors.fill: parent
+                                    source: root.notificationIconSource(toast.notification)
+                                    visible: !notificationImage.visible && source.toString().length > 0
+                                    asynchronous: true
+                                    mipmap: true
+                                }
 
-                                    Rectangle {
-                                        anchors.fill: parent
-                                        radius: 6
-                                        color: closeButton.containsMouse ? colorScheme.surfaceHover : "transparent"
-                                    }
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 8
+                                    visible: !notificationImage.visible && !appIcon.visible
+                                    color: colorScheme.surface
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: "×"
-                                        color: colorScheme.textMuted
-                                        font.family: "Cantarell"
-                                        font.pixelSize: 16
-                                    }
-
-                                    onClicked: mouse => {
-                                        mouse.accepted = true;
-                                        if (toast.notification)
-                                            toast.notification.dismiss();
+                                        text: "󰂚"
+                                        color: colorScheme.text
+                                        font.family: "Symbols Nerd Font"
+                                        font.pixelSize: 20
                                     }
                                 }
                             }
 
-                            Text {
-                                width: parent.width
-                                text: root.notificationBody(toast.notification)
-                                visible: text.length > 0
-                                color: colorScheme.textMuted
-                                wrapMode: Text.WordWrap
-                                maximumLineCount: 4
-                                elide: Text.ElideRight
-                                textFormat: Text.PlainText
-                                font.family: "Cantarell"
-                                font.pixelSize: 12
-                                lineHeight: 1.12
-                            }
-
-                            Row {
-                                width: parent.width
+                            Column {
+                                width: parent.width - 52
                                 spacing: 6
-                                visible: root.notificationActions(toast.notification).length > 0
 
-                                Repeater {
-                                    model: root.notificationActions(toast.notification)
+                                Row {
+                                    width: parent.width
+                                    spacing: 8
+
+                                    Text {
+                                        width: parent.width - closeButton.width - parent.spacing
+                                        text: root.notificationTitle(toast.notification)
+                                        color: colorScheme.text
+                                        elide: Text.ElideRight
+                                        textFormat: Text.PlainText
+                                        font.family: "Cantarell"
+                                        font.pixelSize: 13
+                                        font.weight: Font.Bold
+                                    }
 
                                     MouseArea {
-                                        id: actionButton
+                                        id: closeButton
 
-                                        required property var modelData
-
-                                        width: Math.min(120, Math.max(64, actionLabel.implicitWidth + 18))
-                                        height: 26
+                                        width: 22
+                                        height: 22
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
 
                                         Rectangle {
                                             anchors.fill: parent
                                             radius: 6
-                                            color: actionButton.containsMouse ? colorScheme.surfaceHover : colorScheme.surface
+                                            color: closeButton.containsMouse ? colorScheme.surfaceHover : "transparent"
                                         }
 
                                         Text {
-                                            id: actionLabel
-
                                             anchors.centerIn: parent
-                                            width: parent.width - 12
-                                            text: actionButton.modelData ? actionButton.modelData.text : ""
-                                            color: colorScheme.text
-                                            elide: Text.ElideRight
-                                            textFormat: Text.PlainText
-                                            horizontalAlignment: Text.AlignHCenter
+                                            text: "×"
+                                            color: colorScheme.textMuted
                                             font.family: "Cantarell"
-                                            font.pixelSize: 11
-                                            font.weight: Font.Bold
+                                            font.pixelSize: 16
                                         }
 
                                         onClicked: mouse => {
                                             mouse.accepted = true;
-                                            if (actionButton.modelData)
-                                                actionButton.modelData.invoke();
                                             if (toast.notification)
                                                 toast.notification.dismiss();
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: root.notificationBody(toast.notification)
+                                    visible: text.length > 0
+                                    color: colorScheme.textMuted
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 4
+                                    elide: Text.ElideRight
+                                    textFormat: Text.PlainText
+                                    font.family: "Cantarell"
+                                    font.pixelSize: 12
+                                    lineHeight: 1.12
+                                }
+
+                                Row {
+                                    width: parent.width
+                                    spacing: 6
+                                    visible: root.notificationActions(toast.notification).length > 0
+
+                                    Repeater {
+                                        model: root.notificationActions(toast.notification)
+
+                                        MouseArea {
+                                            id: actionButton
+
+                                            required property var modelData
+
+                                            width: Math.min(120, Math.max(64, actionLabel.implicitWidth + 18))
+                                            height: 26
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+
+                                            Rectangle {
+                                                anchors.fill: parent
+                                                radius: 6
+                                                color: actionButton.containsMouse ? colorScheme.surfaceHover : colorScheme.surface
+                                            }
+
+                                            Text {
+                                                id: actionLabel
+
+                                                anchors.centerIn: parent
+                                                width: parent.width - 12
+                                                text: actionButton.modelData ? actionButton.modelData.text : ""
+                                                color: colorScheme.text
+                                                elide: Text.ElideRight
+                                                textFormat: Text.PlainText
+                                                horizontalAlignment: Text.AlignHCenter
+                                                font.family: "Cantarell"
+                                                font.pixelSize: 11
+                                                font.weight: Font.Bold
+                                            }
+
+                                            onClicked: mouse => {
+                                                mouse.accepted = true;
+                                                if (actionButton.modelData)
+                                                    actionButton.modelData.invoke();
+                                                if (toast.notification)
+                                                    toast.notification.dismiss();
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                onClicked: mouse => {
-                    if (!toast.notification)
-                        return;
+                    onClicked: mouse => {
+                        if (!toast.notification)
+                            return;
 
-                    if (mouse.button === Qt.LeftButton) {
-                        const action = root.defaultAction(toast.notification);
-                        if (action)
-                            action.invoke();
+                        if (mouse.button === Qt.LeftButton) {
+                            const action = root.defaultAction(toast.notification);
+                            if (action)
+                                action.invoke();
+                        }
+
+                        toast.notification.dismiss();
                     }
 
-                    toast.notification.dismiss();
-                }
-
-                function resetTimer() {
-                    if (toast.timeout > 0 && !toast.containsMouse)
-                        expireTimer.restart();
-                    else
-                        expireTimer.stop();
+                    function resetTimer() {
+                        if (toast.timeout > 0 && !toast.containsMouse)
+                            expireTimer.restart();
+                        else
+                            expireTimer.stop();
+                    }
                 }
             }
         }
+    }
+
+    function notificationPlacement() {
+        const width = root.screen ? root.screen.width : 1920;
+        const normalLeft = Math.max(12, width - root.implicitWidth - 12);
+        const rects = root.avoidRects || [];
+        let left = normalLeft;
+
+        // Shift the stack to the left of any expanded surface it would cross.
+        // Repeat because moving past one surface may reach another.
+        for (let pass = 0; pass < rects.length; pass++) {
+            let moved = false;
+            for (const rect of rects) {
+                if (!rect || left >= rect.x + rect.width + 12 || left + root.implicitWidth <= rect.x - 12)
+                    continue;
+
+                const nextLeft = rect.x - root.implicitWidth - 12;
+                if (nextLeft < left) {
+                    left = nextLeft;
+                    moved = true;
+                }
+            }
+            if (!moved)
+                break;
+        }
+
+        if (left >= 12)
+            return { left: left, top: 48 };
+
+        // A narrow display may have no room beside the panel. Place the
+        // stack below the panels occupying its usual right-hand column.
+        let top = 48;
+        for (const rect of rects) {
+            if (rect && normalLeft < rect.x + rect.width + 12 && normalLeft + root.implicitWidth > rect.x - 12)
+                top = Math.max(top, rect.y + rect.height + 12);
+        }
+        return { left: normalLeft, top: top };
     }
 
     function addNotification(notification) {

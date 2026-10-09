@@ -12,8 +12,10 @@ Item {
 
     readonly property var goal: Model.goalProgress(service.today.total, service.dailyGoalHours)
     readonly property bool goalReached: goal && goal.reached
+    readonly property rect expandedRect: popover.expandedRect
+    readonly property bool occupyingExpandedArea: popover.occupyingExpandedArea
 
-    implicitWidth: capsule.implicitWidth
+    implicitWidth: content.implicitWidth + 22
     implicitHeight: 30
     width: implicitWidth
     height: implicitHeight
@@ -35,54 +37,6 @@ Item {
         popover.expanded = false;
     }
 
-    Rectangle {
-        id: capsule
-        implicitWidth: content.implicitWidth + 22
-        width: implicitWidth
-        height: 30
-        radius: root.ui.geometry.pillRadius
-        color: button.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-        border.width: 1
-        border.color: root.ui.border
-
-        Row {
-            id: content
-            anchors.centerIn: parent
-            spacing: 7
-
-            Text {
-                text: root.goalReached ? "" : "󰔟"
-                color: root.goalReached ? root.ui.accent : root.ui.text
-                font.family: root.ui.typography.iconFamily
-                font.pixelSize: root.ui.typography.iconSize
-                font.weight: Font.Bold
-            }
-
-            Text {
-                visible: !root.service.barCompact
-                text: root.service.ready ? root.service.barLabel : "--"
-                color: root.ui.text
-                font.family: root.ui.typography.bodyFamily
-                font.pixelSize: root.ui.typography.labelSize
-                font.weight: Font.Bold
-            }
-        }
-
-        MouseArea {
-            id: button
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: Qt.PointingHandCursor
-            onClicked: mouse => {
-                if (mouse.button === Qt.RightButton)
-                    root.service.setBarCompact(!root.service.barCompact);
-                else
-                    root.togglePopover();
-            }
-        }
-    }
-
     Surfaces.PopoverSurface {
         id: popover
         ui: root.ui
@@ -95,11 +49,54 @@ Item {
         originY: 0
         originWidth: root.width
         originHeight: root.height
+        persistent: true
+        collapsedSurfaceColor: button.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
         closeKey: "screen-time"
         onCloseRequested: expanded = false
         onSurfaceOpened: {
             screenTimePanel.page = "today";
             screenTimePanel.selectedDayKey = root.service.todayKey;
+        }
+
+        collapsedContent: Item {
+            anchors.fill: parent
+
+            Row {
+                id: content
+                anchors.centerIn: parent
+                spacing: 7
+
+                Text {
+                    text: root.goalReached ? "" : "󰔟"
+                    color: root.goalReached ? root.ui.accent : root.ui.text
+                    font.family: root.ui.typography.iconFamily
+                    font.pixelSize: root.ui.typography.iconSize
+                    font.weight: Font.Bold
+                }
+
+                Text {
+                    visible: !root.service.barCompact
+                    text: root.service.ready ? root.service.barLabel : "--"
+                    color: root.ui.text
+                    font.family: root.ui.typography.bodyFamily
+                    font.pixelSize: root.ui.typography.labelSize
+                    font.weight: Font.Bold
+                }
+            }
+
+            MouseArea {
+                id: button
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                cursorShape: Qt.PointingHandCursor
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        root.service.setBarCompact(!root.service.barCompact);
+                    else
+                        root.togglePopover();
+                }
+            }
         }
 
         ScreenTimePanel {

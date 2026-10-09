@@ -2,24 +2,18 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 
-Rectangle {
+Item {
     id: root
 
     required property var ui
     required property var trayItems
-    required property var parentWindow
     required property var iconSource
     required property var fallbackIcon
     required property var openMenu
+    readonly property bool hovered: trayMouse.containsMouse
 
     implicitWidth: trayRow.implicitWidth + 14
     implicitHeight: 30
-    width: implicitWidth
-    height: implicitHeight
-    radius: 999
-    color: trayMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-    border.width: 1
-    border.color: root.ui.border
 
     MouseArea {
         id: trayMouse
@@ -110,11 +104,10 @@ Rectangle {
                     if (!trayButton.modelData || !trayButton.modelData.hasMenu)
                         return;
 
-                    const localPoint = trayButton.mapToItem(root, 0, 0);
                     // Never hand this back to StatusNotifierItem.display(): it
                     // creates Qt's native, unstyled menu. The shell menu can
                     // wait for an app's DBusMenu layout to arrive instead.
-                    root.openMenu(trayButton.modelData, localPoint.x, localPoint.y, trayButton.width, trayButton.height);
+                    root.openMenu(trayButton.modelData);
                 }
             }
         }

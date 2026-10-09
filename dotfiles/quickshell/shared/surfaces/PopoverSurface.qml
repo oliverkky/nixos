@@ -16,6 +16,11 @@ QS.PanelWindow {
     property real originWidth: 1
     property real originHeight: 28
     property bool expanded: false
+    property bool persistent: false
+    property color collapsedSurfaceColor: root.ui.panelSurface
+    Behavior on collapsedSurfaceColor {
+        ColorAnimation { duration: 100 }
+    }
     // Some popovers have an element that exists in both their collapsed and
     // expanded states. Keep that element drawn while the surface grows so it
     // reads as one object moving into place, rather than two cross-fading
@@ -27,11 +32,14 @@ QS.PanelWindow {
     property string closeKey: expanded ? "expanded" : ""
     property bool hidingAfterClose: false
     property real progress: 0
+    readonly property rect expandedRect: Qt.rect(panelX, panelY, implicitWidth, implicitHeight)
+    readonly property bool occupyingExpandedArea: expanded || progress > 0
     readonly property real contentProgress: Math.max(0, Math.min(1, (progress - 0.12) / 0.88))
     readonly property int surfaceRadius: root.ui.geometry.popoverRadius
     readonly property int debugAnimationDuration: 180
     readonly property int closeAnimationDuration: 130
     default property alias content: content.data
+    property alias collapsedContent: collapsedContent.data
     signal surfaceOpened()
     signal surfaceClosed()
     signal closeRequested()
@@ -47,8 +55,8 @@ QS.PanelWindow {
     }
     exclusionMode: ExclusionMode.Ignore
     aboveWindows: true
-    focusable: true
-    visible: false
+    focusable: !persistent || expanded
+    visible: persistent
     color: "transparent"
     mask: Region { item: surface }
     WlrLayershell.namespace: "oliver.quickshell.popover"
@@ -101,8 +109,29 @@ QS.PanelWindow {
 
     onImplicitWidthChanged: syncOpenSurface()
     onImplicitHeightChanged: syncOpenSurface()
-    onOriginXChanged: syncOpenSurface()
-    onOriginYChanged: syncOpenSurface()
+    onOriginXChanged: {
+        syncOpenSurface();
+        syncCollapsedSurface();
+    }
+    onOriginYChanged: {
+        syncOpenSurface();
+        syncCollapsedSurface();
+    }
+    onOriginWidthChanged: syncCollapsedSurface()
+    onOriginHeightChanged: syncCollapsedSurface()
+    Component.onCompleted: syncCollapsedSurface()
+
+    function syncCollapsedSurface() {
+        if (!persistent || expanded || openAnimation.running || closeAnimation.running)
+            return;
+
+        surface.x = root.originX;
+        surface.y = root.originY;
+        surface.width = root.originWidth;
+        surface.height = root.originHeight;
+        surface.radius = root.originHeight / 2;
+        progress = 0;
+    }
 
     function syncOpenSurface() {
         if (!visible || !expanded || openAnimation.running || closeAnimation.running)
@@ -152,9 +181,23 @@ QS.PanelWindow {
         height: root.implicitHeight
         radius: root.surfaceRadius
         clip: true
-        color: root.ui.popoverSurface
+        color: root.persistent ? Qt.rgba(
+            root.collapsedSurfaceColor.r + (root.ui.popoverSurface.r - root.collapsedSurfaceColor.r) * root.progress,
+            root.collapsedSurfaceColor.g + (root.ui.popoverSurface.g - root.collapsedSurfaceColor.g) * root.progress,
+            root.collapsedSurfaceColor.b + (root.ui.popoverSurface.b - root.collapsedSurfaceColor.b) * root.progress,
+            root.collapsedSurfaceColor.a + (root.ui.popoverSurface.a - root.collapsedSurfaceColor.a) * root.progress
+        ) : root.ui.popoverSurface
         border.width: root.ui.borders.width
         border.color: root.ui.border
+
+        Item {
+            id: collapsedContent
+            anchors.fill: parent
+            clip: true
+            visible: root.persistent && opacity > 0
+            opacity: Math.max(0, 1 - root.progress * 1.4)
+            enabled: !root.expanded && !closeAnimation.running
+        }
 
         Item {
             id: content
@@ -164,7 +207,8 @@ QS.PanelWindow {
             anchors.topMargin: root.collapsedContentTopMargin + ((12 - root.collapsedContentTopMargin) * root.progress)
             anchors.bottomMargin: 12
             clip: true
-            focus: root.visible
+            focus: root.visible && root.expanded
+            enabled: !root.persistent || root.expanded
             opacity: root.animateContent ? root.contentProgress : 1
             transform: Translate {
                 y: root.animateContent ? (1 - root.contentProgress) * -6 : 0
@@ -238,8 +282,13 @@ QS.PanelWindow {
 
         onFinished: {
             if (!root.expanded) {
-                root.hidingAfterClose = true;
-                root.visible = false;
+                if (root.persistent) {
+                    root.syncCollapsedSurface();
+                    root.surfaceClosed();
+                } else {
+                    root.hidingAfterClose = true;
+                    root.visible = false;
+                }
             }
         }
 

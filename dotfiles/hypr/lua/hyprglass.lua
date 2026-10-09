@@ -9,11 +9,11 @@ return function()
     if glass then
         glass.config({
             default_theme = "dark",
-            default_preset = "pomme",
+            default_preset = "glass",
             manage_window_blur = true,
             layers = {
                 enabled = true,
-                preset = "pomme",
+                preset = "glass",
                 mask_mode = "alpha",
             },
         })

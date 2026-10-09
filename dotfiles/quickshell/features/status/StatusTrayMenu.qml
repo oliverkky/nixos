@@ -8,29 +8,30 @@ Surfaces.PopoverSurface {
 
     required property var parentWindow
     required property var activeTrayItem
+    required property var trayItems
     required property var rootMenu
     required property var iconSource
+    required property var fallbackIcon
     required property var titleProvider
+    property bool collapsedEnabled: true
+    readonly property real collapsedWidth: collapsedTray.implicitWidth
     property real anchorX: 0
     property real anchorY: 0
 
     signal closeMenuRequested()
+    signal menuRequested(var item)
 
     sourceWindow: root.parentWindow
     panelX: root.anchorX
     panelY: root.anchorY
-    implicitWidth: 286
+    implicitWidth: Math.max(286, root.collapsedWidth)
     // DBusMenu entries arrive asynchronously for several tray apps. Size from
     // the stable delegate count and fixed row metrics instead of Column
     // implicitHeight/childrenRect, which can briefly collapse back to one row.
     implicitHeight: root.panelHeight()
+    persistent: root.trayItems.length > 0
     expanded: root.activeTrayItem !== null
-    animateContent: false
-    // Match the icon's position inside the 28px tray button at progress 0;
-    // PopoverSurface interpolates these to its normal padding as it expands.
-    collapsedContentLeftMargin: 6
-    collapsedContentRightMargin: 6
-    collapsedContentTopMargin: 0
+    collapsedSurfaceColor: collapsedTray.hovered ? root.ui.panelSurfaceHover : root.ui.panelSurface
     closeKey: root.activeTrayItem ? "tray" : ""
 
     property var menuStack: root.rootMenu ? [root.rootMenu] : []
@@ -49,13 +50,25 @@ Surfaces.PopoverSurface {
     }
     onSurfaceOpened: trayMenuContent.forceActiveFocus()
 
+    collapsedContent: StatusTrayRow {
+        id: collapsedTray
+
+        anchors.fill: parent
+        ui: root.ui
+        trayItems: root.trayItems
+        iconSource: root.iconSource
+        fallbackIcon: root.fallbackIcon
+        openMenu: item => root.menuRequested(item)
+        enabled: root.collapsedEnabled
+    }
+
     Column {
         id: trayMenuContent
 
         width: parent.width
         height: parent.height
         spacing: 10
-        focus: root.visible
+        focus: root.expanded
 
         // The popup is focus-grabbed by the shell, which also makes this work
         // for menus opened from a keyboard shortcut (there is no pointer

@@ -16,10 +16,10 @@ Item {
 
     required property var ui
     required property var parentWindow
+    signal opening
 
     property string activePanel: ""
     property string visiblePanel: ""
-    property bool panelVisible: false
     property var devices: root.modelValues(Networking.devices)
     property var bluetoothAdapter: Bluetooth.defaultAdapter
     property var bluetoothDevices: root.modelValues(Bluetooth.devices)
@@ -28,15 +28,14 @@ Item {
     property var source: Pipewire.defaultAudioSource
     property var battery: UPower.displayDevice
     property var trayItems: root.modelValues(SystemTray.items)
+    readonly property rect expandedRect: panel.expandedRect
+    readonly property bool occupyingExpandedArea: panel.occupyingExpandedArea
+    readonly property rect trayMenuExpandedRect: trayMenuPanel.expandedRect
+    readonly property bool trayMenuOccupyingExpandedArea: trayMenuPanel.occupyingExpandedArea
     property var activeTrayItem: null
-    property real trayMenuOriginX: 0
-    property real trayMenuOriginY: 0
-    property real trayMenuOriginWidth: 26
-    property real trayMenuOriginHeight: 24
     property real brightnessPercent: 0
     property bool brightnessAvailable: false
     property bool idleInhibited: false
-    property bool expandedSurfaceReady: false
     property int powerSelectedIndex: 0
     readonly property bool powerProfilesAvailable: root.hasBattery()
     readonly property var powerActions: [
@@ -102,6 +101,11 @@ Item {
 
     Component.onCompleted: root.refreshBrightness()
 
+    onTrayItemsChanged: {
+        if (activeTrayItem && trayItems.indexOf(activeTrayItem) < 0)
+            closeTrayMenu();
+    }
+
     onActivePanelChanged: {
         if (activePanel.length > 0)
             visiblePanel = activePanel;
@@ -113,44 +117,65 @@ Item {
         height: 30
         spacing: 0
 
-        StatusTrayRow {
-            id: trayButtons
+        Item {
+            id: traySlot
 
-            ui: root.ui
-            trayItems: root.trayItems
-            parentWindow: root.parentWindow
-            iconSource: root.trayIconSource
-            fallbackIcon: root.trayFallbackIcon
-            openMenu: (item, x, y, width, height) => root.openTrayMenu(item, trayButtons.x + x, trayButtons.y + y, width, height)
+            width: trayMenuPanel.collapsedWidth
+            height: root.height
             visible: root.trayItems.length > 0
-            enabled: root.activePanel.length === 0 && !panel.visible
         }
 
         Item {
             // Keep the tray beside the expanded status surface instead of
-            // letting that surface grow over it. Since StatusArea is anchored
-            // to the right edge, widening this gap moves only the tray left.
-            visible: trayButtons.visible
-            width: 7 + panel.progress * Math.max(0, panel.implicitWidth - container.width)
+            // letting that surface grow over it. This also moves the adjacent
+            // screen-time pill when there are no tray items.
+            width: (traySlot.visible ? 7 : 0) + panel.progress * Math.max(0, panel.implicitWidth - container.width)
+            visible: width > 0
             height: 1
         }
 
-        Rectangle {
+        Item {
             id: container
             width: systemButtons.implicitWidth + 26
             height: 30
-            radius: 999
-            enabled: root.activePanel.length === 0 && !panel.visible
-            opacity: panel.visible ? Math.max(0, 1 - panel.progress * 1.4) : 1
-            color: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
-            border.width: 1
-            border.color: root.ui.border
+        }
+    }
+
+    Surfaces.PopoverSurface {
+        id: panel
+        ui: root.ui
+        sourceWindow: root.parentWindow
+        panelX: Math.max(12, root.x + root.width - implicitWidth)
+        panelY: root.y
+        implicitWidth: 360
+        implicitHeight: root.panelHeight()
+        originX: Math.max(0, implicitWidth - container.width)
+        originY: 0
+        originWidth: container.width
+        originHeight: root.height
+        persistent: true
+        collapsedSurfaceColor: containerMouse.containsMouse ? root.ui.panelSurfaceHover : root.ui.panelSurface
+        expanded: root.activePanel.length > 0
+        closeKey: root.activePanel
+        onCloseRequested: {
+            root.activePanel = "";
+        }
+        onSurfaceOpened: {
+            if (root.activePanel === "power")
+                panelKeyboardHandler.forceActiveFocus();
+        }
+        onSurfaceClosed: {
+            root.activePanel = "";
+            root.visiblePanel = "";
+        }
+
+        collapsedContent: Item {
+            anchors.fill: parent
 
             MouseArea {
                 id: containerMouse
                 anchors.fill: parent
                 hoverEnabled: true
-                enabled: root.activePanel.length === 0
                 acceptedButtons: Qt.NoButton
             }
 
@@ -194,38 +219,6 @@ Item {
                 onIdleClicked: root.togglePanel("battery")
                 onPowerClicked: root.togglePanel("power")
             }
-        }
-    }
-
-    Surfaces.PopoverSurface {
-        id: panel
-        ui: root.ui
-        sourceWindow: root.parentWindow
-        panelX: Math.max(12, root.x + root.width - implicitWidth)
-        panelY: root.y
-        implicitWidth: 360
-        implicitHeight: root.panelHeight()
-        originX: Math.max(0, implicitWidth - container.width)
-        originY: 0
-        originWidth: container.width
-        originHeight: root.height
-        expanded: root.activePanel.length > 0
-        closeKey: root.activePanel
-        onVisibleChanged: {
-            root.panelVisible = visible;
-        }
-        onCloseRequested: {
-            root.activePanel = "";
-        }
-        onSurfaceOpened: {
-            root.expandedSurfaceReady = true;
-            if (root.activePanel === "power")
-                panelKeyboardHandler.forceActiveFocus();
-        }
-        onSurfaceClosed: {
-            root.activePanel = "";
-            root.visiblePanel = "";
-            root.expandedSurfaceReady = false;
         }
 
         Item {
@@ -313,19 +306,23 @@ Item {
         ui: root.ui
         parentWindow: root.parentWindow
         activeTrayItem: root.activeTrayItem
+        trayItems: root.trayItems
+        collapsedEnabled: root.activePanel.length === 0 && panel.progress === 0
         // QsMenuOpener must receive the persistent QsMenuHandle. Some
         // applications (notably Steam) populate handle.menu asynchronously,
         // so passing that transient root entry leaves the opener empty.
         rootMenu: root.activeTrayMenuHandle()
         iconSource: root.trayIconSource
+        fallbackIcon: root.trayFallbackIcon
         titleProvider: root.trayPanelTitle
         anchorX: root.trayPanelAnchorX()
         anchorY: root.y
-        originX: root.trayPanelOriginX(implicitWidth)
-        originY: root.trayMenuOriginY
-        originWidth: root.trayMenuOriginWidth
-        originHeight: root.trayMenuOriginHeight
+        originX: root.x + traySlot.x - anchorX
+        originY: 0
+        originWidth: traySlot.width
+        originHeight: traySlot.height
 
+        onMenuRequested: item => root.openTrayMenu(item)
         onCloseMenuRequested: root.closeTrayMenu()
         onSurfaceClosed: {
             if (root.activeTrayItem) {
@@ -442,12 +439,13 @@ Item {
     property string passwordError: ""
 
     function togglePanel(name) {
+        if (activePanel !== name)
+            root.opening();
         closeTrayMenu();
 
         if (activePanel === name) {
             activePanel = "";
         } else {
-            expandedSurfaceReady = activePanel.length > 0;
             activePanel = name;
         }
 
@@ -458,8 +456,9 @@ Item {
     }
 
     function openPowerMenu() {
+        if (activePanel !== "power")
+            root.opening();
         closeTrayMenu();
-        expandedSurfaceReady = activePanel.length > 0;
         activePanel = "power";
         powerSelectedIndex = 0;
     }
@@ -572,7 +571,7 @@ Item {
         return trayRootMenuFor(activeTrayItem);
     }
 
-    function openTrayMenu(item, x, y, width, height) {
+    function openTrayMenu(item) {
         if (!item || !item.hasMenu)
             return false;
 
@@ -581,16 +580,13 @@ Item {
             return true;
         }
 
+        root.opening();
+
         const previousMenu = activeTrayRootMenu();
         if (previousMenu)
             previousMenu.closed();
 
-        trayMenuOriginX = x;
-        trayMenuOriginY = y;
-        trayMenuOriginWidth = width;
-        trayMenuOriginHeight = height;
         activePanel = "";
-        expandedSurfaceReady = false;
         activeTrayItem = item;
 
         // The DBusMenu handle, rather than its transient root entry, is the
@@ -649,19 +645,8 @@ Item {
     }
 
     function trayPanelAnchorX() {
-        // Keep the active 16px tray icon in the same horizontal position in
-        // both states. The clicked 28px tray button contains the icon with 6px
-        // side insets, and the expanded header keeps the icon 12px from the
-        // panel edge, so the panel edge sits 6px past the original button.
-        const target = root.x + trayMenuOriginX + trayMenuOriginWidth + 6 - trayMenuPanel.implicitWidth;
-        const maxX = root.parentWindow && root.parentWindow.width ? root.parentWindow.width - trayMenuPanel.implicitWidth - 12 : target;
-
-        return Math.max(12, Math.min(Math.max(12, maxX), target));
-    }
-
-    function trayPanelOriginX(panelWidth) {
-        const anchorX = trayPanelAnchorX() - root.x;
-        return Math.max(0, Math.min(panelWidth - trayMenuOriginWidth, trayMenuOriginX - anchorX));
+        const trayX = root.x + traySlot.x;
+        return Math.min(trayX, Math.max(12, trayX + traySlot.width - trayMenuPanel.implicitWidth));
     }
 
     function wifiDevice() {
