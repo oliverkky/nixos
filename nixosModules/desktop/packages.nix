@@ -75,7 +75,6 @@
         glib
         gsettings-desktop-schemas
         wayvnc
-        rustdesk
 
         # Theming
         bibata-cursors
