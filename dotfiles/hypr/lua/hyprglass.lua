@@ -13,7 +13,7 @@ return function()
             manage_window_blur = true,
             layers = {
                 enabled = true,
-                preset = "glass",
+                preset = "clear",
                 mask_mode = "alpha",
             },
         })
