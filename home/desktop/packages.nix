@@ -57,6 +57,7 @@ in
         gnome-themes-extra
         hicolor-icon-theme
         papirus-icon-theme
+        fluent-icon-theme
         shared-mime-info
         imv
       ]
@@ -68,6 +69,7 @@ in
         firefox
         gimp
         gnome-calendar
+        gnome-calculator
         gnome-clocks
         gnome-weather
         gnome-font-viewer

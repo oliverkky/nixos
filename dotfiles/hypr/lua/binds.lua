@@ -23,6 +23,8 @@ return function(ctx)
     bind(main_mod .. " + SHIFT + W", hl.dsp.exec_cmd("waypaper"))
     bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("qs ipc call screenshotMenu open"))
     bind("CTRL + SHIFT + ESCAPE", hl.dsp.exec_cmd("missioncenter"))
+    bind("XF86Calculator", hl.dsp.exec_cmd("gnome-calculator"))
+    bind("XF86ScreenSaver", hl.dsp.exec_cmd("hyprlock"))
 
     bind(main_mod .. " + CTRL + B", hl.dsp.exec_cmd("qs ipc call statusPanel toggle bluetooth"))
     bind(main_mod .. " + CTRL + N", hl.dsp.exec_cmd("qs ipc call statusPanel toggle network"))

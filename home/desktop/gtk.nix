@@ -17,8 +17,8 @@
         package = pkgs.gnome-themes-extra;
       };
       iconTheme = {
-        name = "Papirus-Dark";
-        package = pkgs.papirus-icon-theme;
+        name = "Fluent";
+        package = pkgs.fluent-icon-theme;
       };
       cursorTheme = {
         name = host.cursor.name;

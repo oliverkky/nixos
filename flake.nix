@@ -117,6 +117,7 @@
                 nativeBuildInputs = with pkgs; [
                   bash
                   coreutils
+                  gcc
                   findutils
                   gawk
                   gnugrep
@@ -133,6 +134,7 @@
                   lib.makeBinPath [
                     pkgs.bash
                     pkgs.coreutils
+                    pkgs.gcc
                     pkgs.findutils
                     pkgs.gawk
                     pkgs.gnugrep

@@ -45,11 +45,11 @@ let
     glib
     gnugrep
     gnused
+    ghostty
     grim
     hyprland
     hyprlock
     jq
-    kitty
     libnotify
     networkmanager
     pavucontrol

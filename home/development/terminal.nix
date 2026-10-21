@@ -8,6 +8,8 @@
   options.my.home.development.terminal.enable = lib.mkEnableOption "development terminal emulator";
 
   config = lib.mkIf config.my.home.development.terminal.enable {
+    home.sessionVariables.TERMINAL = "ghostty";
+
     programs.kitty = {
       enable = true;
       font = {
@@ -19,7 +21,7 @@
         scrollback_lines = 10000;
         enable_audio_bell = false;
         confirm_os_window_close = 0;
-        background_opacity = "0.0";
+        background_opacity = "0.75";
         dynamic_background_opacity = true;
       };
     };

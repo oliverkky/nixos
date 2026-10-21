@@ -43,7 +43,7 @@ Item {
             icon: "",
             text: "Lock",
             key: Qt.Key_L,
-            command: ["loginctl", "lock-session"]
+            command: ["hyprlock"]
         },
         {
             icon: "󰍃",
@@ -205,7 +205,7 @@ Item {
                 }
                 onNetworkClicked: mouse => {
                     if (mouse.button === Qt.RightButton)
-                        root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"]);
+                        root.runNativeTool(["ghostty", "-e", "nmtui"]);
                     else
                         root.togglePanel("network");
                 }
@@ -368,7 +368,7 @@ Item {
             onConnectNetwork: network => root.promptForNetwork(network)
             onSubmitPassword: password => root.submitPassword(password)
             onCancelPassword: input => root.cancelPasswordPrompt(input)
-            onOpenFallback: root.runNativeTool(["kitty", "--class", "nmtui", "nmtui"])
+            onOpenFallback: root.runNativeTool(["ghostty", "-e", "nmtui"])
             onDisconnectWifi: {
                 const wifi = root.wifiDevice();
                 if (wifi)

@@ -70,6 +70,8 @@ in
       xwayland.enable = true;
     };
 
+    programs.hyprlock.enable = true;
+
     # Hyprland's portal handles compositor-specific interfaces, but it does
     # not provide the file chooser used by apps such as Brave and Zed.
     xdg.portal = {

@@ -22,15 +22,15 @@
       },
     },
   },
-  // "edit_predictions": {
-  //   "provider": "open_ai_compatible_api",
-  //   "open_ai_compatible_api": {
-  //     "api_url": "http://127.0.0.1:1234/v1/completions",
-  //     "model": "lmstudio-community/Qwen3-Coder-Next-GGUF/Qwen3-Coder-Next-Q4_K_M.gguf",
-  //     "prompt_format": "qwen",
-  //     "max_output_tokens": 512,
-  //   },
-  // },
+  "edit_predictions": {
+    "provider": "open_ai_compatible_api",
+    "open_ai_compatible_api": {
+      "api_url": "http://127.0.0.1:1234/v1/completions",
+      "model": "mradermacher/AceCoder-Qwen2.5-Coder-7B-Base-Rule-i1-GGUF/AceCoder-Qwen2.5-Coder-7B-Base-Rule.i1-Q6_K.gguf",
+      "prompt_format": "qwen",
+      "max_output_tokens": 512,
+    },
+  },
   "agent_servers": {
     "codex-acp": {
       "type": "registry",
