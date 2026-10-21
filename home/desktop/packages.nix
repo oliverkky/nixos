@@ -57,7 +57,7 @@ in
         gnome-themes-extra
         hicolor-icon-theme
         papirus-icon-theme
-        fluent-icon-theme
+        (callPackage ../../pkgs/infinity-icon-theme.nix { })
         shared-mime-info
         imv
       ]

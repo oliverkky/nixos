@@ -17,8 +17,8 @@
         package = pkgs.gnome-themes-extra;
       };
       iconTheme = {
-        name = "Fluent";
-        package = pkgs.fluent-icon-theme;
+        name = "Infinity";
+        package = pkgs.callPackage ../../pkgs/infinity-icon-theme.nix { };
       };
       cursorTheme = {
         name = host.cursor.name;
