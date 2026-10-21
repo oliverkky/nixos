@@ -17,7 +17,7 @@
         package = pkgs.gnome-themes-extra;
       };
       iconTheme = {
-        name = "Infinity";
+        name = "infinity Dark";
         package = pkgs.callPackage ../../pkgs/infinity-icon-theme.nix { };
       };
       cursorTheme = {

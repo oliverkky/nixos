@@ -17,7 +17,7 @@ configuration {
 	scroll-method: 0;
 	normalize-match: true;
 	show-icons: true;
-	icon-theme: "Infinity";
+	icon-theme: "infinity Dark";
 /*	cache-dir: ;*/
 	steal-focus: false;
 /*	dpi: -1;*/
