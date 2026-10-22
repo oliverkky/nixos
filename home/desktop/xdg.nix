@@ -15,13 +15,24 @@
       userDirs = {
         enable = true;
         createDirectories = true;
+        # Nautilus builds the standard places in its sidebar from these XDG
+        # directory entries. Set them explicitly so they exist even when
+        # user-dirs.dirs was previously generated with the directories
+        # disabled or mapped elsewhere.
+        pictures = "${config.home.homeDirectory}/Pictures";
+        documents = "${config.home.homeDirectory}/Documents";
+        download = "${config.home.homeDirectory}/Downloads";
+        music = "${config.home.homeDirectory}/Music";
+        videos = "${config.home.homeDirectory}/Videos";
       };
       mimeApps = {
         enable = true;
         defaultApplications."inode/directory" = "org.gnome.Nautilus.desktop";
       };
     };
-    xdg.userDirs.setSessionVariables = false;
+    # Nautilus uses the XDG directory environment variables to expose these
+    # locations in its Places sidebar.
+    xdg.userDirs.setSessionVariables = true;
 
     xdg.desktopEntries."oliver.quickshell" = {
       name = "Oliver Quickshell";

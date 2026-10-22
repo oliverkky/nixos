@@ -17,8 +17,8 @@
         package = pkgs.gnome-themes-extra;
       };
       iconTheme = {
-        name = "infinity Dark";
-        package = pkgs.callPackage ../../pkgs/infinity-icon-theme.nix { };
+        name = "Frost-Wallust";
+        package = null;
       };
       cursorTheme = {
         name = host.cursor.name;
@@ -32,6 +32,11 @@
     dconf.settings."org/gnome/desktop/interface" = {
       color-scheme = "prefer-dark";
       gtk-theme = "Adwaita-dark";
+      icon-theme = "Frost-Wallust";
     };
+
+    home.activation.frostIconTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      ${config.my.home.desktop.scripts.hyprPackage}/bin/update-frost-theme
+    '';
   };
 }

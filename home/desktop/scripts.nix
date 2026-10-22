@@ -7,6 +7,7 @@
 
 let
   inherit (lib) makeBinPath;
+  frostSource = pkgs.callPackage ../../pkgs/frost-icon-theme-source.nix { };
 
   hyprRuntimeInputs = with pkgs; [
     awww
@@ -22,6 +23,8 @@ let
     imagemagick
     jq
     kitty
+    python3
+    glib
     power-profiles-daemon
     pipewire
     wallust
@@ -70,6 +73,7 @@ let
       src,
       runtimeInputs,
       sourceDirEnv ? null,
+      frostSourceEnv ? false,
     }:
     pkgs.stdenvNoCC.mkDerivation {
       inherit name src;
@@ -91,6 +95,7 @@ let
             ${lib.optionalString (
               sourceDirEnv != null
             ) "--set ${lib.escapeShellArg sourceDirEnv} \"$out/libexec/${name}\""}
+            ${lib.optionalString frostSourceEnv "--set FROST_SOURCE ${lib.escapeShellArg (toString frostSource)}"}
           )
           makeWrapper "$script" "$out/bin/$(basename "$script")" "''${wrapper_args[@]}"
         done
@@ -103,6 +108,7 @@ let
     name = "hypr-desktop-scripts";
     src = ../../dotfiles/hypr/scripts;
     runtimeInputs = hyprRuntimeInputs;
+    frostSourceEnv = true;
   };
 
   rofiScripts = makeScriptSet {

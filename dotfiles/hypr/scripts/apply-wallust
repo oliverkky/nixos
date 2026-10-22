@@ -43,5 +43,10 @@ fi
 
 "$wallust_bin" --quiet --skip-sequences run "$image_path"
 
+frost_update="$(dirname "$0")/update-frost-theme"
+if [ -x "$frost_update" ]; then
+    "$frost_update" || echo "Frost icon theme update failed" >&2
+fi
+
 hyprctl reload >/dev/null 2>&1 || true
 kitty @ --to unix:/tmp/kitty-theme load-config "$config_root/kitty/kitty.conf" >/dev/null 2>&1 || true

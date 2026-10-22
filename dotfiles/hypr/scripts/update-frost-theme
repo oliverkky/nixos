@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Install Frost's SVG artwork with hues from Wallust's current palette."""
+
+import colorsys
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+THEME = "Frost-Wallust"
+CONTEXTS = {
+    "places": "Places",
+    "mimetypes": "MimeTypes",
+    "apps": "Applications",
+    "devices": "Devices",
+    "status": "Status",
+}
+WALLUST_COLORS = {
+    "blue": "color4",
+    "teal": "color6",
+    "green": "color2",
+    "yellow": "color3",
+    "orange": "color9",
+    "red": "color1",
+    "pink": "color13",
+    "violet": "color5",
+    "graphite": "color8",
+}
+
+
+def hex_rgb(value):
+    value = value.removeprefix("#")
+    return tuple(int(value[i : i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+def recolor(original, target):
+    old_h, old_l, old_s = colorsys.rgb_to_hls(*hex_rgb(original))
+    new_h, _, new_s = colorsys.rgb_to_hls(*hex_rgb(target))
+    # Keep Frost's original gradient and white-glyph contrast; use the wallpaper hue.
+    saturation = min(1.0, max(0.25, old_s * 0.75 + new_s * 0.25))
+    rgb = colorsys.hls_to_rgb(new_h if new_s > 0.05 else old_h, old_l, saturation)
+    return "#" + "".join(f"{round(channel * 255):02X}" for channel in rgb)
+
+
+def palette_substitutions(design, colors):
+    pattern = re.compile(r"^\| `([^`]+)`\s*\| `(#(?:[0-9A-Fa-f]{6}))`\s*\| `(#(?:[0-9A-Fa-f]{6}))`", re.M)
+    substitutions = {}
+    for name, light, deep in pattern.findall(design):
+        chosen = colors.get(WALLUST_COLORS[name])
+        if chosen and re.fullmatch(r"#[0-9A-Fa-f]{6}", chosen):
+            substitutions[light.upper()] = recolor(light, chosen)
+            substitutions[deep.upper()] = recolor(deep, chosen)
+    if not substitutions and colors:
+        raise ValueError("Wallust palette has no usable colors")
+    return substitutions
+
+
+def write_theme(destination, source, substitutions, colors):
+    svg_sources = {}
+    replace_pattern = re.compile("|".join(re.escape(c) for c in substitutions), re.I) if substitutions else None
+    for context in CONTEXTS:
+        src_dir = source / "src" / context
+        if not src_dir.is_dir():
+            continue
+        dst_dir = destination / "scalable" / context
+        dst_dir.mkdir(parents=True)
+        for svg in src_dir.rglob("*.svg"):
+            if re.search(r"\.\d+\.svg$", svg.name):
+                continue  # Upstream's size-specific variants are for its raster build.
+            artwork = svg.read_text()
+            if replace_pattern:
+                artwork = replace_pattern.sub(lambda match: substitutions[match.group().upper()], artwork)
+            (dst_dir / svg.name).write_text(artwork)
+            svg_sources[svg.stem] = context
+
+    aliases = json.loads((source / "src" / "aliases.json").read_text())
+    for target, names in aliases.items():
+        context = svg_sources.get(target)
+        if not context:
+            continue
+        directory = destination / "scalable" / context
+        for alias in names:
+            path = directory / f"{alias}.svg"
+            if not path.exists() and not path.is_symlink():
+                path.symlink_to(f"{target}.svg")
+
+    dirs = [f"scalable/{context}" for context in CONTEXTS if (destination / "scalable" / context).is_dir()]
+    lines = [
+        "[Icon Theme]",
+        f"Name={THEME}",
+        "Comment=Frost artwork recolored from the current wallpaper by Wallust",
+        "Inherits=Papirus,Adwaita,breeze,hicolor",
+        "Example=folder",
+        f"Directories={','.join(dirs)}",
+        "",
+    ]
+    for context in CONTEXTS:
+        directory = f"scalable/{context}"
+        if directory not in dirs:
+            continue
+        lines.extend([f"[{directory}]", "Size=48", "MinSize=16", "MaxSize=512", "Type=Scalable", f"Context={CONTEXTS[context]}", ""])
+    (destination / "index.theme").write_text("\n".join(lines))
+    (destination / "wallust-colors.json").write_text(json.dumps(colors, sort_keys=True) + "\n")
+    (destination / "frost-source.txt").write_text(str(source) + "\n")
+
+
+def main():
+    source = Path(os.environ["FROST_SOURCE"]) / "share" / "frost"
+    cache = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))) / "wallust" / "colors.json"
+    icons = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "icons"
+    colors = json.loads(cache.read_text())["colors"] if cache.is_file() else {}
+    current = icons / THEME
+    recorded = current / "wallust-colors.json"
+    source_record = current / "frost-source.txt"
+    if recorded.is_file() and source_record.is_file() and json.loads(recorded.read_text()) == colors and source_record.read_text().strip() == str(source):
+        return
+
+    substitutions = palette_substitutions((source / "docs" / "DESIGN.md").read_text(), colors)
+    icons.mkdir(parents=True, exist_ok=True)
+    temp = Path(tempfile.mkdtemp(prefix=f".{THEME}-", dir=icons))
+    old = icons / f".{THEME}-old"
+    try:
+        write_theme(temp, source, substitutions, colors)
+        if old.exists():
+            shutil.rmtree(old)
+        if current.exists():
+            current.rename(old)
+        temp.rename(current)
+        if old.exists():
+            shutil.rmtree(old)
+    finally:
+        if temp.exists():
+            shutil.rmtree(temp)
+
+    # A setting change tells an open Nautilus to discard its previous icon lookup cache.
+    try:
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Adwaita"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", THEME], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.CalledProcessError):
+        print("Frost installed; GTK icon setting will update on the next desktop session", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
