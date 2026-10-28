@@ -53,7 +53,11 @@
         ))
 
         # C toolchain (needed for many Rust crates and Python extensions)
+        clang
         gcc
+        gnumake
+        gdb
+        clang-tools
 
         # Linting / formatting
         ruff
