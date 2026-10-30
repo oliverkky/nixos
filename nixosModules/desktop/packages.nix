@@ -46,10 +46,6 @@
     services.gnome.tinysparql.enable = true;
     services.gvfs.enable = true;
     services.udisks2.enable = true;
-    # GVFS supplies the camera browser, while libgphoto2's udev rules grant
-    # the logged-in user access to PTP cameras such as the Nikon D3300.
-    programs.gphoto2.enable = true;
-    users.users.${host.primaryUser}.extraGroups = [ "camera" ];
     programs.seahorse.enable = true;
     programs.dconf.enable = true;
     security.polkit.enable = true;
