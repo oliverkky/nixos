@@ -37,6 +37,7 @@ Item {
     property bool brightnessAvailable: false
     property bool idleInhibited: false
     property int powerSelectedIndex: 0
+    property var selectedControl: null
     readonly property bool powerProfilesAvailable: root.hasBattery()
     readonly property var powerActions: [
         {
@@ -107,6 +108,7 @@ Item {
     }
 
     onActivePanelChanged: {
+        root.selectControl(null);
         if (activePanel.length > 0)
             visiblePanel = activePanel;
     }
@@ -161,8 +163,8 @@ Item {
             root.activePanel = "";
         }
         onSurfaceOpened: {
-            if (root.activePanel === "power")
-                panelKeyboardHandler.forceActiveFocus();
+            panelKeyboardHandler.forceActiveFocus();
+            root.selectFirstControl();
         }
         onSurfaceClosed: {
             root.activePanel = "";
@@ -225,9 +227,9 @@ Item {
             id: panelKeyboardHandler
 
             anchors.fill: parent
-            focus: root.visiblePanel === "power"
+            focus: root.activePanel.length > 0
             Keys.onPressed: event => {
-                if (root.handlePowerKey(event.key))
+                if (root.activePanel === "power" ? root.handlePowerKey(event.key) : root.handlePanelKey(event))
                     event.accepted = true;
             }
 
@@ -291,10 +293,12 @@ Item {
                 }
 
                 Loader {
+                    id: panelLoader
                     width: parent.width
                     height: parent.height - 51
                     clip: true
                     sourceComponent: root.visiblePanel === "power" ? powerPanel : root.visiblePanel === "network" ? networkPanel : root.visiblePanel === "bluetooth" ? bluetoothPanel : root.visiblePanel === "audio" ? audioPanel : root.visiblePanel === "battery" ? batteryPanel : null
+                    onLoaded: Qt.callLater(root.selectFirstControl)
                 }
             }
         }
@@ -368,6 +372,10 @@ Item {
             onConnectNetwork: network => root.promptForNetwork(network)
             onSubmitPassword: password => root.submitPassword(password)
             onCancelPassword: input => root.cancelPasswordPrompt(input)
+            onNavigationRequested: {
+                panelKeyboardHandler.forceActiveFocus();
+                root.selectControl(panelLoader.item.connectButton);
+            }
             onOpenFallback: root.runNativeTool(["ghostty", "-e", "nmtui"])
             onDisconnectWifi: {
                 const wifi = root.wifiDevice();
@@ -487,18 +495,11 @@ Item {
         if (activePanel !== "power")
             return false;
 
-        for (let i = 0; i < powerActions.length; i++) {
-            if (powerActions[i].key === key) {
-                runPowerAction(i);
-                return true;
-            }
-        }
-
-        if (key === Qt.Key_Up || key === Qt.Key_Left || key === Qt.Key_K) {
+        if (key === Qt.Key_Up || key === Qt.Key_Left || key === Qt.Key_K || key === Qt.Key_H) {
             movePowerSelection(-1);
             return true;
         }
-        if (key === Qt.Key_Down || key === Qt.Key_Right || key === Qt.Key_J) {
+        if (key === Qt.Key_Down || key === Qt.Key_Right || key === Qt.Key_J || key === Qt.Key_L) {
             movePowerSelection(1);
             return true;
         }
@@ -507,6 +508,94 @@ Item {
             return true;
         }
 
+        for (let i = 0; i < powerActions.length; i++) {
+            if (powerActions[i].key === key) {
+                runPowerAction(i);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function collectControls(item, result) {
+        if (!item || !item.visible || !item.enabled)
+            return;
+        if (item.keyboardNavigable !== undefined) {
+            if (item.keyboardNavigable)
+                result.push(item);
+            return;
+        }
+        for (const child of item.children)
+            collectControls(child, result);
+    }
+
+    function panelControls() {
+        const controls = [];
+        collectControls(panelLoader.item, controls);
+        collectControls(statusHeaderRow, controls);
+        return controls;
+    }
+
+    function selectControl(control) {
+        if (selectedControl === control)
+            return;
+        if (selectedControl)
+            selectedControl.keyboardSelected = false;
+        selectedControl = control;
+        if (!control)
+            return;
+        control.keyboardSelected = true;
+        let ancestor = control.parent;
+        while (ancestor && ancestor !== panelKeyboardHandler) {
+            if (ancestor.contentY !== undefined && ancestor.contentHeight !== undefined) {
+                const position = control.mapToItem(ancestor, 0, 0).y;
+                if (position < 0)
+                    ancestor.contentY = Math.max(0, ancestor.contentY + position - 4);
+                else if (position + control.height > ancestor.height)
+                    ancestor.contentY = Math.min(Math.max(0, ancestor.contentHeight - ancestor.height), ancestor.contentY + position + control.height - ancestor.height + 4);
+                break;
+            }
+            ancestor = ancestor.parent;
+        }
+    }
+
+    function selectFirstControl() {
+        if (!panel.expanded || activePanel === "power")
+            return;
+        const controls = panelControls();
+        if (controls.length > 0 && controls.indexOf(selectedControl) < 0)
+            selectControl(controls[0]);
+    }
+
+    function handlePanelKey(event) {
+        if (!activePanel || event.modifiers !== Qt.NoModifier)
+            return false;
+        const controls = panelControls();
+        if (controls.length === 0)
+            return false;
+        const current = controls.indexOf(selectedControl);
+        const key = event.key;
+        if (key === Qt.Key_Up || key === Qt.Key_K || key === Qt.Key_Down || key === Qt.Key_J) {
+            const delta = key === Qt.Key_Up || key === Qt.Key_K ? -1 : 1;
+            selectControl(controls[(current < 0 ? 0 : current + delta + controls.length) % controls.length]);
+            return true;
+        }
+        if (key === Qt.Key_Left || key === Qt.Key_H || key === Qt.Key_Right || key === Qt.Key_L) {
+            const delta = key === Qt.Key_Left || key === Qt.Key_H ? -1 : 1;
+            if (current >= 0 && selectedControl.keyboardAdjust !== undefined)
+                selectedControl.keyboardAdjust(delta);
+            else
+                selectControl(controls[(current < 0 ? 0 : current + delta + controls.length) % controls.length]);
+            return true;
+        }
+        if (key === Qt.Key_Return || key === Qt.Key_Enter || key === Qt.Key_Space) {
+            const control = current < 0 ? controls[0] : selectedControl;
+            if (control.keyboardActivate !== undefined) {
+                control.keyboardActivate();
+                return true;
+            }
+        }
         return false;
     }
 

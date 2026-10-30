@@ -27,6 +27,7 @@ Column {
     spacing: 8
 
     Controls.PanelAction {
+        keyboardNavigable: false
         width: parent.width
         ui: root.ui
         icon: root.batteryIcon

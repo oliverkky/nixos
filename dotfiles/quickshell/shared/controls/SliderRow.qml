@@ -7,6 +7,8 @@ Row {
     property string icon: ""
     property real value: 0
     property real maximum: 1
+    property bool keyboardNavigable: true
+    property bool keyboardSelected: false
     signal moved(real value)
 
     height: root.ui.geometry.controlHeight
@@ -30,6 +32,8 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         radius: root.ui.geometry.pillRadius
         color: root.ui.surface
+        border.width: root.keyboardSelected ? root.ui.borders.width : 0
+        border.color: root.ui.accent
 
         Rectangle {
             width: parent.width * root.normalizedValue()
@@ -61,5 +65,9 @@ Row {
         if (root.maximum <= 0)
             return 0;
         return Math.max(0, Math.min(1, root.value / root.maximum));
+    }
+
+    function keyboardAdjust(delta) {
+        root.moved(Math.max(0, Math.min(root.maximum, root.value + delta * root.maximum / 20)));
     }
 }

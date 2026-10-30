@@ -9,6 +9,8 @@ MouseArea {
     property string subtext: ""
     property bool active: false
     property bool selected: false
+    property bool keyboardNavigable: true
+    property bool keyboardSelected: false
     property bool warning: false
     property bool danger: false
     property string trailingIcon: ""
@@ -25,9 +27,9 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: root.ui.geometry.controlRadius
-        color: root.containsMouse || root.active || root.selected ? root.ui.surfaceHover : "transparent"
-        border.width: root.active || root.selected ? root.ui.borders.width : 0
-        border.color: root.ui.borderSoft
+        color: root.containsMouse || root.active || root.selected || root.keyboardSelected ? root.ui.surfaceHover : "transparent"
+        border.width: root.active || root.selected || root.keyboardSelected ? root.ui.borders.width : 0
+        border.color: root.keyboardSelected ? root.ui.accent : root.ui.borderSoft
     }
 
     Row {
@@ -101,5 +103,9 @@ MouseArea {
                 font.weight: Font.Bold
             }
         }
+    }
+
+    function keyboardActivate() {
+        root.clicked();
     }
 }

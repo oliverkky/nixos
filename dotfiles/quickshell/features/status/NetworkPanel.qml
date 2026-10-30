@@ -22,6 +22,8 @@ Column {
     signal cancelPassword(var input)
     signal openFallback
     signal disconnectWifi
+    signal navigationRequested
+    property alias connectButton: connectAction
 
     width: parent.width
     height: parent.height
@@ -148,12 +150,14 @@ Column {
                 Keys.onReturnPressed: root.submitPassword(passwordInput.text)
                 Keys.onEnterPressed: root.submitPassword(passwordInput.text)
                 Keys.onEscapePressed: root.cancelPassword(passwordInput)
+                Keys.onTabPressed: root.navigationRequested()
             }
 
             Row {
                 spacing: 8
 
                 Controls.PanelAction {
+                    id: connectAction
                     width: 92
                     ui: root.ui
                     icon: "󰌑"

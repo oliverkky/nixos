@@ -10,6 +10,8 @@ MouseArea {
     property bool warning: false
     property bool critical: false
     property bool compact: true
+    property bool keyboardNavigable: true
+    property bool keyboardSelected: false
 
     implicitWidth: compact ? 28 : Math.max(48, content.implicitWidth + 20)
     implicitHeight: 26
@@ -21,7 +23,9 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: root.ui.geometry.buttonRadius
-        color: root.containsMouse ? root.ui.surfaceHover : "transparent"
+        color: root.containsMouse || root.keyboardSelected ? root.ui.surfaceHover : "transparent"
+        border.width: root.keyboardSelected ? root.ui.borders.width : 0
+        border.color: root.ui.accent
     }
 
     Row {
@@ -47,5 +51,9 @@ MouseArea {
             font.weight: Font.Bold
             verticalAlignment: Text.AlignVCenter
         }
+    }
+
+    function keyboardActivate() {
+        root.clicked();
     }
 }
