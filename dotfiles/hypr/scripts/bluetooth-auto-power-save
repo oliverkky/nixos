@@ -6,23 +6,62 @@ if ! command -v bluetoothctl >/dev/null 2>&1; then
     exit 0
 fi
 
+if [ -z "${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ]; then
+    exit 0
+fi
+
+idle_since_file="$XDG_RUNTIME_DIR/bluetooth-auto-power-save-idle-since"
+
 if ! find /sys/class/power_supply/BAT* -maxdepth 0 -type l -exec sh -c '
     for battery do
         [ -r "$battery/status" ] && [ "$(cat "$battery/status")" = "Discharging" ] && exit 0
     done
     exit 1
 ' sh {} + 2>/dev/null; then
+    rm -f "$idle_since_file"
     exit 0
 fi
 
-if bluetoothctl show 2>/dev/null | grep -q "Discovering: yes"; then
+# If BlueZ cannot answer, leave the adapter alone. An empty result from a
+# failed query must never be mistaken for an idle adapter.
+if ! adapter_status=$(bluetoothctl show 2>&1); then
+    rm -f "$idle_since_file"
     exit 0
 fi
 
-if bluetoothctl devices Connected 2>/dev/null | grep -q '^Device '; then
+if ! grep -q 'Powered: yes' <<< "$adapter_status" ||
+    grep -q 'Discovering: yes' <<< "$adapter_status"; then
+    rm -f "$idle_since_file"
     exit 0
 fi
 
-if bluetoothctl show 2>/dev/null | grep -q "Powered: yes"; then
-    bluetoothctl power off >/dev/null
+if ! connected_devices=$(bluetoothctl devices Connected 2>&1); then
+    rm -f "$idle_since_file"
+    exit 0
 fi
+
+if [ -n "$connected_devices" ]; then
+    rm -f "$idle_since_file"
+    exit 0
+fi
+
+# Require two idle checks at least ten minutes apart. A single transient
+# disconnect or an empty query cannot turn off a device in use.
+now=$(date +%s)
+if [ -r "$idle_since_file" ]; then
+    read -r idle_since < "$idle_since_file" || idle_since=
+    if [[ "$idle_since" =~ ^[0-9]+$ ]] &&
+        (( now >= idle_since + 600 )); then
+        # Recheck immediately before changing adapter power.
+        if ! connected_devices=$(bluetoothctl devices Connected 2>&1) ||
+            [ -n "$connected_devices" ]; then
+            rm -f "$idle_since_file"
+            exit 0
+        fi
+        bluetoothctl power off >/dev/null
+        rm -f "$idle_since_file"
+        exit 0
+    fi
+fi
+
+printf '%s\n' "$now" > "$idle_since_file"
