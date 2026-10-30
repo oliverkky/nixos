@@ -13,6 +13,7 @@ import tempfile
 
 
 THEME = "Frost-Wallust"
+ROFI_THEME = "Frost-Apps"
 CONTEXTS = {
     "places": "Places",
     "mimetypes": "MimeTypes",
@@ -60,10 +61,10 @@ def palette_substitutions(design, colors):
     return substitutions
 
 
-def write_theme(destination, source, substitutions, colors):
+def write_theme(destination, source, substitutions, colors, contexts=CONTEXTS, theme=THEME):
     svg_sources = {}
     replace_pattern = re.compile("|".join(re.escape(c) for c in substitutions), re.I) if substitutions else None
-    for context in CONTEXTS:
+    for context in contexts:
         src_dir = source / "src" / context
         if not src_dir.is_dir():
             continue
@@ -89,17 +90,17 @@ def write_theme(destination, source, substitutions, colors):
             if not path.exists() and not path.is_symlink():
                 path.symlink_to(f"{target}.svg")
 
-    dirs = [f"scalable/{context}" for context in CONTEXTS if (destination / "scalable" / context).is_dir()]
+    dirs = [f"scalable/{context}" for context in contexts if (destination / "scalable" / context).is_dir()]
     lines = [
         "[Icon Theme]",
-        f"Name={THEME}",
-        "Comment=Frost artwork recolored from the current wallpaper by Wallust",
+        f"Name={theme}",
+        "Comment=Frost application icons in their original colors" if theme == ROFI_THEME else "Comment=Frost artwork recolored from the current wallpaper by Wallust",
         "Inherits=Papirus,Adwaita,breeze,hicolor",
         "Example=folder",
         f"Directories={','.join(dirs)}",
         "",
     ]
-    for context in CONTEXTS:
+    for context in contexts:
         directory = f"scalable/{context}"
         if directory not in dirs:
             continue
@@ -118,7 +119,10 @@ def main():
     recorded = current / "wallust-colors.json"
     source_record = current / "frost-source.txt"
     if recorded.is_file() and source_record.is_file() and json.loads(recorded.read_text()) == colors and source_record.read_text().strip() == str(source):
-        return
+        rofi_current = icons / ROFI_THEME
+        rofi_source = rofi_current / "frost-source.txt"
+        if rofi_source.is_file() and rofi_source.read_text().strip() == str(source):
+            return
 
     substitutions = palette_substitutions((source / "docs" / "DESIGN.md").read_text(), colors)
     icons.mkdir(parents=True, exist_ok=True)
@@ -136,6 +140,23 @@ def main():
     finally:
         if temp.exists():
             shutil.rmtree(temp)
+
+    # Rofi uses Frost's original app artwork; GTK continues to use the Wallust theme.
+    rofi_current = icons / ROFI_THEME
+    rofi_temp = Path(tempfile.mkdtemp(prefix=f".{ROFI_THEME}-", dir=icons))
+    rofi_old = icons / f".{ROFI_THEME}-old"
+    try:
+        write_theme(rofi_temp, source, {}, {}, contexts={"apps": "Applications"}, theme=ROFI_THEME)
+        if rofi_old.exists():
+            shutil.rmtree(rofi_old)
+        if rofi_current.exists():
+            rofi_current.rename(rofi_old)
+        rofi_temp.rename(rofi_current)
+        if rofi_old.exists():
+            shutil.rmtree(rofi_old)
+    finally:
+        if rofi_temp.exists():
+            shutil.rmtree(rofi_temp)
 
     # A setting change tells an open Nautilus to discard its previous icon lookup cache.
     try:
