@@ -1,5 +1,6 @@
 {
   config,
+  host,
   lib,
   pkgs,
   ...
@@ -13,6 +14,11 @@
   };
 
   config = lib.mkIf config.my.nixos.desktop.packages.enable {
+    # Librepods needs CAP_NET_ADMIN for AirPods discovery. The upstream
+    # NixOS module installs its wrapper and grants access through this group.
+    programs.librepods.enable = true;
+    users.users.${host.primaryUser}.extraGroups = [ "librepods" ];
+
     # ── Fonts ─────────────────────────────────────────────────────────────────
 
     fonts = {

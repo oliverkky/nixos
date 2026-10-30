@@ -32,13 +32,16 @@
       # Do NOT also set networking.interfaces or networking.wireless.interfaces.
       networkmanager.enable = true;
 
-      # Firewall is enabled by default on NixOS; keep it explicit here so
-      # future exceptions have a clear home.
+      # Allow remote development over SSH.
       firewall = {
         enable = true;
-        allowedTCPPorts = config.my.nixos.networking.allowedTCPPorts;
+        allowedTCPPorts = [ 22 ] ++ config.my.nixos.networking.allowedTCPPorts;
         allowedUDPPorts = config.my.nixos.networking.allowedUDPPorts;
       };
+    };
+
+    services.openssh = {
+      enable = true;
     };
   };
 }

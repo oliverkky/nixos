@@ -9,6 +9,11 @@
   home.homeDirectory = "/home/${config.home.username}";
   home.stateVersion = host.stateVersion;
 
+  programs.craftapps = {
+    enable = true;
+    enableAll = true;
+  };
+
   my.home = {
     desktop = {
       enable = host.home.desktop.enable;

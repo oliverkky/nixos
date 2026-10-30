@@ -75,6 +75,7 @@ in
         gnome-font-viewer
         papers
         heroic
+        inkscape
         libreoffice
         lmstudio
         mission-center

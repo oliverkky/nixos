@@ -14,6 +14,10 @@
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-craftapps = {
+      url = "github:olafkfreund/nix-craftapps";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprglass = {
       url = "github:hyprnux/hyprglass/hyprland-0.56";
       flake = false;
@@ -77,8 +81,17 @@
           modules = [
             (./hosts + "/${name}/configuration.nix")
             ./nixosModules
+            inputs.nix-craftapps.nixosModules.default
             home-manager.nixosModules.home-manager
             {
+              programs.craftapps = {
+                enable = true;
+                # Home Manager installs the apps per-user; the NixOS module
+                # provides the shared font directory the apps expect.
+                enableAll = false;
+                linkFonts = true;
+              };
+              home-manager.sharedModules = [ inputs.nix-craftapps.homeManagerModules.default ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.${host.primaryUser} = import ./home/host-default.nix;
